@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "JetBrains Mono"; src: url("assets/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      :root {
+        --bg: #19191b; --line: rgba(255, 255, 255, 0.045); --text: #ececec; --dim: #8d8d93;
+        --blue: #4d7cf6; --orange: #f2895f; --yellow: #f6d433; --purple: #a98bf7; --pink: #f29cc4;
+        --green: #3fc87a; --red: #f06a62; --gray: #3a3a3f; --gray-2: #4a4a50; --brand-red: #e8382d;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: "JetBrains Mono", monospace; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .full { position: absolute; inset: 0; }
+      .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 60px 60px; }
+      .dotgrid { position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,0.22) 2px, transparent 2.6px); background-size: 54px 54px; background-position: 27px 27px; }
+      .clouds { position: absolute; left: 0; width: 1080px; height: 1608px; background: url("assets/clouds_dither.png") no-repeat; background-size: 1080px 1608px; image-rendering: pixelated; }
+      .head { position: absolute; left: 60px; top: 150px; font-size: 46px; line-height: 1.25; font-weight: 500; }
+      .head .sub { color: var(--dim); font-size: 30px; display: block; margin-top: 10px; }
+      /* trace blocks */
+      .blk { position: absolute; display: flex; align-items: center; padding: 0 26px; font-size: 38px; font-weight: 500; color: #111; white-space: nowrap; overflow: hidden; }
+      .blk.v { padding: 26px 0; justify-content: center; }
+      .blk.v span { writing-mode: vertical-rl; }
+      .ico { position: absolute; display: flex; align-items: center; justify-content: center; }
+      .ico svg { width: 56px; height: 56px; }
+      .orb { position: absolute; width: 96px; height: 96px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 6px rgba(255,255,255,0.12), 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+      .orb i { width: 64px; height: 64px; border-radius: 50%; border: 5px solid #111; border-right-color: transparent; display: block; }
+      .badge { position: absolute; width: 84px; height: 84px; }
+      .log { position: absolute; font-size: 29px; line-height: 1.5; color: #cfcfd4; white-space: pre; }
+      .log .r { background: var(--red); color: #111; padding: 0 6px; }
+      .log .g { color: var(--green); }
+      .tag { color: var(--dim); font-size: 22px; }
+      .row { position: absolute; left: 0; height: 74px; display: flex; gap: 0; }
+      .row .gb { height: 74px; display: flex; align-items: center; padding: 0 22px; font-size: 28px; color: #c9c9ce; background: var(--gray); white-space: nowrap; }
+      .row .gi { width: 74px; height: 74px; background: var(--gray-2); display: flex; align-items: center; justify-content: center; }
+      .row .gi svg { width: 40px; height: 40px; }
+      .card { position: absolute; background: #fff; color: #111; border-radius: 26px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+      .kv { display: flex; justify-content: space-between; align-items: center; font-size: 30px; padding: 14px 0; }
+      .pill { font-size: 24px; padding: 4px 18px; border-radius: 999px; }
+      .tri { position: absolute; width: 34px; height: 30px; }
+      .bar { position: absolute; height: 34px; border-radius: 6px; }
+      .disp { font-family: "Archivo", sans-serif; font-weight: 860; font-stretch: 118%; text-transform: uppercase; line-height: 0.95; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="44" data-width="1080" data-height="1920">
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="40.96" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="44" data-track-index="11" data-volume="0.28"></audio>
+      <div id="sfx"></div>
+
+      <!-- S1 · one lead's trace -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="8.75" data-track-index="1">
+        <div class="grid"></div>
+        <div id="s1-clouds" class="clouds" style="top: -520px; opacity: 0.55;"></div>
+        <div class="head" id="s1-head">traza de un lead<span class="sub">visita → landing → pricing → ?</span></div>
+        <div id="s1-world" class="full"></div>
+      </section>
+
+      <!-- S2 · thousands of leads, same landing -->
+      <section id="s2" class="scene clip" data-start="8.75" data-duration="6.0" data-track-index="1">
+        <div class="grid"></div>
+        <div id="s2-rows" class="full"></div>
+        <div class="head" id="s2-head" style="background: rgba(25,25,27,0.92); padding: 18px 22px; left: 38px;">1.000 leads · la misma landing<span class="sub">ejemplo</span></div>
+        <div id="s2-count" style="position: absolute; left: 60px; top: 1600px; background: rgba(25,25,27,0.94); padding: 26px 30px; border: 1px solid #333; border-radius: 16px;">
+          <div style="font-size: 30px; color: var(--dim);">visitas → demos</div>
+          <div style="font-size: 76px; font-weight: 700; margin-top: 8px;"><span id="s2-n">1.000</span> → <span style="color: var(--red);" id="s2-d">0</span></div>
+        </div>
+      </section>
+
+      <!-- S3 · title over clouds -->
+      <section id="s3" class="scene clip" data-start="14.75" data-duration="2.3" data-track-index="1">
+        <div id="s3-clouds" class="clouds" style="top: 120px;"></div>
+        <div id="s3-stars" class="full"></div>
+        <div class="full" style="display: flex; align-items: center; justify-content: center;">
+          <div id="s3-title" style="font-size: 132px; font-weight: 400; letter-spacing: -0.02em; text-shadow: 0 0 40px rgba(0,0,0,0.9);">quiz-funnel<span id="s3-cur" style="display: inline-block; width: 60px; height: 120px; background: var(--text); margin-left: 8px; vertical-align: -14px;"></span></div>
+        </div>
+      </section>
+
+      <!-- S4 · the quiz trace -->
+      <section id="s4" class="scene clip" data-start="17.05" data-duration="5.45" data-track-index="1">
+        <div class="grid"></div>
+        <div class="head" id="s4-head">traza del quiz<span class="sub">5–8 preguntas · cards de valor entre medias</span></div>
+        <div id="s4-world" class="full"></div>
+      </section>
+
+      <!-- S5 · profile card -->
+      <section id="s5" class="scene clip" data-start="22.5" data-duration="4.7" data-track-index="1">
+        <div class="grid"></div>
+        <div class="head" id="s5-head">cada respuesta = un dato<span class="sub">perfil del lead</span></div>
+        <div id="s5-orb" style="position: absolute; left: 90px; top: 560px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8fb2ff, #4d7cf6 70%); box-shadow: 0 0 80px rgba(77,124,246,0.45); display: flex; align-items: center; justify-content: center;">
+          <i id="s5-spin" style="width: 160px; height: 160px; border-radius: 50%; border: 8px solid #10204a; border-right-color: transparent; display: block;"></i>
+        </div>
+        <div id="s5-log" class="log" style="left: 400px; top: 540px;"><span id="s5-l1">[quiz] p1 · ¿quién eres?</span>
+<span id="s5-l2">[quiz] p2 · ¿qué quieres?</span>
+<span id="s5-l3">[quiz] p3 · ¿qué te duele?</span>
+<span id="s5-l4">analizando respuestas…</span></div>
+        <div id="s5-card" class="card" style="left: 90px; top: 900px; width: 900px; padding: 40px 46px;">
+          <div class="kv"><span>perfil</span><span id="s5-p1" class="pill" style="background: #dfe8ff; color: #2448a8;">founder_saas</span></div>
+          <div class="kv"><span>objetivo</span><span id="s5-p2" class="pill" style="background: #dfe8ff; color: #2448a8;">mas_demos</span></div>
+          <div class="kv"><span>problema</span><span id="s5-p3" class="pill" style="background: #ffe1df; color: #b3261e;">leads_frios · crítico</span></div>
+          <div style="font-size: 26px; color: #6b6b72; margin-top: 18px; line-height: 1.45;">explicación<span style="display: block; color: #333; margin-top: 8px;" id="s5-exp">Llega desde un anuncio, tiene un SaaS B2B y sus leads no convierten. Necesita demos cualificadas, no más tráfico.</span></div>
+        </div>
+      </section>
+
+      <!-- S6 · result + offer + countdown -->
+      <section id="s6" class="scene clip" data-start="27.2" data-duration="5.25" data-track-index="1">
+        <div class="grid"></div>
+        <div class="head" id="s6-head">resultado + oferta<span class="sub">hechos para su perfil</span></div>
+        <div id="s6-world" class="full"></div>
+        <div id="s6-timer" style="position: absolute; left: 60px; top: 1180px; width: 960px;">
+          <div style="display: flex; justify-content: space-between; font-size: 30px; color: var(--dim);"><span>caduca en</span><span id="s6-clock" style="color: var(--text); font-size: 54px; font-weight: 700;">14:59</span></div>
+          <div style="position: relative; height: 40px; margin-top: 22px; background: #2a2a2e; border-radius: 8px;">
+            <div id="s6-bar" class="bar" style="left: 0; top: 3px; width: 880px; background: var(--yellow); transform-origin: left center;"></div>
+            <div id="s6-coin" style="position: absolute; left: 852px; top: -12px; width: 64px; height: 64px; border-radius: 50%; background: #fff; color: #111; font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: center;">€</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S7 · segments (clusters) + benchmark -->
+      <section id="s7" class="scene clip" data-start="32.45" data-duration="5.95" data-track-index="1">
+        <div class="dotgrid"></div>
+        <div class="head" id="s7-head">cada lead deja de ser un número<span class="sub">segmentos automáticos</span></div>
+        <div id="s7-tris" class="full"></div>
+        <div id="s7-labels" class="full"></div>
+        <div id="s7-bench" style="position: absolute; left: 60px; top: 1500px; width: 960px; background: rgba(25,25,27,0.94); padding: 28px 30px; border: 1px solid #333; border-radius: 16px;">
+          <div style="font-size: 28px;">conversión a demo <span class="tag">· ejemplo</span></div>
+          <div style="display: flex; align-items: center; gap: 18px; margin-top: 22px; font-size: 26px;"><span style="width: 90px; color: var(--dim);">2,1%</span><div style="position: relative; flex: 1; height: 26px;"><div id="s7-b1" class="bar" style="height: 26px; width: 22%; background: #5a5a60; transform-origin: left center;"></div></div><span style="width: 240px; color: var(--dim);">landing genérica</span></div>
+          <div style="display: flex; align-items: center; gap: 18px; margin-top: 16px; font-size: 26px;"><span style="width: 90px;">6,8%</span><div style="position: relative; flex: 1; height: 26px;"><div id="s7-b2" class="bar" style="height: 26px; width: 70%; background: var(--blue); transform-origin: left center;"></div></div><span style="width: 240px;">quiz funnel</span></div>
+        </div>
+      </section>
+
+      <!-- S8 · terminal CTA + logo -->
+      <section id="s8" class="scene clip" data-start="38.4" data-duration="5.6" data-track-index="1">
+        <div class="dotgrid" style="opacity: 0.5;"></div>
+        <div id="s8-term" style="position: absolute; left: 110px; top: 700px; width: 860px; background: #232326; border: 1px solid #38383d; border-radius: 22px; padding: 44px 48px; box-shadow: 0 30px 80px rgba(0,0,0,0.5);">
+          <div style="display: flex; gap: 12px;"><i style="width: 16px; height: 16px; border-radius: 50%; background: #444;"></i><i style="width: 16px; height: 16px; border-radius: 50%; background: #444;"></i><i style="width: 16px; height: 16px; border-radius: 50%; background: #444;"></i></div>
+          <div style="font-size: 44px; margin-top: 36px; line-height: 1.4;"><span style="color: var(--dim);">&gt;</span> comenta <span id="s8-quiz" style="background: var(--blue); color: #fff; padding: 2px 14px; border-radius: 8px;">QUIZ</span><span id="s8-cur" style="display: inline-block; width: 24px; height: 46px; background: var(--text); margin-left: 10px; vertical-align: -8px;"></span></div>
+          <div id="s8-sub" style="font-size: 32px; color: var(--dim); margin-top: 18px;">y te enseño cómo montarlo</div>
+        </div>
+        <div id="s8-logo" style="position: absolute; left: 0; right: 0; top: 1240px; display: flex; justify-content: center; align-items: center; gap: 14px;">
+          <span class="disp" style="font-size: 104px;">SaaS</span>
+          <span style="font-family: Silkscreen; font-size: 40px; background: var(--brand-red); color: #f2efe6; padding: 10px 14px 6px; border-radius: 10px; box-shadow: 6px 6px 0 #7e140d;">IN</span>
+          <span class="disp" style="font-size: 104px;">House</span>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const VO = 0.3;
+      const t = (s) => s + VO; // word start (from words.json) -> timeline time
+      const END = 44;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      let seed = 11;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      const ICON = {
+        hex: '<svg viewBox="0 0 24 24"><path d="M12 2.5l8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5z" fill="none" stroke="#111" stroke-width="1.8"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#111" stroke-width="1.8"/></svg>',
+        chat: '<svg viewBox="0 0 24 24"><path d="M12 3.5c4.7 0 8.5 3.3 8.5 7.4s-3.8 7.4-8.5 7.4c-1.1 0-2.2-.2-3.2-.5L4 20l1.2-4.1c-1.1-1.3-1.7-3-1.7-4.9 0-4.2 3.8-7.5 8.5-7.5z" fill="none" stroke="#111" stroke-width="1.8"/></svg>',
+        warn: '<svg viewBox="0 0 24 24"><path d="M12 2.8l10 17.6H2z" fill="#f06a62"/><rect x="11" y="8.5" width="2" height="6.5" fill="#111"/><rect x="11" y="16.5" width="2" height="2" fill="#111"/></svg>',
+        check: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#3fc87a"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#111" stroke-width="2.4"/></svg>',
+      };
+      const COLORS = { blue: "var(--blue)", orange: "linear-gradient(90deg,#f2895f,#f5a35a)", yellow: "var(--yellow)", purple: "var(--purple)", pink: "var(--pink)", green: "var(--green)", red: "var(--red)", gold: "linear-gradient(90deg,#f6d433,#f2a93b)" };
+
+      // SFX: one <audio> per cue (every <audio> needs its own id)
+      let sfxN = 0;
+      function sfx(file, at, vol = 0.5, dur = 1) {
+        const a = document.createElement("audio");
+        a.id = "sfx" + sfxN++;
+        a.src = "assets/" + file;
+        a.setAttribute("data-start", at.toFixed(2));
+        a.setAttribute("data-duration", String(dur));
+        a.setAttribute("data-track-index", String(20 + (sfxN % 6)));
+        a.setAttribute("data-volume", String(vol));
+        $("sfx").appendChild(a);
+      }
+
+      /* ---------- snake builder: blocks grow in order, the orb rides the leading edge ---------- */
+      // seg: {x,y,w,h, color|icon, label, dir: "r"|"l"|"d", at}
+      function snake(worldId, segs, orbStart) {
+        const world = $(worldId);
+        const orb = document.createElement("div");
+        orb.className = "orb";
+        orb.id = worldId + "-orb";
+        orb.innerHTML = "<i></i>";
+        segs.forEach((s, i) => {
+          const el = document.createElement("div");
+          el.id = `${worldId}-b${i}`;
+          if (s.icon) {
+            el.className = "ico";
+            el.innerHTML = ICON[s.icon];
+            el.style.background = s.icon === "hex" ? COLORS.yellow : COLORS.purple;
+          } else {
+            el.className = "blk" + (s.dir === "d" ? " v" : "");
+            if (s.dir === "l") el.style.paddingLeft = "104px"; // leave room for the orb parked on the leading edge
+            el.innerHTML = `<span>${s.label}</span>`;
+            el.style.background = COLORS[s.color];
+          }
+          Object.assign(el.style, { left: s.x + "px", top: s.y + "px", width: s.w + "px", height: s.h + "px" });
+          world.appendChild(el);
+          const origin = s.dir === "r" ? "left center" : s.dir === "l" ? "right center" : "center top";
+          const prop = s.dir === "d" ? "scaleY" : "scaleX";
+          tl.fromTo(el, { [prop]: 0, transformOrigin: origin }, { [prop]: 1, duration: 0.32, ease: "power3.out" }, s.at);
+          sfx("blip.mp3", s.at, 0.25, 0.5);
+          // orb to the leading edge of this block
+          const ex = s.dir === "r" ? s.x + s.w : s.dir === "l" ? s.x : s.x + s.w / 2;
+          const ey = s.dir === "d" ? s.y + s.h : s.y + s.h / 2;
+          tl.to(orb, { x: ex - 48, y: ey - 48, duration: 0.32, ease: "power3.out" }, s.at);
+        });
+        world.appendChild(orb);
+        tl.fromTo(orb, { x: orbStart[0] - 48, y: orbStart[1] - 48, scale: 0 }, { scale: 1, duration: 0.3, ease: "back.out(2)" }, segs[0].at - 0.25);
+        tl.to(orb.querySelector("i"), { rotation: 360 * 12, duration: 12, ease: "none" }, segs[0].at - 0.25);
+        return orb;
+      }
+      function badge(worldId, x, y, at, kind = "warn") {
+        const b = document.createElement("div");
+        b.className = "badge";
+        b.id = `${worldId}-badge${Math.round(x)}${Math.round(y)}`;
+        b.innerHTML = ICON[kind];
+        Object.assign(b.style, { left: x + "px", top: y + "px" });
+        $(worldId).appendChild(b);
+        tl.fromTo(b, { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.35, ease: "back.out(3)" }, at);
+        sfx(kind === "warn" ? "alert.mp3" : "chime.mp3", at, 0.4, 0.6);
+      }
+      function logPanel(worldId, x, y, lines, at, step = 0.18) {
+        const p = document.createElement("div");
+        p.className = "log";
+        p.id = worldId + "-log";
+        Object.assign(p.style, { left: x + "px", top: y + "px" });
+        p.innerHTML = lines.map((l, i) => `<div id="${worldId}-log${i}">${l}</div>`).join("");
+        $(worldId).appendChild(p);
+        lines.forEach((_, i) => tl.fromTo(`#${worldId}-log${i}`, { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.2 }, at + i * step));
+      }
+
+      /* ---------- S1 ---------- */
+      tl.fromTo("#s1-clouds", { x: 0 }, { x: -60, duration: 8.75, ease: "none" }, 0);
+      tl.fromTo("#s1-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5 }, 0.1);
+      const H = 100;
+      snake("s1-world", [
+        { x: 40, y: 820, w: 280, h: H, color: "blue", label: "Visita", dir: "r", at: t(0.48) },
+        { x: 320, y: 820, w: 100, h: H, icon: "chat", dir: "r", at: t(0.82) },
+        { x: 420, y: 820, w: 300, h: H, color: "orange", label: "Landing", dir: "r", at: t(1.02) },
+        { x: 720, y: 820, w: 100, h: H, icon: "hex", dir: "r", at: t(1.46) },
+        { x: 820, y: 820, w: 100, h: 400, color: "pink", label: "Scroll 38%", dir: "d", at: t(2.7) },
+        { x: 520, y: 1120, w: 300, h: H, color: "green", label: "Pricing", dir: "l", at: t(3.29) },
+        { x: 420, y: 1120, w: 100, h: H, icon: "chat", dir: "l", at: t(3.66) },
+        { x: 140, y: 1120, w: 280, h: H, color: "red", label: "Sale", dir: "l", at: t(4.64) },
+      ], [40, 870]);
+      badge("s1-world", 360, 1070, t(5.08));
+      logPanel("s1-world", 140, 1270, [
+        "> /landing · 00:12s",
+        "> scroll 38% · CTA fuera de vista",
+        "> /pricing · 00:04s",
+        '<span class="r">abandona: no ve su caso</span>',
+        '<span class="tag">exit: sin_conversión</span>',
+      ], t(5.94));
+
+      /* ---------- S2 ---------- */
+      const labels = ["Visita", "Landing", "Scroll", "Pricing", "Sale"];
+      for (let r = 0; r < 15; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.id = "s2-r" + r;
+        row.style.top = 300 + r * 82 + "px";
+        let html = "";
+        for (let k = 0; k < 22; k++) {
+          const lab = labels[(k + r) % labels.length];
+          html += `<div class="gb">${lab}</div><div class="gi">${k % 2 ? ICON.chat : ICON.hex}</div>`;
+        }
+        row.innerHTML = html;
+        $("s2-rows").appendChild(row);
+        const sp = 140 + rnd() * 160;
+        const x0 = -rnd() * 600;
+        tl.fromTo(row, { x: x0, opacity: 0 }, { x: x0 - sp * 6, opacity: 1, duration: 6, ease: "none" }, 8.75);
+        tl.to(row, { opacity: 1, duration: 0.3 }, 8.75 + r * 0.03);
+      }
+      tl.fromTo("#s2-head", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 8.9);
+      // most rows die at the landing
+      for (let r = 0; r < 15; r++) {
+        if (rnd() < 0.78) {
+          const b = document.createElement("div");
+          b.className = "badge";
+          b.id = "s2-w" + r;
+          b.innerHTML = ICON.warn;
+          Object.assign(b.style, { left: 120 + rnd() * 820 + "px", top: 300 + r * 82 - 5 + "px", width: "64px", height: "64px" });
+          $("s2-rows").appendChild(b);
+          const at = t(11.68) + rnd() * 1.0;
+          tl.fromTo(b, { scale: 0 }, { scale: 1, duration: 0.25, ease: "back.out(3)" }, at);
+          tl.to("#s2-r" + r, { opacity: 0.35, duration: 0.3 }, at);
+        }
+      }
+      sfx("alert.mp3", t(11.7), 0.4, 0.6);
+      sfx("alert.mp3", t(12.2), 0.3, 0.6);
+      tl.fromTo("#s2-count", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, t(9.6));
+      const dem = { v: 0 };
+      tl.fromTo(dem, { v: 0 }, { v: 21, duration: 1.2, ease: "power2.out", onUpdate: () => ($("s2-d").textContent = Math.round(dem.v)) }, t(12.07));
+
+      /* ---------- S3 ---------- */
+      sfx("whoosh.mp3", 14.6, 0.5, 1);
+      tl.fromTo("#s3-clouds", { scale: 1.15, opacity: 0 }, { scale: 1, opacity: 1, duration: 2.2, ease: "power2.out" }, 14.75);
+      for (let i = 0; i < 26; i++) {
+        const s = document.createElement("i");
+        s.id = "s3-st" + i;
+        s.style.cssText = `position:absolute;left:${rnd() * 1080}px;top:${300 + rnd() * 1300}px;width:6px;height:6px;background:${["#4d7cf6", "#a98bf7", "#ececec"][i % 3]};`;
+        $("s3-stars").appendChild(s);
+        tl.fromTo(s, { opacity: 0 }, { opacity: 0.9, duration: 0.2, yoyo: true, repeat: 3 }, 14.8 + rnd() * 1.5);
+      }
+      tl.fromTo("#s3-title", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5 }, t(15.38));
+      for (let k = 15.0; k < 17.0; k += 0.5) tl.set("#s3-cur", { opacity: 0 }, k).set("#s3-cur", { opacity: 1 }, k + 0.25);
+
+      /* ---------- S4 ---------- */
+      tl.fromTo("#s4-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 17.1);
+      snake("s4-world", [
+        { x: 40, y: 700, w: 280, h: H, color: "blue", label: "Pregunta 1", dir: "r", at: t(16.85) },
+        { x: 320, y: 700, w: 100, h: H, icon: "chat", dir: "r", at: t(17.25) },
+        { x: 420, y: 700, w: 300, h: H, color: "blue", label: "Pregunta 2", dir: "r", at: t(17.5) },
+        { x: 720, y: 700, w: 100, h: H, icon: "chat", dir: "r", at: t(17.9) },
+        { x: 820, y: 700, w: 100, h: 420, color: "orange", label: "Caso real", dir: "d", at: t(20.08) },
+        { x: 520, y: 1020, w: 300, h: H, color: "blue", label: "Pregunta 3", dir: "l", at: t(20.45) },
+        { x: 420, y: 1020, w: 100, h: H, icon: "hex", dir: "l", at: t(20.7) },
+        { x: 140, y: 1020, w: 280, h: H, color: "pink", label: "Dato", dir: "l", at: t(20.92) },
+        { x: 40, y: 1020, w: 100, h: 380, color: "blue", label: "Pregunta 4", dir: "d", at: t(21.45) },
+      ], [40, 750]);
+      logPanel("s4-world", 200, 1190, [
+        "caso_real: SaaS B2B · 4 → 19 demos/sem",
+        "dato: 7 de 10 no vuelven a tu landing",
+        '<span class="g">progreso: pregunta 4/8 · sigue dentro</span>',
+        '<span class="tag">(ejemplo)</span>',
+      ], t(20.3), 0.3);
+      badge("s4-world", 850, 650, t(21.6), "check");
+
+      /* ---------- S5 ---------- */
+      tl.fromTo("#s5-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 22.55);
+      tl.fromTo("#s5-orb", { scale: 0 }, { scale: 1, duration: 0.5, ease: "back.out(2)" }, 22.55);
+      tl.fromTo("#s5-spin", { rotation: 0 }, { rotation: 360 * 6, duration: 4.7, ease: "none" }, 22.5);
+      ["#s5-l1", "#s5-l2", "#s5-l3", "#s5-l4"].forEach((id, i) => tl.fromTo(id, { opacity: 0 }, { opacity: 1, duration: 0.15 }, 22.6 + i * 0.22));
+      tl.fromTo("#s5-card", { opacity: 0, y: 60, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "expo.out" }, t(22.9));
+      [["#s5-p1", 23.39], ["#s5-p2", 23.94], ["#s5-p3", 24.7]].forEach(([id, w]) => {
+        tl.fromTo(id, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(3)" }, t(w));
+        sfx("blip.mp3", t(w), 0.35, 0.5);
+      });
+      tl.fromTo("#s5-exp", { opacity: 0 }, { opacity: 1, duration: 0.5 }, t(25.4));
+
+      /* ---------- S6 ---------- */
+      tl.fromTo("#s6-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 27.25);
+      snake("s6-world", [
+        { x: 40, y: 820, w: 320, h: H, color: "green", label: "Resultado", dir: "r", at: t(27.37) },
+        { x: 360, y: 820, w: 100, h: H, icon: "hex", dir: "r", at: t(27.8) },
+        { x: 460, y: 820, w: 400, h: H, color: "gold", label: "Oferta −30%", dir: "r", at: t(28.16) },
+      ], [40, 870]);
+      tl.fromTo("#s6-timer", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, t(29.8));
+      const clk = { v: 899 };
+      tl.fromTo(clk, { v: 899 }, { v: 896, duration: 2.6, ease: "none",
+        onUpdate: () => { const s = Math.ceil(clk.v); $("s6-clock").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; } }, t(29.95));
+      tl.fromTo("#s6-bar", { scaleX: 1 }, { scaleX: 0.72, duration: 2.6, ease: "none" }, t(29.95));
+      tl.fromTo("#s6-coin", { x: 0 }, { x: -246, duration: 2.6, ease: "none" }, t(29.95));
+
+      /* ---------- S7 ---------- */
+      tl.fromTo("#s7-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 32.5);
+      const SEG = [
+        { c: "#4d7cf6", cx: 260, cy: 760, name: "founders · leads fríos" },
+        { c: "#f6d433", cx: 800, cy: 900, name: "agencias · pocas demos" },
+        { c: "#f29cc4", cx: 420, cy: 1210, name: "saas b2b · churn" },
+      ];
+      for (let i = 0; i < 90; i++) {
+        const sg = SEG[i % 3];
+        const tri = document.createElement("div");
+        tri.className = "tri";
+        tri.id = "s7-t" + i;
+        tri.innerHTML = `<svg viewBox="0 0 24 21" width="34" height="30"><path d="M12 1l11 19H1z" fill="${sg.c}"/></svg>`;
+        tri.style.left = "0px";
+        tri.style.top = "0px";
+        $("s7-tris").appendChild(tri);
+        const x0 = 40 + rnd() * 1000, y0 = 380 + rnd() * 1050;
+        const a = rnd() * Math.PI * 2, rr = 30 + rnd() * 130;
+        tl.fromTo(tri, { x: x0, y: y0, scale: 0 }, { scale: 1, duration: 0.25, ease: "back.out(3)" }, 32.5 + rnd() * 1.2);
+        tl.to(tri, { x: sg.cx + Math.cos(a) * rr, y: sg.cy + Math.sin(a) * rr * 0.75, duration: 0.9, ease: "power3.inOut" }, t(34.75) + rnd() * 0.25);
+      }
+      SEG.forEach((sg, i) => {
+        const l = document.createElement("div");
+        l.id = "s7-l" + i;
+        l.style.cssText = `position:absolute;left:${sg.cx - 150}px;top:${sg.cy + 175}px;width:340px;text-align:center;font-size:26px;color:${sg.c};background:rgba(25,25,27,0.85);padding:6px 10px;border-radius:8px;`;
+        l.textContent = sg.name;
+        $("s7-labels").appendChild(l);
+        tl.fromTo(l, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3 }, t(35.4) + i * 0.15);
+      });
+      sfx("whoosh.mp3", t(34.75), 0.35, 1);
+      tl.fromTo("#s7-bench", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4 }, t(36.3));
+      tl.fromTo("#s7-b1", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.out" }, t(36.45));
+      tl.fromTo("#s7-b2", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.out" }, t(36.62));
+      sfx("chime.mp3", t(37.09), 0.45, 1);
+
+      /* ---------- S8 ---------- */
+      tl.fromTo("#s8-term", { opacity: 0, y: 40, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "expo.out" }, 38.45);
+      tl.fromTo("#s8-quiz", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.25, ease: "back.out(3)" }, t(38.73));
+      sfx("blip.mp3", t(38.73), 0.45, 0.5);
+      tl.fromTo("#s8-sub", { opacity: 0 }, { opacity: 1, duration: 0.4 }, t(39.3));
+      for (let k = 38.6; k < 43.8; k += 0.5) tl.set("#s8-cur", { opacity: 0 }, k).set("#s8-cur", { opacity: 1 }, k + 0.25);
+      tl.fromTo("#s8-logo", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 41.3);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

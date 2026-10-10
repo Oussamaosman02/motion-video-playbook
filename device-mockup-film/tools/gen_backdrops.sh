@@ -1,0 +1,14 @@
+#!/bin/bash
+# 6 Gemini 3 Pro Image calls (~$0.18): 5 dreamy backdrops + one 3x3 sheet of faces for the app UIs.
+# Usage (from the folder that contains playbook/): bash playbook/device-mockup-film/tools/gen_backdrops.sh GEN_DIR
+# Skips files that already exist, so re-run after a failed poll (or fetch the task with `treg call reapi.tasks.get --query id=<task>`).
+set -e
+T="$(cd "$(dirname "$0")/../../tools" && pwd)"
+mkdir -p "${1:-gen}"; cd "${1:-gen}"
+g(){ [ -s "$1" ] || python3 $T/gen_image.py "$1" "$2"; }
+g flowers.png "Dreamy cinematic photograph, low camera angle inside a field of tall pink and white cosmos flowers in soft focus in the foreground and at the bottom, bright blue summer sky with soft fluffy white clouds filling the upper two thirds, warm sunlight, shallow depth of field, airy pastel colours, premium product-launch backdrop, empty centre for a product. Vertical composition. No text, no people, no objects."
+g desert.png "Cinematic photograph of a vast desert valley at dusk: hazy terracotta and rust-coloured mountains in the distance, a dry lake bed with soft reflections, dusty warm pink-orange sky, slight mist, soft muted film look, shallow depth of field, premium product-launch backdrop with empty space in the centre. Vertical composition. No text, no people, no buildings."
+g hill.png "Surreal dreamy photograph: a small round mossy green hill in the lower third under a bright saturated blue sky with puffy white clouds, colourful wildflowers (white daisies, yellow, blue cornflowers, pink) floating and flying through the air around the frame, some very close to the camera and blurred, joyful, premium product-launch backdrop, empty centre above the hill. Vertical composition. No text, no people."
+g peach.png "Dreamy close-up photograph: a twisted weathered tree branch crossing the lower part of the frame with a few white and yellow frangipani flowers on it, everything in soft focus, smooth warm peach-orange gradient background, golden light, premium product-launch backdrop with empty space in the centre and top. Vertical composition. No text, no people."
+g puffer.png "Abstract 3D render: a full-frame surface of glossy inflated horizontal tubes like a shiny puffer jacket or inflatable mattress, rich bright red colour (#e8382d) with soft specular highlights and deep red shadows, stacked horizontal rows filling the whole image, soft studio lighting, premium brand backdrop. Vertical composition. No text, no logo."
+g faces.png "A 3x3 grid of nine separate square portrait photographs of diverse young startup founders and marketers (different ages, genders and ethnicities), each a natural candid smiling head-and-shoulders photo with soft daylight and a different warm colourful background, high quality lifestyle photography. The nine squares are equal size, separated by thin pure white gaps, aligned in a perfect grid. No text."

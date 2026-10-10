@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Roboto Mono"; src: url("assets/RobotoMono.ttf") format("truetype"); font-weight: 100 700; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      :root { --paper: #f1f0ec; --ink: #1d1d1f; --yellow: #f6c945; --blue: #3f72e0; --red: #e0475b; --green: #2fa866; --lane: #d7e4f0; --rule: #cddbe9; --mute: #66666b; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Roboto Mono", monospace; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .full { position: absolute; inset: 0; }
+      .spr { position: absolute; left: 0; top: 0; }
+      .spr img { display: block; width: 100%; height: auto; }
+      .hl { position: absolute; background: var(--yellow); font-weight: 700; padding: 4px 18px 6px; line-height: 1.05; white-space: nowrap; }
+      .tag { position: absolute; background: var(--ink); color: #fff; font-size: 30px; padding: 6px 14px; white-space: nowrap; }
+      .tag.blue { background: var(--blue); } .tag.red { background: var(--red); } .tag.green { background: var(--green); }
+      .sub { position: absolute; font-size: 30px; color: #444; white-space: nowrap; }
+      .note { position: absolute; font-size: 20px; color: var(--mute); white-space: nowrap; }
+      .ground { position: absolute; left: 0; right: 0; height: 120px; background: var(--lane); }
+      .bubble { position: absolute; background: #fff; border: 3px solid var(--ink); border-radius: 22px; padding: 14px 22px; font-size: 32px; font-weight: 600; white-space: nowrap; }
+      .q { position: absolute; font-size: 56px; font-weight: 700; color: var(--red); }
+      .dot { position: absolute; width: 46px; height: 46px; border-radius: 50%; border: 3px solid #b9b9bf; background: #e4e3df; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="57.6" data-width="1080" data-height="1920">
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="54.99" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="57.6" data-track-index="11" data-volume="0.22"></audio>
+      <div id="sfx"></div>
+
+      <!-- S1 · the queue at the same door -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="16.75" data-track-index="1">
+        <div class="ground" style="top: 1250px;"></div>
+        <svg id="s1-ropes" class="full" width="1080" height="1920"></svg>
+        <div id="s1-world" class="full"></div>
+        <div id="s1-dots" class="full"></div>
+        <div id="s1-ui" class="full"></div>
+      </section>
+
+      <!-- S2 · el reparto -->
+      <section id="s2" class="scene clip" data-start="16.75" data-duration="10.95" data-track-index="1">
+        <div id="s2-band" style="position: absolute; left: 0; right: 0; top: 760px; height: 760px; background: var(--lane);"></div>
+        <div id="s2-world" class="full"></div>
+        <div id="s2-ui" class="full"></div>
+      </section>
+
+      <!-- S3 · quiz, lanes, polaroids, offers -->
+      <section id="s3" class="scene clip" data-start="27.7" data-duration="17.25" data-track-index="1">
+        <svg id="s3-lanes" class="full" width="1080" height="1920"></svg>
+        <div id="s3-world" class="full"></div>
+        <div id="s3-ui" class="full"></div>
+      </section>
+
+      <!-- S4 · the chart -->
+      <section id="s4" class="scene clip" data-start="44.95" data-duration="3.95" data-track-index="1">
+        <svg id="s4-chart" class="full" width="1080" height="1920"></svg>
+        <div id="s4-world" class="full"></div>
+        <div id="s4-ui" class="full"></div>
+      </section>
+
+      <!-- S5 · same queue, different door + CTA -->
+      <section id="s5" class="scene clip" data-start="48.9" data-duration="8.7" data-track-index="1">
+        <div class="ground" style="top: 1110px;"></div>
+        <div id="s5-world" class="full"></div>
+        <div id="s5-ui" class="full"></div>
+      </section>
+    </div>
+
+    <script>
+      const VO = 0.3;
+      const t = (s) => s + VO;
+      const END = 57.6;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      let seed = 21;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      let uid = 0;
+
+      function el(parent, html, cls, style = {}) {
+        const d = document.createElement("div");
+        d.id = "e" + uid++;
+        d.className = cls;
+        d.innerHTML = html;
+        Object.assign(d.style, style);
+        $(parent).appendChild(d);
+        return d;
+      }
+      // sprite placed by transform (x, y = top-left), width in px
+      function spr(parent, src, x, y, w, extra = {}) {
+        const d = el(parent, `<img src="assets/${src}.png" alt="" />`, "spr", { width: w + "px", ...extra });
+        tl.set(d, { x, y }, 0);
+        return d;
+      }
+      const tag = (parent, text, x, y, cls = "tag", style = {}) => el(parent, text, cls, { left: x + "px", top: y + "px", ...style });
+      const popIn = (d, at, from = {}) => tl.fromTo(d, { opacity: 0, scale: 0.6, ...from }, { opacity: 1, scale: 1, duration: 0.42, ease: "back.out(2.4)" }, at);
+      const fadeOut = (d, at) => tl.to(d, { opacity: 0, duration: 0.3 }, at);
+      // walk with little hops
+      function walk(d, x, y, at, dur) {
+        tl.to(d, { x, y, duration: dur, ease: "power1.inOut" }, at);
+        const hops = Math.max(1, Math.round(dur / 0.28));
+        tl.to(d.firstChild, { y: -14, rotation: 3, duration: dur / hops / 2, ease: "sine.out", yoyo: true, repeat: hops * 2 - 1 }, at);
+      }
+      let sN = 0;
+      function sfx(file, at, vol = 0.45, dur = 1) {
+        const a = document.createElement("audio");
+        a.id = "sfx" + sN++;
+        a.src = "assets/" + file;
+        a.setAttribute("data-start", at.toFixed(2));
+        a.setAttribute("data-duration", String(dur));
+        a.setAttribute("data-track-index", String(20 + (sN % 6)));
+        a.setAttribute("data-volume", String(vol));
+        $("sfx").appendChild(a);
+      }
+      const PLAIN = ["c_purple", "c_orange", "c_white", "c_pink", "c_yellow"];
+      const HUE = [0, 25, -25, 60, -60, 120];
+
+      /* ================= S1 ================= */
+      // velvet ropes along the queue
+      const ropes = $("s1-ropes");
+      for (let i = 0; i < 5; i++) {
+        const x0 = 40 + i * 120, x1 = x0 + 120;
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", `M${x0 + 20} 1150 Q ${(x0 + x1) / 2 + 20} 1190 ${x1 + 20} 1150`);
+        p.setAttribute("stroke", "#c8283c"); p.setAttribute("stroke-width", "9"); p.setAttribute("fill", "none"); p.setAttribute("stroke-linecap", "round");
+        p.id = "rope" + i;
+        ropes.appendChild(p);
+        tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.2 + i * 0.08);
+      }
+      for (let i = 0; i < 6; i++) { const s = spr("s1-world", "p_stanchion", 22 + i * 120, 1110, 46); popIn(s, 0.15 + i * 0.08); }
+      const shop = spr("s1-world", "p_shop", 600, 690, 460);
+      popIn(shop, 0.2, { y: 740 });
+      const sign = el("s1-world", "tu landing", "", { position: "absolute", left: "652px", top: "944px", width: "312px", height: "70px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "34px", fontWeight: "700" });
+      popIn(sign, 0.6);
+      // the queue
+      const Q = [];
+      for (let i = 0; i < 11; i++) {
+        const src = PLAIN[i % PLAIN.length];
+        const q = spr("s1-world", src, -200 - i * 90, 1100, 120, { filter: `hue-rotate(${HUE[i % HUE.length]}deg)` });
+        Q.push(q);
+        walk(q, 540 - i * 92, 1105, 0.1 + i * 0.05, 2.2);
+      }
+      sfx("steps.mp3", 0.2, 0.35, 2);
+      const h1 = tag("s1-ui", "la fila", 60, 230, "hl", { fontSize: "64px" });
+      popIn(h1, t(0.6));
+      const h1b = tag("s1-ui", "visitas a tu SaaS · este mes", 60, 330, "sub");
+      popIn(h1b, t(1.5));
+      const big = tag("s1-ui", "1.000", 60, 420, "hl", { fontSize: "150px", padding: "6px 24px 10px" });
+      popIn(big, t(3.8)); sfx("pop.mp3", t(3.8));
+      const cnt = { v: 0 };
+      tl.fromTo(cnt, { v: 0 }, { v: 1000, duration: 0.9, ease: "power2.out", onUpdate: () => (big.textContent = String(Math.round(cnt.v)).replace(/\B(?=(\d{3})+(?!\d))/g, ".")) }, t(3.8));
+      const tPuerta = tag("s1-ui", "la misma puerta", 690, 1290, "tag");
+      popIn(tPuerta, t(6.0)); sfx("pop.mp3", t(6.0), 0.35);
+      const bub = tag("s1-ui", "«¡Reserva una demo!»", 520, 600, "bubble");
+      popIn(bub, t(8.4)); sfx("pop.mp3", t(8.4), 0.35);
+      // question marks over the queue
+      Q.slice(0, 7).forEach((q, i) => {
+        const m = tag("s1-ui", "?", 540 - i * 92 + 40, 1020, "q");
+        popIn(m, t(9.4) + i * 0.07);
+        fadeOut(m, t(11.9));
+      });
+      // fade the top texts to make room for the dot grid
+      [h1, h1b, big, bub].forEach((d) => fadeOut(d, t(11.7)));
+      // 10x10 unit chart: 2 of 100
+      const dots = [];
+      for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
+        const d = el("s1-dots", "", "dot", { left: 60 + c * 52 + "px", top: 250 + r * 52 + "px", width: "42px", height: "42px" });
+        dots.push(d);
+        tl.fromTo(d, { scale: 0 }, { scale: 1, duration: 0.25, ease: "back.out(3)" }, t(12.0) + (r * 10 + c) * 0.006);
+      }
+      [dots[44], dots[57]].forEach((d) => tl.to(d, { backgroundColor: "#2fa866", borderColor: "#1d1d1f", duration: 0.2 }, t(13.05)));
+      const r2 = tag("s1-ui", "2 de cada 100", 60, 790, "hl", { fontSize: "64px" });
+      popIn(r2, t(13.05)); sfx("ding.mp3", t(13.05), 0.4);
+      const r2b = tag("s1-ui", "piden una demo", 60, 890, "sub");
+      popIn(r2b, t(13.4));
+      tag("s1-ui", "ejemplo", 60, 950, "note");
+      // the rest turns around and walks off, two go in
+      walk(Q[0], 760, 1105, t(14.7), 0.8);
+      walk(Q[1], 760, 1105, t(14.9), 1.0);
+      tl.to([Q[0], Q[1]], { opacity: 0, duration: 0.25 }, t(15.6));
+      Q.slice(2).forEach((q, i) => {
+        tl.set(q.firstChild, { scaleX: -1 }, t(14.75) + i * 0.04);
+        tl.to(q, { filter: "grayscale(1) opacity(0.6)", duration: 0.3 }, t(14.75));
+        walk(q, -260 - i * 40, 1105, t(14.8) + i * 0.04, 1.6);
+      });
+      sfx("wrong.mp3", t(14.8), 0.4);
+      const back = tag("s1-ui", "el resto se da la vuelta", 60, 1420, "tag red");
+      popIn(back, t(14.8));
+
+      /* ================= S2 · el reparto ================= */
+      sfx("swoosh.mp3", 16.6, 0.4);
+      tl.fromTo("#s2-band", { scaleY: 0, transformOrigin: "center bottom" }, { scaleY: 1, duration: 0.5, ease: "power3.out" }, 16.75);
+      const h2 = tag("s2-ui", "el reparto", 60, 280, "hl", { fontSize: "86px" });
+      popIn(h2, t(18.6));
+      const h2b = tag("s2-ui", "quién es quién en la fila", 60, 400, "sub");
+      popIn(h2b, t(18.9));
+      // background queue (small, faded)
+      for (let i = 0; i < 9; i++) {
+        const b = spr("s2-world", PLAIN[(i + 2) % PLAIN.length], 30 + i * 115, 1330, 100, { filter: `hue-rotate(${HUE[i % HUE.length]}deg) opacity(0.45)` });
+        popIn(b, 16.9 + i * 0.04);
+      }
+      const TYPES = [
+        { src: "c_red", x: 50, label: "el founder con prisa", cls: "tag red", at: 19.68, need: "«lo quiero ya»" },
+        { src: "c_blue", x: 395, label: "la agencia que compara", cls: "tag blue", at: 21.55, need: "«¿vs. otros?»" },
+        { src: "c_green", x: 740, label: "el que mira precios", cls: "tag green", at: 23.05, need: "«¿cuánto?»" },
+      ];
+      TYPES.forEach((ty, i) => {
+        const c = spr("s2-world", ty.src, ty.x + 20, 1500, 270);
+        tl.to(c, { y: 930, duration: 0.55, ease: "back.out(1.8)" }, t(ty.at));
+        tl.fromTo(c, { opacity: 0 }, { opacity: 1, duration: 0.2 }, t(ty.at));
+        sfx("pop.mp3", t(ty.at), 0.4);
+        const lab = tag("s2-ui", ty.label, ty.x, 1240, ty.cls, { fontSize: "24px" });
+        popIn(lab, t(ty.at) + 0.25);
+        const nb = tag("s2-ui", ty.need, ty.x + 10, 800, "bubble", { fontSize: "28px" });
+        popIn(nb, t(25.04) + i * 0.35);
+      });
+      sfx("pop.mp3", t(25.04), 0.3); sfx("pop.mp3", t(25.4), 0.3); sfx("pop.mp3", t(25.75), 0.3);
+
+      /* ================= S3 · quiz → lanes → polaroids → offers ================= */
+      sfx("swoosh.mp3", 27.6, 0.4);
+      const lanes = $("s3-lanes");
+      const LANES = [{ x: 190, c: "#e0475b" }, { x: 540, c: "#3f72e0" }, { x: 890, c: "#2fa866" }];
+      LANES.forEach((ln, i) => {
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", `M540 820 L ${ln.x} 1430`);
+        p.setAttribute("stroke", "#d7e4f0"); p.setAttribute("stroke-width", "120"); p.setAttribute("fill", "none"); p.setAttribute("stroke-linecap", "round");
+        p.id = "lane" + i;
+        lanes.appendChild(p);
+        const len = 720;
+        p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+        tl.to(p, { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, t(31.06) + i * 0.12);
+        const edge = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        edge.setAttribute("d", `M540 820 L ${ln.x} 1430`);
+        edge.setAttribute("stroke", ln.c); edge.setAttribute("stroke-width", "6"); edge.setAttribute("stroke-dasharray", "4 18"); edge.setAttribute("fill", "none"); edge.setAttribute("stroke-linecap", "round");
+        edge.id = "lanedash" + i;
+        lanes.appendChild(edge);
+        tl.fromTo(edge, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t(31.3) + i * 0.12);
+      });
+      const kiosk = spr("s3-world", "p_kiosk", 430, 440, 220);
+      popIn(kiosk, t(27.82)); sfx("pop.mp3", t(27.82), 0.45);
+      const h3 = tag("s3-ui", "el quiz", 60, 230, "hl", { fontSize: "86px" });
+      popIn(h3, t(27.9));
+      const qn = tag("s3-ui", "pregunta 1/8", 680, 520, "tag");
+      popIn(qn, t(29.0));
+      [2, 3, 4, 5, 6].forEach((n, i) => tl.set(qn, { textContent: `pregunta ${n}/8` }, t(29.4) + i * 0.3));
+      const h3b = tag("s3-ui", "5–8 preguntas en la puerta", 60, 350, "sub");
+      popIn(h3b, t(29.0));
+      // queue arrives from the bottom center, then splits into lanes
+      const LQ = [];
+      for (let i = 0; i < 9; i++) {
+        const ln = i % 3;
+        const src = ["c_red", "c_blue", "c_green"][ln];
+        const q = spr("s3-world", src, 480, 1950 + i * 40, 110);
+        LQ.push({ q, ln });
+        walk(q, 485, 840, t(29.2) + i * 0.12, 1.4);
+        const L = LANES[ln];
+        const k = Math.floor(i / 3);
+        const tx = 540 + (L.x - 540) * (0.45 + k * 0.22) - 55;
+        const ty = 820 + (1430 - 820) * (0.45 + k * 0.22) - 70;
+        walk(q, tx, ty, t(31.5) + i * 0.1, 1.2);
+      }
+      sfx("steps.mp3", t(29.3), 0.3, 2);
+      sfx("steps.mp3", t(31.6), 0.3, 2);
+      const tRep = tag("s3-ui", "cada uno por su carril", 60, 1560, "tag");
+      popIn(tRep, t(32.73));
+      fadeOut(tRep, t(34.1));
+      // polaroids on each lane
+      const POL = [
+        { x: 30, label: "caso real", body: "SaaS B2B<br>4 → 19<br>demos/sem", at: 35.9, rot: -6 },
+        { x: 400, label: "dato", body: "7 de 10<br>no vuelven<br>a la landing", at: 36.95, rot: 4 },
+        { x: 770, label: "consejo", body: "precio<br>anual<br>−2 meses", at: 37.5, rot: -3 },
+      ];
+      POL.forEach((pl, i) => {
+        const g = el("s3-world", "", "spr", { width: "260px", height: "319px" });
+        tl.set(g, { x: pl.x, y: 1000, rotation: pl.rot }, 0);
+        el(g.id, pl.body, "", { position: "absolute", left: "26px", top: "28px", width: "208px", height: "204px", background: "#fffdf6", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", fontSize: "26px", fontWeight: "600", lineHeight: "1.25" });
+        el(g.id, `<img src="assets/p_polaroid.png" alt="" style="width:260px;display:block" />`, "", { position: "absolute", left: "0", top: "0" });
+        el(g.id, pl.label, "", { position: "absolute", left: "0", right: "0", top: "248px", textAlign: "center", fontSize: "26px", fontWeight: "700" });
+        popIn(g, t(pl.at), { y: 1060 });
+        sfx("pop.mp3", t(pl.at), 0.35);
+        fadeOut(g, t(40.6));
+      });
+      tl.to(h3b, { opacity: 0, duration: 0.3 }, t(34.2));
+      const think = tag("s3-ui", "«vale, esto tiene sentido»", 150, 1640, "hl", { fontSize: "44px" });
+      popIn(think, t(38.9)); sfx("ding.mp3", t(38.9), 0.4);
+      fadeOut(think, t(40.6));
+      // each lane ends in its own offer house + timer
+      const OFF = [{ txt: "−30% · 3 meses", c: "tag red" }, { txt: "demo + caso", c: "tag blue" }, { txt: "plan anual", c: "tag green" }];
+      LANES.forEach((L, i) => {
+        const hs = spr("s3-world", "p_house", L.x - 120, 1360, 240);
+        popIn(hs, t(41.2) + i * 0.2, { y: 1420 });
+        const o = tag("s3-ui", OFF[i].txt, L.x - 130, 1600, OFF[i].c, { fontSize: "24px" });
+        popIn(o, t(42.6) + i * 0.15);
+        const w = spr("s3-world", "p_watch", L.x + 60, 1300, 80);
+        popIn(w, t(43.6) + i * 0.1);
+        sfx("pop.mp3", t(41.2) + i * 0.2, 0.3);
+      });
+      tag("s3-ui", "ejemplo", 60, 1800, "note");
+      tl.to(LQ.map((o) => o.q), { opacity: 0.0, duration: 0.3 }, t(40.7));
+
+      /* ================= S4 · the chart ================= */
+      sfx("swoosh.mp3", 44.9, 0.4);
+      const ch = $("s4-chart");
+      const X0 = 120, X1 = 960, Y0 = 1360, Y1 = 560; // axes: months 0..6, conversion 0..8%
+      const yv = (v) => Y0 - (v / 8) * (Y0 - Y1);
+      for (let v = 0; v <= 8; v += 2) {
+        const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        Object.entries({ x1: X0, x2: X1, y1: yv(v), y2: yv(v), stroke: "#cddbe9", "stroke-width": 3 }).forEach(([k, val]) => ln.setAttribute(k, val));
+        ln.id = "gl" + v; ch.appendChild(ln);
+        tl.fromTo(ln, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 45.0 + v * 0.03);
+        const lb = tag("s4-ui", v + "%", 40, yv(v) - 18, "note", { fontSize: "24px" });
+        tl.fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 45.0);
+      }
+      const mk = (id, d, color, w) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.id = id; p.setAttribute("d", d); p.setAttribute("stroke", color); p.setAttribute("stroke-width", w); p.setAttribute("fill", "none"); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round"); ch.appendChild(p); return p; };
+      const PTS = [[0, 2.1], [1, 2.6], [2, 3.6], [3, 4.4], [4, 5.3], [5, 6.1], [6, 6.8]];
+      const xv = (m) => X0 + (m / 6) * (X1 - X0);
+      const flat = mk("flat", `M${X0} ${yv(2.1)} L ${X1} ${yv(2.0)}`, "#3f72e0", 10);
+      const up = mk("up", "M" + PTS.map(([m, v]) => `${xv(m)} ${yv(v)}`).join(" L "), "#e0475b", 12);
+      [flat, up].forEach((p) => { const L = 1400; p.style.strokeDasharray = L; p.style.strokeDashoffset = L; });
+      tl.to(flat, { strokeDashoffset: 0, duration: 1.0, ease: "power1.inOut" }, t(45.0));
+      tl.to(up, { strokeDashoffset: 0, duration: 1.8, ease: "power1.inOut" }, t(46.0));
+      const rider = spr("s4-world", "c_yellow", xv(0) - 60, yv(2.1) - 125, 120);
+      popIn(rider, t(45.9));
+      tl.to(rider, { keyframes: PTS.slice(1).map(([m, v]) => ({ x: xv(m) - 60, y: yv(v) - 125, duration: 1.8 / 6, ease: "none" })) }, t(46.0));
+      const h4 = tag("s4-ui", "la gráfica cambia", 60, 230, "hl", { fontSize: "70px" });
+      popIn(h4, t(44.8));
+      const lb1 = tag("s4-ui", "landing genérica · 2%", 600, yv(2) + 26, "tag blue", { fontSize: "26px" });
+      popIn(lb1, t(46.0));
+      const lb2 = tag("s4-ui", "6,8%", 560, yv(6.8) - 250, "hl", { fontSize: "72px" });
+      popIn(lb2, t(47.6)); sfx("ding.mp3", t(47.6), 0.45);
+      const lb3 = tag("s4-ui", "quiz funnel", 560, yv(6.8) - 150, "tag red", { fontSize: "28px" });
+      popIn(lb3, t(47.75));
+      tag("s4-ui", "conversión a demo · ejemplo · meses 0–6", 120, 1400, "note", { fontSize: "22px" });
+
+      /* ================= S5 · misma fila, distinta puerta + CTA ================= */
+      sfx("swoosh.mp3", 48.8, 0.4);
+      const kiosk2 = spr("s5-world", "p_kiosk", 760, 640, 220);
+      popIn(kiosk2, 48.95);
+      for (let i = 0; i < 7; i++) {
+        const q = spr("s5-world", PLAIN[i % PLAIN.length], -160 - i * 90, 965, 110, { filter: `hue-rotate(${HUE[i % HUE.length]}deg)` });
+        walk(q, 640 - i * 92, 965, 48.95 + i * 0.04, 1.6);
+      }
+      const L1 = tag("s5-ui", "misma fila.", 60, 250, "tag", { fontSize: "48px" });
+      const L2 = tag("s5-ui", "mismo tráfico.", 60, 340, "tag", { fontSize: "48px" });
+      const L3 = tag("s5-ui", "distinta puerta.", 60, 430, "hl", { fontSize: "64px" });
+      popIn(L1, t(48.67)); popIn(L2, t(49.49)); popIn(L3, t(50.56));
+      sfx("pop.mp3", t(48.67), 0.3); sfx("pop.mp3", t(49.49), 0.3); sfx("ding.mp3", t(50.56), 0.4);
+      const cta = tag("s5-ui", "comenta «QUIZ»", 140, 1290, "hl", { fontSize: "92px" });
+      popIn(cta, t(52.0)); sfx("pop.mp3", t(52.0), 0.45);
+      const cta2 = tag("s5-ui", "y te enseño cómo montarlo", 220, 1440, "sub", { fontSize: "34px" });
+      popIn(cta2, t(53.3));
+      const logo = el("s5-ui", '<span style="font-family:Archivo;font-weight:860;font-stretch:118%;font-size:76px;text-transform:uppercase">SaaS</span><span style="font-family:Silkscreen;font-size:30px;background:#e8382d;color:#f2efe6;padding:8px 12px 4px;border-radius:8px;box-shadow:5px 5px 0 #7e140d">IN</span><span style="font-family:Archivo;font-weight:860;font-stretch:118%;font-size:76px;text-transform:uppercase">House</span>', "", { position: "absolute", left: "0", right: "0", top: "1660px", display: "flex", justifyContent: "center", alignItems: "center", gap: "14px" });
+      popIn(logo, 54.8);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

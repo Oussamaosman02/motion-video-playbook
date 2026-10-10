@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "GMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      :root {
+        --night: #050506; --ink: #0b0b0d; --white: #f3f2f0; --grey: #9a99a3; --dim: #6e6d76;
+        --red: #e8382d; --neon: #ff4134; --hot: #ff6a5c; --deep: #7e140d;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Archivo", sans-serif; color: var(--white); }
+      .layer { position: absolute; inset: 0; }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+      .full { position: absolute; inset: 0; }
+      .mono { font-family: "GMono", monospace; font-weight: 400; letter-spacing: 0.01em; }
+      .tag { position: absolute; left: 96px; font-family: "GMono", monospace; font-size: 30px; color: var(--white); white-space: nowrap; }
+      .tag b { color: var(--neon); font-weight: 500; margin-right: 18px; font-size: 26px; }
+      .hl { position: absolute; left: 96px; font-weight: 500; font-size: 92px; line-height: 1.04; letter-spacing: -0.035em; white-space: nowrap; }
+      .hl .r, .r { color: var(--neon); text-shadow: 0 0 28px rgba(255, 65, 52, 0.45); }
+      .sub { position: absolute; left: 96px; font-size: 34px; line-height: 1.3; color: var(--grey); white-space: nowrap; letter-spacing: -0.01em; }
+      .card { position: absolute; left: 0; top: 0; width: 200px; height: 128px; margin: -64px 0 0 -100px; border-radius: 10px;
+              background: linear-gradient(160deg, #d6d6db, #9c9ca4); box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 16px 16px; color: #1c1c20;
+              font-size: 17px; font-weight: 600; line-height: 1.2; backface-visibility: visible; }
+      .card i { display: block; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.18); margin-top: 10px; }
+      .card i + i { width: 62%; }
+      .chip { position: absolute; padding: 18px 24px; border-radius: 14px; background: rgba(14, 10, 12, 0.82); border: 2px solid rgba(255, 65, 52, 0.75);
+              box-shadow: 0 0 26px rgba(255, 65, 52, 0.35), inset 0 0 18px rgba(255,65,52,0.12); white-space: nowrap; }
+      .chip .k { font-family: "GMono", monospace; font-size: 20px; color: var(--neon); letter-spacing: 0.08em; }
+      .chip .v { font-size: 34px; font-weight: 600; margin-top: 6px; letter-spacing: -0.01em; }
+      .wire { border: 2px solid rgba(255, 65, 52, 0.9); box-shadow: 0 0 18px rgba(255, 65, 52, 0.45), inset 0 0 12px rgba(255, 65, 52, 0.15); border-radius: 12px; position: absolute; }
+      .kpi { position: absolute; top: 120px; width: 200px; height: 140px; }
+      .kpi .k { position: absolute; left: 18px; top: 16px; font-family: "GMono", monospace; font-size: 18px; color: var(--grey); }
+      .kpi .v { position: absolute; left: 18px; top: 52px; font-size: 56px; font-weight: 600; letter-spacing: -0.03em; }
+      .tile { position: absolute; width: 230px; height: 150px; border-radius: 10px; overflow: hidden; background-size: cover; background-position: center; box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
+      .tile.ui { background: linear-gradient(160deg, #1d1b20, #121114); border: 1px solid rgba(255,255,255,0.08); padding: 14px; font-size: 17px; color: #cfcfd6; font-weight: 600; }
+      .tile.ui i { display: block; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.14); margin-top: 9px; }
+      .tile.ui s { display: inline-block; text-decoration: none; margin-top: 12px; padding: 5px 10px; border-radius: 6px; background: var(--red); color: #fff; font-size: 14px; }
+      .ej { font-family: "GMono", monospace; font-size: 18px; color: #8f8e98; letter-spacing: 0.1em; }
+      .cur { display: inline-block; width: 0.55em; height: 1.05em; background: var(--neon); vertical-align: -0.18em; margin-left: 6px; box-shadow: 0 0 12px rgba(255,65,52,0.7); }
+      svg { overflow: visible; }
+      #vig { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 62% at 50% 46%, transparent 52%, rgba(0,0,0,0.55)); pointer-events: none; }
+      #fade { position: absolute; inset: 0; background: #000; opacity: 0; }
+      #flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgba(255,120,100,0.9), rgba(255,65,52,0.25) 40%, transparent 70%); opacity: 0; mix-blend-mode: screen; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="55" data-width="1080" data-height="1920">
+      <!-- audio: reused music bed (hero-object-film / boxd, trimmed from 3 s, +2 dB, limited) + reused library SFX. Music only, no VO (like the reference). -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="55" data-track-index="10" data-volume="0.95"></audio>
+      <audio id="a-type1" src="assets/type.mp3" data-start="0.4" data-duration="1.5" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="a-sh1" src="assets/shimmer.mp3" data-start="2.8" data-duration="1.5" data-track-index="12" data-volume="0.6"></audio>
+      <audio id="a-rs1" src="assets/riser.mp3" data-start="5.5" data-duration="1.5" data-track-index="13" data-volume="0.35"></audio>
+      <audio id="a-sw1" src="assets/swarm.mp3" data-start="8.6" data-duration="1.64" data-track-index="14" data-volume="0.4"></audio>
+      <audio id="a-im1" src="assets/impact.mp3" data-start="9.6" data-duration="2.0" data-track-index="15" data-volume="0.55"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="14.1" data-duration="1.04" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="a-wh2" src="assets/whoosh.mp3" data-start="19.3" data-duration="1.04" data-track-index="17" data-volume="0.45"></audio>
+      <audio id="a-tk1" src="assets/tick.mp3" data-start="20.4" data-duration="0.52" data-track-index="18" data-volume="0.4"></audio>
+      <audio id="a-tk2" src="assets/tick.mp3" data-start="21.1" data-duration="0.52" data-track-index="19" data-volume="0.4"></audio>
+      <audio id="a-tk3" src="assets/tick.mp3" data-start="21.8" data-duration="0.52" data-track-index="20" data-volume="0.4"></audio>
+      <audio id="a-wh3" src="assets/whoosh.mp3" data-start="24.3" data-duration="1.04" data-track-index="21" data-volume="0.45"></audio>
+      <audio id="a-gl1" src="assets/glitch.mp3" data-start="25.6" data-duration="0.62" data-track-index="22" data-volume="0.3"></audio>
+      <audio id="a-type2" src="assets/type.mp3" data-start="29.2" data-duration="1.5" data-track-index="23" data-volume="0.45"></audio>
+      <audio id="a-bm1" src="assets/boom.mp3" data-start="31.0" data-duration="1.5" data-track-index="24" data-volume="0.7"></audio>
+      <audio id="a-tk4" src="assets/tick.mp3" data-start="33.6" data-duration="0.52" data-track-index="25" data-volume="0.35"></audio>
+      <audio id="a-tk5" src="assets/tick.mp3" data-start="34.6" data-duration="0.52" data-track-index="26" data-volume="0.35"></audio>
+      <audio id="a-tk6" src="assets/tick.mp3" data-start="35.6" data-duration="0.52" data-track-index="27" data-volume="0.35"></audio>
+      <audio id="a-dr1" src="assets/datarain.mp3" data-start="37.0" data-duration="2.5" data-track-index="28" data-volume="0.35"></audio>
+      <audio id="a-gl2" src="assets/glitch.mp3" data-start="39.55" data-duration="0.62" data-track-index="29" data-volume="0.4"></audio>
+      <audio id="a-wh4" src="assets/whoosh.mp3" data-start="42.5" data-duration="1.04" data-track-index="30" data-volume="0.45"></audio>
+      <audio id="a-im2" src="assets/impact.mp3" data-start="46.0" data-duration="2.0" data-track-index="31" data-volume="0.5"></audio>
+      <audio id="a-type3" src="assets/type.mp3" data-start="46.3" data-duration="1.5" data-track-index="32" data-volume="0.35"></audio>
+      <audio id="a-sw2" src="assets/swell.mp3" data-start="50.3" data-duration="1.5" data-track-index="33" data-volume="0.45"></audio>
+      <audio id="a-ch1" src="assets/chime.mp3" data-start="51.6" data-duration="2.03" data-track-index="34" data-volume="0.6"></audio>
+
+      <!-- backgrounds under the fx canvas -->
+      <div id="bgs" class="layer">
+        <div id="bg-space" class="full" style="background: url('assets/space.jpg') center / cover; opacity: 0;"></div>
+        <div id="bg-red" class="full" style="background: var(--red); opacity: 0;"></div>
+      </div>
+      <canvas id="fx" width="1080" height="1920" class="layer" data-layout-ignore></canvas>
+
+      <!-- ============ S1 · starfield, typed line → red payoff ============ -->
+      <section id="s1" class="scene">
+        <div id="s1-a" class="mono" style="position: absolute; left: 0; right: 0; top: 836px; text-align: center; font-size: 34px; color: #c4c3cb;"></div>
+        <div id="s1-b" style="position: absolute; left: 0; right: 0; top: 910px; text-align: center; font-size: 66px; font-weight: 500; letter-spacing: -0.03em; opacity: 0;"><span class="r">Venderles con ella, no.</span></div>
+      </section>
+
+      <!-- ============ S2 · hex grid + neon wireframe polyhedron (canvas only) ============ -->
+      <section id="s2" class="scene"></section>
+
+      <!-- ============ S3 · hero lockup: glass "?" + headline ============ -->
+      <section id="s3" class="scene">
+        <div id="s3-glow" class="full" style="background: radial-gradient(circle at 50% 33%, rgba(255,65,52,0.22), transparent 45%);"></div>
+        <div id="s3-embw" style="position: absolute; left: 190px; top: 170px; width: 700px; height: 700px; perspective: 1400px;">
+          <img id="s3-emb" src="assets/emblem.png" style="width: 100%; height: 100%; display: block;" />
+        </div>
+        <div id="s3-k" class="mono" style="position: absolute; left: 96px; top: 1010px; font-size: 30px; color: var(--grey); opacity: 0;">Haz esto.</div>
+        <div id="s3-h1" class="hl" style="top: 1070px; opacity: 0;">Menos demos a ciegas.</div>
+        <div id="s3-h2" class="hl" style="top: 1170px; opacity: 0;"><span class="r">Más Quiz Funnel.</span></div>
+        <div id="s3-s" class="sub" style="top: 1320px; opacity: 0;">Pregunta antes de vender. Vende mejor.</div>
+      </section>
+
+      <!-- ============ S4 · 01 preguntas: question cards orbit the emblem ============ -->
+      <section id="s4" class="scene">
+        <div id="s4-emb" style="position: absolute; left: 400px; top: 550px; width: 280px; height: 280px; background: url('assets/emblem.png') center / contain no-repeat;"></div>
+        <div id="s4-cards" class="full" data-layout-ignore style="perspective: 1100px;"></div>
+        <div id="s4-tag" class="tag" style="top: 1260px; opacity: 0;"><b>01</b>Preguntas</div>
+        <div id="s4-h" class="hl" style="top: 1320px; opacity: 0;">De 5 a 8 <span class="r">preguntas.</span></div>
+        <div id="s4-s" class="sub" style="top: 1450px; opacity: 0;">Quién es · qué quiere · qué le duele.</div>
+      </section>
+
+      <!-- ============ S5 · 02 cards de valor: particle galaxy + laser + chips ============ -->
+      <section id="s5" class="scene">
+        <div id="s5-c1" class="chip" style="left: 470px; top: 330px; opacity: 0;"><div class="k">CASO REAL</div><div class="v">4 → 19 demos/mes</div></div>
+        <div id="s5-c2" class="chip" style="left: 90px; top: 510px; opacity: 0;"><div class="k">DATO</div><div class="v">7 de cada 10 lo terminan</div></div>
+        <div id="s5-c3" class="chip" style="left: 380px; top: 1010px; opacity: 0;"><div class="k">CONSEJO</div><div class="v">Pregunta el problema, no el presupuesto</div></div>
+        <div id="s5-tag" class="tag" style="top: 1230px; opacity: 0;"><b>02</b>Entre pregunta y pregunta</div>
+        <div id="s5-h1" class="hl" style="top: 1290px; font-size: 84px; opacity: 0;">«Vale, esto</div>
+        <div id="s5-h2" class="hl" style="top: 1380px; font-size: 84px; opacity: 0;"><span class="r">tiene sentido.»</span></div>
+        <div id="s5-s" class="sub" style="top: 1510px; opacity: 0;">Casos reales, datos y consejos en cards.</div>
+        <div class="ej" style="position: absolute; left: 96px; top: 1580px;">DATOS DE EJEMPLO</div>
+      </section>
+
+      <!-- ============ S6 · 03 resultado: wireframe dashboard fills in + phone ============ -->
+      <section id="s6" class="scene">
+        <div id="s6-dashw" style="position: absolute; left: 40px; top: 300px; width: 760px; height: 560px; perspective: 1600px;">
+          <div id="s6-dash" class="wire" style="left: 0; top: 0; width: 760px; height: 560px; transform: rotateY(16deg) rotateX(6deg); transform-origin: 0% 50%; background: rgba(10,6,8,0.55);">
+            <div class="mono" style="position: absolute; left: 24px; top: 26px; font-size: 22px; color: var(--grey);">quiz / resultados</div>
+            <div id="s6-btn" style="position: absolute; right: 24px; top: 20px; width: 150px; height: 38px; border-radius: 8px; background: var(--red); box-shadow: 0 0 18px rgba(255,65,52,0.7); opacity: 0;"></div>
+            <div class="wire kpi" style="left: 24px;"><div class="k">LEADS</div><div class="v s6-v" id="s6-v1">0</div></div>
+            <div class="wire kpi" style="left: 280px;"><div class="k">CUALIFICADOS</div><div class="v s6-v" id="s6-v2">0</div></div>
+            <div class="wire kpi" style="left: 536px;"><div class="k">DEMOS</div><div class="v s6-v" id="s6-v3">0</div></div>
+            <div class="wire" style="left: 24px; top: 290px; width: 712px; height: 240px;">
+              <svg width="712" height="240" viewBox="0 0 712 240" style="position: absolute; left: 0; top: 0;">
+                <path id="s6-line" pathLength="1" d="M 20 210 C 120 200, 160 180, 240 170 S 360 150, 420 120 S 560 70, 690 30" fill="none" stroke="#ff4134" stroke-width="5" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 8px rgba(255,65,52,0.9));" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div id="s6-phone" class="wire" style="left: 700px; top: 470px; width: 320px; height: 640px; border-radius: 44px; background: #0c0a0b; overflow: hidden; border-width: 3px;">
+          <div style="position: absolute; left: 14px; right: 14px; top: 14px; height: 300px; border-radius: 32px; background: url('assets/dusk.jpg') center / cover;"></div>
+          <div class="mono" style="position: absolute; left: 30px; top: 340px; font-size: 18px; color: var(--neon);">TU RESULTADO</div>
+          <div style="position: absolute; left: 30px; top: 372px; font-size: 32px; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em;">SaaS B2B con<br />leads fríos</div>
+          <div style="position: absolute; left: 30px; top: 470px; right: 30px; font-size: 19px; color: var(--grey); line-height: 1.3;">Tu cuello de botella: la cualificación.</div>
+          <div style="position: absolute; left: 30px; right: 30px; top: 560px; height: 50px; border-radius: 12px; background: var(--red); font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Ver mi plan</div>
+        </div>
+        <div id="s6-tag" class="tag" style="top: 1260px; opacity: 0;"><b>03</b>Resultado</div>
+        <div id="s6-h1" class="hl" style="top: 1320px; opacity: 0;">Un resultado</div>
+        <div id="s6-h2" class="hl" style="top: 1416px; opacity: 0;"><span class="r">hecho para él.</span></div>
+        <div id="s6-s" class="sub" style="top: 1546px; opacity: 0;">Según lo que ha respondido.</div>
+        <div class="ej" style="position: absolute; left: 96px; top: 1616px;">DATOS DE EJEMPLO</div>
+      </section>
+
+      <!-- ============ S7 · black breath (music gap): cursor + typed line ============ -->
+      <section id="s7" class="scene">
+        <div class="mono" style="position: absolute; left: 0; right: 0; top: 920px; text-align: center; font-size: 40px; color: #d9d8de;"><span id="s7-t"></span><span id="s7-cur" class="cur"></span></div>
+      </section>
+
+      <!-- ============ S8 · 04 oferta (music drop): planet horizon, hexagon wire, image panels, countdown ============ -->
+      <section id="s8" class="scene">
+        <svg id="s8-hex" viewBox="-500 -500 1000 1000" width="1000" height="1000" style="position: absolute; left: 40px; top: 470px;">
+          <polygon id="s8-hp" points="0,-430 372,-215 372,215 0,430 -372,215 -372,-215" fill="none" stroke="#ff4134" stroke-width="2.5" stroke-opacity="0.75" pathLength="1" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 8px rgba(255,65,52,0.8));" />
+          <polygon points="0,-300 260,-150 260,150 0,300 -260,150 -260,-150" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.18" />
+        </svg>
+        <div id="s8-panels" class="full" data-layout-ignore style="perspective: 1200px;">
+          <div id="s8-p1" class="tile" style="left: -40px; top: 300px; width: 420px; height: 280px; background-image: url('assets/aurora.jpg'); transform: rotateY(38deg); opacity: 0;"></div>
+          <div id="s8-p2" class="tile" style="left: 700px; top: 380px; width: 420px; height: 280px; background-image: url('assets/dusk.jpg'); transform: rotateY(-38deg); opacity: 0;"></div>
+          <div id="s8-p3" class="tile" style="left: -60px; top: 1180px; width: 400px; height: 260px; background-image: url('assets/dusk.jpg'); background-position: 30% 60%; transform: rotateY(40deg); opacity: 0;"></div>
+          <div id="s8-p4" class="tile" style="left: 730px; top: 1120px; width: 400px; height: 260px; background-image: url('assets/aurora.jpg'); background-position: 70% 40%; transform: rotateY(-40deg); opacity: 0;"></div>
+        </div>
+        <div id="s8-tag" class="mono" style="position: absolute; left: 0; right: 0; top: 740px; text-align: center; font-size: 30px; opacity: 0;"><b style="color: var(--neon); font-weight: 500; margin-right: 16px;">04</b>La oferta</div>
+        <div id="s8-h1" style="position: absolute; left: 0; right: 0; top: 800px; text-align: center; font-size: 104px; font-weight: 500; letter-spacing: -0.04em; opacity: 0;">Por qué encaja.</div>
+        <div id="s8-h2" style="position: absolute; left: 0; right: 0; top: 910px; text-align: center; font-size: 104px; font-weight: 500; letter-spacing: -0.04em; opacity: 0;"><span class="r">Oferta a su medida.</span></div>
+        <div id="s8-pill" class="chip" style="left: 50%; top: 1070px; transform: translateX(-50%); display: flex; gap: 22px; align-items: center; opacity: 0;">
+          <div class="v" style="margin: 0; font-size: 34px;">Plan Growth <span class="r">−30 %</span></div>
+          <div style="width: 2px; height: 40px; background: rgba(255,65,52,0.6);"></div>
+          <div class="mono" style="font-size: 22px; color: var(--grey);">termina en</div>
+          <div id="s8-clk" class="mono" style="font-size: 40px; font-weight: 600; color: var(--white);">14:59</div>
+        </div>
+        <div class="ej" style="position: absolute; left: 0; right: 0; top: 1180px; text-align: center;">OFERTA DE EJEMPLO</div>
+      </section>
+
+      <!-- ============ S9 · wall of tiles → black streaks ============ -->
+      <section id="s9" class="scene">
+        <div id="s9-wallw" class="full" style="perspective: 1300px;">
+          <div id="s9-wall" data-layout-ignore style="position: absolute; left: -380px; top: -300px; width: 1840px; height: 2600px; transform: rotateX(18deg) rotateZ(-8deg);"></div>
+        </div>
+        <div id="s9-shade" class="full" style="background: radial-gradient(ellipse 60% 18% at 50% 50%, rgba(0,0,0,0.85), rgba(0,0,0,0.25) 100%);"></div>
+        <div id="s9-a" class="mono" style="position: absolute; left: 0; right: 0; top: 930px; text-align: center; font-size: 36px; color: #e4e3e8;"></div>
+      </section>
+      <section id="s9b" class="scene">
+        <div id="s9b-a" class="mono" style="position: absolute; left: 0; right: 0; top: 760px; text-align: center; font-size: 34px; color: var(--grey); opacity: 0;">Un quiz, en cambio…</div>
+        <div id="s9b-h1" style="position: absolute; left: 0; right: 0; top: 830px; text-align: center; font-size: 76px; font-weight: 500; letter-spacing: -0.035em; opacity: 0;">lo segmenta, lo educa</div>
+        <div id="s9b-h2" style="position: absolute; left: 0; right: 0; top: 920px; text-align: center; font-size: 76px; font-weight: 500; letter-spacing: -0.035em; opacity: 0;"><span class="r">y lo lleva a la compra.</span></div>
+      </section>
+
+      <!-- ============ S10 · "Tu SaaS, con mejor embudo." + wireframe funnel (canvas) ============ -->
+      <section id="s10" class="scene">
+        <div id="s10-h1" class="hl" style="top: 1180px; font-size: 100px; opacity: 0;">Tu SaaS,</div>
+        <div id="s10-h2" class="hl" style="top: 1286px; font-size: 100px; opacity: 0;">con <span class="r">mejor embudo.</span></div>
+      </section>
+
+      <!-- ============ S11 · full red slab, big typed question ============ -->
+      <section id="s11" class="scene">
+        <div id="s11-q" style="position: absolute; left: 80px; top: 520px; width: 930px; font-size: 124px; font-weight: 500; line-height: 1.02; letter-spacing: -0.045em; color: #0b0b0d; white-space: normal;"></div>
+        <div id="s11-a" style="position: absolute; left: 80px; top: 1240px; font-size: 40px; font-weight: 600; color: #2a0c09; opacity: 0;">No necesitas otra landing.</div>
+        <div id="s11-b" style="position: absolute; left: 80px; top: 1296px; font-size: 40px; font-weight: 600; color: #0b0b0d; opacity: 0;">Necesitas un quiz.</div>
+      </section>
+
+      <!-- ============ S12 · particle stream → wordmark lockup + CTA ============ -->
+      <section id="s12" class="scene">
+        <div id="s12-lock" style="position: absolute; left: 0; right: 0; top: 720px; display: flex; justify-content: center; align-items: center; gap: 18px; opacity: 0;">
+          <div style="font-size: 92px; font-weight: 860; font-stretch: 118%; letter-spacing: -0.02em; text-transform: uppercase; line-height: 1;">SaaS</div>
+          <div style="font-family: 'GMono', monospace; font-size: 44px; font-weight: 700; background: var(--red); color: #fff; padding: 10px 16px 8px; border-radius: 10px; box-shadow: 0 0 34px rgba(255,65,52,0.7);">IN</div>
+          <div style="font-size: 92px; font-weight: 860; font-stretch: 118%; letter-spacing: -0.02em; text-transform: uppercase; line-height: 1;">House</div>
+        </div>
+        <div id="s12-tl" style="position: absolute; left: 0; right: 0; top: 846px; text-align: center; font-size: 34px; color: var(--grey); opacity: 0;">Quiz Funnels que <span class="r">venden.</span></div>
+        <div id="s12-cta" style="position: absolute; left: 0; right: 0; top: 1060px; text-align: center; font-size: 84px; font-weight: 600; letter-spacing: -0.03em; opacity: 0;">Comenta <span class="r" style="font-weight: 800;">QUIZ</span></div>
+        <div id="s12-cs" class="mono" style="position: absolute; left: 0; right: 0; top: 1170px; text-align: center; font-size: 32px; color: #c9c8cf; opacity: 0;">y te enseño a montarlo ↗</div>
+      </section>
+
+      <div id="flash" data-layout-ignore></div>
+      <div id="vig" data-layout-ignore></div>
+      <div id="fade" data-layout-ignore></div>
+    </div>
+
+    <script>
+      /* Neon sizzle reel. Music only: the script is on-screen text. Every procedural motion (stars, polyhedron,
+         particles, galaxy, grid, funnel, orbiting cards) is a pure function of the film clock T → seek-safe. */
+      const END = 55;
+      const B = { s1: 0, s2: 5.6, s3: 9.6, s4: 14.2, s5: 19.4, s6: 24.4, s7: 29.0, s8: 31.0, s9: 37.0, s9b: 39.6, s10: 42.6, s11: 46.0, s12: 50.4 };
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#bg-space", "#bg-red"], { opacity: 0 });
+      const $ = (id) => document.getElementById(id);
+      const mk = (s) => { let x = s; return () => ((x = (x * 16807) % 2147483647) / 2147483647); };
+      const rnd = mk(7);
+      const cl = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+      const eo = (p) => 1 - Math.pow(1 - cl(p), 3);
+      const eio = (p) => { p = cl(p); return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; };
+
+      // scene windows (hard cuts like the reference)
+      const SC = [["s1", B.s1, B.s2], ["s2", B.s2, B.s3], ["s3", B.s3, B.s4], ["s4", B.s4, B.s5], ["s5", B.s5, B.s6], ["s6", B.s6, B.s7],
+                  ["s7", B.s7, B.s8], ["s8", B.s8, B.s9], ["s9", B.s9, B.s9b], ["s9b", B.s9b, B.s10], ["s10", B.s10, B.s11], ["s11", B.s11, B.s12], ["s12", B.s12, END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b); });
+
+      // helpers
+      const typeOn = (id, text, at, dur) => { const o = { n: 0 }; tl.to(o, { n: text.length, duration: dur, ease: "none", onUpdate: () => { $(id).textContent = text.slice(0, Math.round(o.n)); } }, at); };
+      const rise = (id, at, dur = 0.5, y = 26) => tl.fromTo("#" + id, { opacity: 0, y, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: dur, ease: "power3.out", immediateRender: false }, at);
+      const out = (ids, at, dur = 0.25) => tl.to(ids.map((i) => "#" + i), { opacity: 0, duration: dur, ease: "power1.in" }, at);
+      function blink(id, a, b) { tl.set("#" + id, { opacity: 1 }, a); for (let k = a + 0.35; k < b; k += 0.5) tl.set("#" + id, { opacity: 0 }, k).set("#" + id, { opacity: 1 }, k + 0.25); }
+      const flash = (at, peak = 0.9) => { tl.set("#flash", { opacity: peak }, at); tl.to("#flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, at + 0.03); };
+
+      /* ================= canvas fx ================= */
+      const cv = $("fx"), cx = cv.getContext("2d");
+      const W = 1080, H = 1920;
+      // stars
+      const STARS = Array.from({ length: 520 }, () => ({ x: rnd() * W, y: rnd() * H, z: 0.2 + rnd() * 0.8, s: rnd() < 0.08 ? 2.2 : 1.1 + rnd() * 0.6, ph: rnd() * 6.28 }));
+      // hex grid (built once)
+      const hex = document.createElement("canvas"); hex.width = W; hex.height = H;
+      (() => { const h = hex.getContext("2d"); h.strokeStyle = "rgba(255,65,52,0.16)"; h.lineWidth = 1.2; const r = 34, dx = r * Math.sqrt(3), dy = r * 1.5;
+        for (let row = -1; row < H / dy + 1; row++) for (let col = -1; col < W / dx + 1; col++) {
+          const x = col * dx + (row % 2 ? dx / 2 : 0), y = row * dy; h.beginPath();
+          for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; h.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); } h.closePath(); h.stroke(); } })();
+      // irregular icosahedron
+      const PHI = 1.618;
+      const V0 = [[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0], [0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI], [PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]]
+        .map((v) => v.map((c) => c * (0.85 + rnd() * 0.3)));
+      const EDGES = []; for (let i = 0; i < 12; i++) for (let j = i + 1; j < 12; j++) { const d = Math.hypot(...V0[i].map((c, k) => c - V0[j][k])); if (d < 2.45) EDGES.push([i, j]); }
+      const BURST = Array.from({ length: 700 }, () => ({ e: Math.floor(rnd() * EDGES.length), u: rnd(), vx: rnd() * 2 - 1, vy: rnd() * 2 - 1, vz: rnd() * 2 - 1, sp: 0.4 + rnd(), r: rnd() }));
+      function rot(v, ax, ay) { let [x, y, z] = v; let c = Math.cos(ay), s = Math.sin(ay); [x, z] = [x * c + z * s, -x * s + z * c]; c = Math.cos(ax); s = Math.sin(ax); [y, z] = [y * c - z * s, y * s + z * c]; return [x, y, z]; }
+      const P = (x, y, z, ox, oy, f = 1100) => { const s = f / (f + z); return [ox + x * s, oy + y * s, s]; };
+      // galaxy
+      const GAL = Array.from({ length: 1500 }, () => { const arm = Math.floor(rnd() * 3); const r = Math.pow(rnd(), 0.7) * 470; return { arm, r, j: (rnd() - 0.5) * (0.5 + r / 500), h: rnd(), s: rnd() < 0.1 ? 2.6 : 1.4 + rnd() }; });
+      // final stream
+      const STREAM = Array.from({ length: 1100 }, () => ({ a: rnd() * 6.283, d: Math.sqrt(rnd()), tx: 170 + rnd() * 740, ty: 780 + (rnd() - 0.5) * 40, dl: rnd() * 0.5, s: 1 + rnd() * 1.6 }));
+
+      function stars(T, alpha, speed = 6) {
+        cx.fillStyle = "#fff";
+        for (const s of STARS) {
+          const y = (s.y + T * speed * s.z) % H; const tw = 0.55 + 0.45 * Math.sin(T * 2 + s.ph);
+          cx.globalAlpha = alpha * s.z * tw; cx.fillRect(s.x, y, s.s, s.s);
+        }
+        cx.globalAlpha = 1;
+      }
+      function neonLine(pts, w, a) { // pts: [[x,y],...] drawn twice for glow
+        cx.lineCap = "round"; cx.lineJoin = "round";
+        cx.strokeStyle = `rgba(255,65,52,${0.35 * a})`; cx.lineWidth = w * 5; cx.beginPath(); pts.forEach(([x, y], i) => (i ? cx.lineTo(x, y) : cx.moveTo(x, y))); cx.stroke();
+        cx.strokeStyle = `rgba(255,120,105,${a})`; cx.lineWidth = w; cx.stroke();
+        cx.strokeStyle = `rgba(255,235,230,${0.8 * a})`; cx.lineWidth = w * 0.35; cx.stroke();
+      }
+
+      function drawPoly(T, ox, oy, scale, a, drawOn) {
+        const ax = T * 0.55, ay = T * 0.8;
+        const V = V0.map((v) => { const [x, y, z] = rot(v, ax, ay); return P(x * scale, y * scale, z * scale, ox, oy); });
+        EDGES.forEach(([i, j], k) => {
+          const p = cl(drawOn * EDGES.length - k * 0.6); if (p <= 0) return;
+          const [x1, y1] = V[i], [x2, y2] = V[j];
+          neonLine([[x1, y1], [x1 + (x2 - x1) * p, y1 + (y2 - y1) * p]], 3, a);
+        });
+        cx.fillStyle = `rgba(255,230,225,${a})`;
+        V.forEach(([x, y]) => { cx.beginPath(); cx.arc(x, y, 4, 0, 6.283); cx.fill(); });
+        return V;
+      }
+
+      function drawFX(T) {
+        cx.setTransform(1, 0, 0, 1, 0, 0);
+        cx.globalCompositeOperation = "source-over"; cx.globalAlpha = 1;
+        cx.clearRect(0, 0, W, H);
+        if (T < B.s2) { stars(T, cl(T / 1.2) * 0.9); return; }
+        if (T < B.s3) { // S2 polyhedron → burst → cloud
+          const L = T - B.s2; stars(T, 0.5);
+          cx.globalAlpha = cl(L / 0.8) * (1 - cl((L - 3.2) / 0.4)); cx.drawImage(hex, 0, 0); cx.globalAlpha = 1;
+          const g = cx.createRadialGradient(540, 820, 0, 540, 820, 600); g.addColorStop(0, `rgba(255,65,52,${0.18 * cl(L)})`); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+          const bt = L - 3.15; // burst time (≈ 8.75 s)
+          const sc = 205 * (1 + 0.06 * Math.sin(L * 2));
+          if (bt < 0.05) { drawPoly(T, 540, 820, sc, 1, cl(L / 1.1)); return; }
+          cx.globalCompositeOperation = "lighter";
+          const ax = T * 0.55, ay = T * 0.8;
+          const V = V0.map((v) => rot(v, ax, ay));
+          for (const p of BURST) {
+            const [i, j] = EDGES[p.e]; const a = V[i], b = V[j];
+            let x = (a[0] + (b[0] - a[0]) * p.u) * sc, y = (a[1] + (b[1] - a[1]) * p.u) * sc, z = (a[2] + (b[2] - a[2]) * p.u) * sc;
+            const out = eo(bt / 0.35) * 160 * p.sp, inn = eio((bt - 0.3) / 0.45);
+            x += p.vx * out; y += p.vy * out; z += p.vz * out;
+            x *= 1 - inn * (0.85 - p.r * 0.5); y *= 1 - inn * (0.85 - p.r * 0.5); z *= 1 - inn * 0.8;
+            const [px, py] = P(x, y, z, 540, 820);
+            cx.fillStyle = p.r < 0.3 ? "rgba(255,230,220,0.95)" : "rgba(255,70,55,0.85)"; const ps = p.r < 0.15 ? 4 : 3; cx.fillRect(px, py, ps, ps);
+          }
+          const cg = cx.createRadialGradient(540, 820, 0, 540, 820, 220); cg.addColorStop(0, `rgba(255,120,100,${0.8 * cl((bt - 0.3) / 0.4)})`); cg.addColorStop(1, "rgba(255,40,30,0)");
+          cx.fillStyle = cg; cx.fillRect(0, 0, W, H);
+          return;
+        }
+        if (T < B.s4) { stars(T, 0.55); return; }
+        if (T < B.s5) { // S4 constellation lines + card transforms
+          stars(T, 0.6); const L = T - B.s4;
+          const pos = [];
+          CARDS.forEach((c, i) => {
+            const e = eo((L - i * 0.035) / 0.9);
+            const ang = c.a0 + L * c.sp, R = c.R * (1 + (1 - e) * 2.2);
+            const x = Math.cos(ang) * R, z = Math.sin(ang) * R * 0.9 + (1 - e) * 900, y = c.y + Math.sin(L * 0.8 + i) * 26;
+            const [px, py, s] = P(x, y, z, 540, 690);
+            pos.push([px, py, s, z]);
+            const el = c.el; el.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) scale(${(s * 0.95).toFixed(3)}) rotateX(${(c.rx + L * c.vr).toFixed(1)}deg) rotateY(${(c.ry + L * c.vr * 1.3).toFixed(1)}deg) rotateZ(${c.rz.toFixed(1)}deg)`;
+            el.style.zIndex = String(Math.round(2000 - z)); el.style.opacity = (cl(e * 1.4) * (z > 0 ? 0.55 + 0.45 * s : 1)).toFixed(3);
+            el.style.filter = z > 250 ? `blur(${Math.min(4, (z - 250) / 120).toFixed(1)}px)` : "none";
+          });
+          cx.lineWidth = 1.2;
+          for (let i = 0; i < pos.length; i++) {
+            const j = (i + 3) % pos.length; const [x1, y1] = pos[i], [x2, y2] = pos[j];
+            cx.strokeStyle = i % 4 === 0 ? "rgba(255,65,52,0.45)" : "rgba(255,255,255,0.16)";
+            cx.beginPath(); cx.moveTo(x1, y1); cx.lineTo(x2, y2); cx.stroke();
+            if (i % 3 === 0) { cx.strokeStyle = "rgba(255,65,52,0.3)"; cx.beginPath(); cx.moveTo(540, 690); cx.lineTo(x1, y1); cx.stroke(); }
+          }
+          return;
+        }
+        if (T < B.s6) { // S5 galaxy + laser
+          stars(T, 0.6); const L = T - B.s5;
+          const ox = 470, oy = 760, ap = eo(L / 1.2);
+          cx.globalCompositeOperation = "lighter";
+          const cg = cx.createRadialGradient(ox, oy, 0, ox, oy, 330); cg.addColorStop(0, `rgba(255,140,120,${0.55 * ap})`); cg.addColorStop(0.25, `rgba(255,50,40,${0.22 * ap})`); cg.addColorStop(1, "rgba(0,0,0,0)");
+          cx.fillStyle = cg; cx.fillRect(0, 0, W, H);
+          const tilt = -0.42, ct = Math.cos(tilt), st = Math.sin(tilt);
+          for (const g of GAL) {
+            const r = g.r * (0.35 + 0.65 * ap);
+            const a = g.arm * 2.094 + r / 115 + g.j - T * 0.45;
+            let x = Math.cos(a) * r, y = Math.sin(a) * r * 0.38;
+            [x, y] = [x * ct - y * st, x * st + y * ct];
+            const near = 1 - g.r / 470;
+            cx.fillStyle = g.h < 0.25 + near * 0.4 ? `rgba(255,225,215,${0.6 * ap})` : g.h < 0.75 ? `rgba(255,60,45,${0.7 * ap})` : `rgba(160,150,165,${0.45 * ap})`;
+            cx.fillRect(ox + x, oy + y, g.s, g.s);
+          }
+          // laser from the core to the top-right, drawn on
+          const lp = eio((L - 0.5) / 0.6); if (lp > 0) neonLine([[ox, oy], [ox + (1180 - ox) * lp, oy + (180 - oy) * lp]], 3.5, 1);
+          const lp2 = eio((L - 1.3) / 0.6); if (lp2 > 0) neonLine([[ox, oy], [ox + (-120 - ox) * lp2, oy + (560 - oy) * lp2]], 2.5, 0.8);
+          const lp3 = eio((L - 2.0) / 0.6); if (lp3 > 0) neonLine([[ox, oy], [ox + (700 - ox) * lp3, oy + (1010 - oy) * lp3]], 2.5, 0.8);
+          return;
+        }
+        if (T < B.s7) { // S6 perspective grid floor
+          stars(T, 0.35); const L = T - B.s6, gp = eo(L / 0.8);
+          const hy = 1040, vx = 540;
+          cx.lineWidth = 1.5;
+          for (let k = -14; k <= 14; k++) { const bx = vx + k * 120; cx.strokeStyle = `rgba(255,65,52,${0.32 * gp})`; cx.beginPath(); cx.moveTo(vx + k * 8, hy); cx.lineTo(vx + (bx - vx) * 3.2, H); cx.stroke(); }
+          for (let k = 0; k < 18; k++) { const zz = ((k + (L * 0.9) % 1) / 18); const y = hy + Math.pow(zz, 2.2) * (H - hy); cx.strokeStyle = `rgba(255,65,52,${0.38 * gp * zz + 0.04})`; cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke(); }
+          const hg = cx.createLinearGradient(0, hy - 120, 0, hy + 60); hg.addColorStop(0, "rgba(255,65,52,0)"); hg.addColorStop(0.7, `rgba(255,65,52,${0.25 * gp})`); hg.addColorStop(1, "rgba(255,65,52,0)");
+          cx.fillStyle = hg; cx.fillRect(0, hy - 120, W, 180);
+          return;
+        }
+        if (T < B.s8) return; // S7 black breath
+        if (T < B.s9) { stars(T, 0.4, 10); return; } // S8 over the planet image
+        if (T < B.s9b) return; // S9 wall (DOM)
+        if (T < B.s10) { // S9b horizontal streaks
+          const L = T - B.s9b; const r2 = mk(99);
+          cx.globalCompositeOperation = "lighter";
+          for (let k = 0; k < 90; k++) {
+            const y = r2() * H, len = 80 + r2() * 420, sp = 900 + r2() * 1800, red = r2() < 0.45;
+            const x = ((r2() * 2000 - L * sp) % 2000 + 2000) % 2000 - 400;
+            cx.fillStyle = red ? `rgba(255,65,52,${0.25 + r2() * 0.4})` : `rgba(220,215,225,${0.08 + r2() * 0.18})`;
+            cx.fillRect(x, y, len, red ? 3 : 2);
+          }
+          return;
+        }
+        if (T < B.s11) { // S10 wireframe funnel
+          stars(T, 0.5); const L = T - B.s10, dp = eo(L / 1.0);
+          const ox = 560, oy = 620, rings = 9;
+          for (let k = 0; k < rings; k++) {
+            const u = k / (rings - 1); if (u > dp + 0.001) continue;
+            const y = -330 + u * 660, r = 380 - u * 300 + (u > 0.85 ? 0 : 0);
+            const pts = []; for (let q = 0; q <= 48; q++) { const a = (q / 48) * 6.283; pts.push([ox + Math.cos(a) * r, oy + y + Math.sin(a) * r * 0.26]); }
+            neonLine(pts, k === 0 ? 3 : 2, 0.55 + 0.45 * (1 - u));
+          }
+          for (let j = 0; j < 12; j++) {
+            const a = j * 0.5236 + T * 0.7; const front = Math.sin(a) > 0;
+            const top = [ox + Math.cos(a) * 380, oy - 330 + Math.sin(a) * 380 * 0.26], bot = [ox + Math.cos(a) * 80, oy + 330 + Math.sin(a) * 80 * 0.26];
+            const p = dp; neonLine([top, [top[0] + (bot[0] - top[0]) * p, top[1] + (bot[1] - top[1]) * p]], front ? 2.2 : 1.2, front ? 0.9 : 0.3);
+          }
+          // leads dropping through the funnel
+          cx.globalCompositeOperation = "lighter";
+          const r3 = mk(5);
+          for (let k = 0; k < 40; k++) {
+            const ph = (r3() + L * 0.45) % 1, a = r3() * 6.283; const y = -420 + ph * 900; const u = cl((y + 330) / 660); const r = (380 - u * 300) * (0.2 + r3() * 0.7);
+            cx.fillStyle = ph > 0.85 ? "rgba(255,240,235,0.95)" : "rgba(255,80,65,0.8)"; cx.beginPath(); cx.arc(ox + Math.cos(a + L) * r, oy + y + Math.sin(a + L) * r * 0.26, ph > 0.85 ? 5 : 3, 0, 6.283); cx.fill();
+          }
+          return;
+        }
+        if (T < B.s12) return; // S11 red slab (DOM)
+        { // S12 stream converges into the wordmark line
+          const L = T - B.s12; stars(T, 0.5);
+          cx.globalCompositeOperation = "lighter";
+          for (const p of STREAM) {
+            const k = eio((L - p.dl) / 1.1);
+            const sx = 540 + Math.cos(p.a) * p.d * 700, sy = 820 + Math.sin(p.a) * p.d * 300;
+            const x = sx + (p.tx - sx) * k, y = sy + (p.ty - sy) * k;
+            const fade = 1 - cl((L - 1.4) / 0.6);
+            if (fade <= 0) continue;
+            cx.fillStyle = p.s > 2.2 ? `rgba(255,235,230,${0.9 * fade})` : `rgba(255,70,55,${0.75 * fade})`;
+            cx.fillRect(x, y, p.s, p.s);
+          }
+          const gg = cx.createRadialGradient(540, 790, 0, 540, 790, 520); gg.addColorStop(0, `rgba(255,65,52,${0.22 * cl((L - 1.0) / 0.8)})`); gg.addColorStop(1, "rgba(0,0,0,0)");
+          cx.fillStyle = gg; cx.fillRect(0, 0, W, H);
+        }
+      }
+
+      /* ================= S4 cards (DOM, positioned by drawFX) ================= */
+      const QS = ["¿Cuál es tu objetivo?", "¿Cuántos leads al mes?", "¿Qué te frena hoy?", "¿Quién decide la compra?", "¿Qué has probado ya?", "¿Tamaño del equipo?", "¿Tu mayor problema?", "¿Para cuándo lo necesitas?"];
+      const CARDS = Array.from({ length: 16 }, (_, i) => {
+        const el = document.createElement("div"); el.className = "card"; el.id = "s4-c" + i;
+        el.innerHTML = `${QS[i % QS.length]}<i></i><i></i>`; el.style.opacity = "0";
+        $("s4-cards").appendChild(el);
+        return { el, a0: (i / 16) * 6.283 + rnd() * 0.3, R: 320 + rnd() * 160, y: -330 + (i % 8) * 85 + rnd() * 30, sp: 0.32 + rnd() * 0.15, rx: rnd() * 60 - 30, ry: rnd() * 80 - 40, rz: rnd() * 40 - 20, vr: 10 + rnd() * 20 };
+      });
+
+      /* ================= S9 wall of tiles ================= */
+      (() => {
+        const imgs = ["aurora", "dusk", "space"], ui = ["¿Cuál es tu objetivo?", "Caso real: +38 %", "Tu resultado", "Oferta −30 %", "¿Qué te frena hoy?", "7 de cada 10", "14:59"];
+        let n = 0;
+        for (let row = 0; row < 15; row++) for (let col = 0; col < 7; col++) {
+          const d = document.createElement("div"); d.id = "s9-t" + n;
+          const r = rnd();
+          if (r < 0.55) { d.className = "tile"; d.style.backgroundImage = `url('assets/${imgs[Math.floor(rnd() * 3)]}.jpg')`; d.style.backgroundPosition = `${Math.floor(rnd() * 100)}% ${Math.floor(rnd() * 100)}%`; d.style.backgroundSize = `${220 + Math.floor(rnd() * 160)}%`; d.style.filter = `brightness(${(0.5 + rnd() * 0.45).toFixed(2)})`; }
+          else { d.className = "tile ui"; d.innerHTML = `${ui[Math.floor(rnd() * ui.length)]}<i></i><i style="width:60%"></i>${rnd() < 0.4 ? "<s>Siguiente</s>" : ""}`; }
+          d.style.left = col * 262 + (row % 2) * 120 + "px"; d.style.top = row * 175 + "px";
+          $("s9-wall").appendChild(d); n++;
+        }
+      })();
+
+      /* ================= clock → drawFX ================= */
+      const clock = { v: 0 };
+      tl.fromTo(clock, { v: 0 }, { v: END, duration: END, ease: "none", onUpdate: () => drawFX(clock.v) }, 0);
+
+      /* ---------- S1 ---------- */
+      typeOn("s1-a", "Mandar a todos a la misma landing es fácil.", 0.4, 1.9);
+      rise("s1-b", 2.9, 0.6, 18);
+      out(["s1-a", "s1-b"], 5.2, 0.35);
+
+      /* ---------- S2 ---------- (canvas only) */
+      flash(B.s3, 1);
+
+      /* ---------- S3 hero ---------- */
+      tl.fromTo("#s3-emb", { scale: 0.55, opacity: 0, rotationY: -40, filter: "blur(14px)" }, { scale: 1, opacity: 1, rotationY: 0, filter: "blur(0px)", duration: 0.9, ease: "expo.out", immediateRender: false }, B.s3);
+      tl.to("#s3-emb", { rotationY: 14, y: -18, duration: B.s4 - B.s3 - 0.9, ease: "sine.inOut" }, B.s3 + 0.9);
+      tl.fromTo("#s3-glow", { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s3);
+      rise("s3-k", 10.2, 0.4); rise("s3-h1", 10.6); rise("s3-h2", 11.3); rise("s3-s", 12.2, 0.5, 14);
+
+      /* ---------- S4 preguntas ---------- */
+      tl.fromTo("#s4-emb", { scale: 2.4, opacity: 0.0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "expo.out", immediateRender: false }, B.s4);
+      tl.to("#s4-emb", { rotation: 8, duration: 4.5, ease: "sine.inOut" }, B.s4 + 0.7);
+      rise("s4-tag", 15.0, 0.4); rise("s4-h", 15.3); rise("s4-s", 16.4, 0.5, 14);
+
+      /* ---------- S5 cards de valor ---------- */
+      rise("s5-tag", 19.9, 0.4); rise("s5-h1", 20.8); rise("s5-h2", 21.3); rise("s5-s", 22.0, 0.4, 12);
+      [["s5-c1", 20.3], ["s5-c2", 21.0], ["s5-c3", 21.7]].forEach(([id, at]) => tl.fromTo("#" + id, { opacity: 0, scale: 0.85, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.35, ease: "back.out(1.8)", immediateRender: false }, at));
+
+      /* ---------- S6 resultado ---------- */
+      tl.fromTo("#s6-dash", { opacity: 0, rotationY: 50, x: -120 }, { opacity: 1, rotationY: 16, x: 0, duration: 0.8, ease: "expo.out", immediateRender: false }, B.s6);
+      tl.fromTo("#s6-phone", { opacity: 0, y: 260, rotation: 8 }, { opacity: 1, y: 0, rotation: -4, duration: 0.8, ease: "expo.out", immediateRender: false }, B.s6 + 1.0);
+      tl.to("#s6-phone", { y: -24, rotation: -2, duration: 2.6, ease: "sine.inOut" }, B.s6 + 1.8);
+      tl.to("#s6-line", { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, B.s6 + 0.6);
+      tl.to("#s6-btn", { opacity: 1, duration: 0.1 }, B.s6 + 1.4);
+      [["s6-v1", 412], ["s6-v2", 268], ["s6-v3", 19]].forEach(([id, v]) => { const o = { n: 0 }; tl.to(o, { n: v, duration: 1.1, ease: "power2.out", onUpdate: () => { $(id).textContent = String(Math.round(o.n)); } }, B.s6 + 0.5); });
+      rise("s6-tag", 25.0, 0.4); rise("s6-h1", 25.4); rise("s6-h2", 25.9); rise("s6-s", 26.6, 0.4, 12);
+
+      /* ---------- S7 breath ---------- */
+      typeOn("s7-t", "Y aquí viene lo importante.", B.s7 + 0.2, 1.1);
+      blink("s7-cur", B.s7, B.s8);
+
+      /* ---------- S8 oferta (drop) ---------- */
+      flash(B.s8, 0.8);
+      tl.fromTo("#bg-space", { opacity: 0 }, { opacity: 1, duration: 0.25, immediateRender: false }, B.s8);
+      tl.fromTo("#bg-space", { scale: 1.15 }, { scale: 1.0, duration: B.s9 - B.s8, ease: "power1.out", immediateRender: false }, B.s8);
+      tl.set("#bg-space", { opacity: 0 }, B.s9);
+      tl.to("#s8-hp", { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" }, B.s8 + 0.1);
+      tl.fromTo("#s8-hex", { rotation: -8, scale: 0.9 }, { rotation: 6, scale: 1.04, duration: B.s9 - B.s8, ease: "none", immediateRender: false }, B.s8);
+      [["s8-p1", -260, 0.05], ["s8-p2", 260, 0.15], ["s8-p3", -260, 0.25], ["s8-p4", 260, 0.35]].forEach(([id, dx, d]) => {
+        tl.fromTo("#" + id, { opacity: 0, x: dx }, { opacity: 0.9, x: 0, duration: 0.7, ease: "expo.out", immediateRender: false }, B.s8 + d);
+        tl.to("#" + id, { x: dx > 0 ? -40 : 40, duration: B.s9 - B.s8 - 1, ease: "none" }, B.s8 + d + 0.7);
+      });
+      rise("s8-tag", 31.4, 0.4); rise("s8-h1", 31.6, 0.55, 30); rise("s8-h2", 32.3, 0.55, 30);
+      rise("s8-pill", 33.3, 0.45, 18);
+      { const o = { v: 899 }; tl.to(o, { v: 894, duration: 5, ease: "steps(5)", onUpdate: () => { const s = Math.round(o.v); $("s8-clk").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; } }, 33.6); }
+
+      /* ---------- S9 wall ---------- */
+      tl.fromTo("#s9-wall", { y: 0, x: 0 }, { y: -520, x: -60, duration: B.s9b - B.s9, ease: "none", immediateRender: false }, B.s9);
+      tl.fromTo("#s9-wallw", { scale: 1.25, opacity: 0.0 }, { scale: 1.0, opacity: 1, duration: 0.6, ease: "expo.out", immediateRender: false }, B.s9);
+      typeOn("s9-a", "Un formulario capta un lead.", 37.4, 1.2);
+      rise("s9b-a", B.s9b + 0.1, 0.35, 10); rise("s9b-h1", 40.3, 0.45); rise("s9b-h2", 41.0, 0.45);
+
+      /* ---------- S10 funnel ---------- */
+      rise("s10-h1", 43.2, 0.5); rise("s10-h2", 43.8, 0.5);
+
+      /* ---------- S11 red slab ---------- */
+      tl.set("#bg-red", { opacity: 1 }, B.s11); tl.set("#bg-red", { opacity: 0 }, B.s12);
+      { const q = "¿Y si cada lead viera la oferta que necesita?"; const o = { n: 0 }; tl.to(o, { n: q.length, duration: 1.9, ease: "none", onUpdate: () => { $("s11-q").textContent = q.slice(0, Math.round(o.n)); } }, B.s11 + 0.3); }
+      rise("s11-a", 48.6, 0.4, 10); rise("s11-b", 49.3, 0.4, 10);
+
+      /* ---------- S12 lockup + CTA ---------- */
+      tl.fromTo("#s12-lock", { opacity: 0, scale: 1.08, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out", immediateRender: false }, 51.5);
+      rise("s12-tl", 52.0, 0.5, 12);
+      rise("s12-cta", 52.6, 0.55, 26);
+      rise("s12-cs", 53.1, 0.45, 12);
+      tl.to("#fade", { opacity: 1, duration: 0.3 }, END - 0.3);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

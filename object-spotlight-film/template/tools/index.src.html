@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "ISerif"; src: url("assets/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; font-weight: 400; }
+      @font-face { font-family: "GMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      :root { --ink: #060607; --warm: #ffd2a1; --hot: #ff5a2b; --red: #e8382d; --cream: #f3efe6; --grey: #6f6b65; --paper: #ece8df; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--ink); }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ink); font-family: "Archivo", sans-serif; color: var(--cream); }
+      .scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; visibility: hidden; }
+      .abs { position: absolute; }
+      .slam { position: absolute; font-weight: 900; font-stretch: 62%; text-transform: uppercase; line-height: 0.8; letter-spacing: -0.005em; white-space: nowrap; }
+      .ol { color: transparent; -webkit-text-stroke: 3px var(--warm); }
+      .mono { font-family: "GMono", monospace; }
+      .serif { font-family: "ISerif", serif; font-style: italic; font-weight: 400; }
+      .lbl { font-family: "GMono", monospace; font-size: 30px; letter-spacing: 0.22em; text-transform: uppercase; }
+      .hot { color: var(--hot); }
+      .red { color: var(--red); }
+      /* captions */
+      #cap { position: absolute; left: 70px; top: 1548px; width: 940px; text-align: center; font-family: "GMono", monospace; font-size: 34px; line-height: 1.35; color: var(--cream); text-shadow: 0 2px 12px #000, 0 0 4px #000; }
+      #cap .ch { position: absolute; left: 0; top: 0; width: 940px; visibility: hidden; }
+      #cap .cw { opacity: 0.32; }
+      /* blocks (S4) */
+      .slab { position: absolute; left: 0; top: 0; width: 700px; height: 440px; border: 3px solid rgba(255, 210, 161, 0.75); background: rgba(16, 13, 11, 0.92); border-radius: 18px; transform-style: preserve-3d; padding: 34px 40px; }
+      .slab .edge { position: absolute; left: -3px; bottom: -3px; width: 700px; height: 46px; transform-origin: 50% 100%; transform: rotateX(-90deg); background: linear-gradient(#2a211b, #0d0a08); border: 3px solid rgba(255, 210, 161, 0.5); border-radius: 0 0 12px 12px; }
+      .slab .qn { font-family: "GMono", monospace; font-size: 26px; letter-spacing: 0.2em; color: var(--hot); }
+      .slab .qq { font-size: 50px; font-weight: 700; line-height: 1.05; margin-top: 18px; color: var(--cream); }
+      .slab .opt { margin-top: 16px; height: 46px; border: 2px solid rgba(255, 210, 161, 0.35); border-radius: 10px; font-family: "GMono", monospace; font-size: 22px; color: rgba(243, 239, 230, 0.6); padding: 9px 16px; }
+      /* type wall (S5) */
+      .wrow { font-weight: 900; font-stretch: 62%; font-size: 176px; line-height: 0.86; white-space: nowrap; color: #34312d; text-transform: uppercase; }
+      /* laptop (S6) */
+      .card { position: absolute; width: 322px; height: 186px; background: #fffaf2; border-radius: 14px; padding: 16px 18px; color: #17140f; box-shadow: 0 6px 18px rgba(80, 40, 0, 0.18); }
+      .card .k { font-family: "GMono", monospace; font-size: 16px; letter-spacing: 0.18em; color: var(--red); }
+      .card .v { font-size: 34px; font-weight: 800; line-height: 1.02; margin-top: 10px; }
+      .card .e { position: absolute; right: 14px; bottom: 12px; font-family: "GMono", monospace; font-size: 13px; color: #8c8273; }
+      .curtain { position: absolute; top: 0; height: 1920px; background: repeating-linear-gradient(90deg, #2b0705 0px, #5a100b 34px, #2b0705 70px, #170302 92px); }
+      #grain { position: absolute; left: -200px; top: -200px; width: 1480px; height: 2320px; background-image: url("assets/grain0.png"); background-size: 384px 384px; mix-blend-mode: overlay; opacity: 0.2; pointer-events: none; }
+      #vig { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; background: radial-gradient(ellipse 78% 60% at 50% 46%, transparent 52%, rgba(0, 0, 0, 0.55)); pointer-events: none; }
+      #flash { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; background: #fff6ea; opacity: 0; }
+      #fade { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; background: #000; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="57" data-width="1080" data-height="1920">
+      <!-- audio: reused Gabriel VO (quiz-funnel-es) + reused bed (aiandesign, spliced) + library SFX + 2 ElevenLabs SFX (spot, crtoff) -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="51.32" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="57" data-track-index="11" data-volume="0.2"></audio>
+<!--SFX-->
+
+      <!-- one canvas: object field + spotlight (S1–S3a) and the light burst (S8), a pure function of t -->
+      <canvas id="fx" class="abs" width="1080" height="1920" style="left: 0; top: 0; width: 1080px; height: 1920px;" data-layout-ignore></canvas>
+
+      <!-- S1 · field of identical landings -->
+      <section id="s1" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s1-a" class="abs" style="left: 0; top: 360px; width: 1080px; opacity: 0;" data-layout-ignore>
+          <div class="slam" style="position: relative; font-size: 300px; text-align: center; color: var(--cream);">TODO EL</div>
+          <div class="slam" style="position: relative; font-size: 300px; text-align: center; color: var(--cream);">MUNDO</div>
+        </div>
+        <div id="s1-b" class="abs" style="left: 0; top: 330px; width: 1080px; opacity: 0;" data-layout-ignore>
+          <div class="slam" style="position: relative; font-size: 250px; text-align: center; color: var(--cream);">A LA <span class="red">MISMA</span></div>
+          <div id="s1-land" class="slam" style="position: relative; font-size: 390px; text-align: center; color: var(--cream); margin-left: -60px; width: 1200px;">LANDING</div>
+        </div>
+      </section>
+
+      <!-- S2 · one object under the spot -->
+      <section id="s2" class="scene" data-layout-allow-overlap>
+        <div id="s2-t" class="serif abs" style="left: 0; top: 1240px; width: 1080px; text-align: center; font-size: 120px; opacity: 0;">Haz <span id="s2-e" style="color: var(--warm);">esto.</span></div>
+      </section>
+
+      <!-- S3a · DEMO slam, struck out -->
+      <section id="s3" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s3-tag" class="lbl abs" style="left: 90px; top: 300px; color: var(--warm); opacity: 0;">en lugar de pedir una</div>
+        <div id="s3-demo" class="slam" style="left: -70px; top: 420px; width: 1220px; text-align: center; font-size: 640px; color: var(--cream); opacity: 0;" data-layout-ignore>DEMO</div>
+        <div id="s3-strike" class="abs" style="left: 40px; top: 640px; width: 1000px; height: 34px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0) rotate(-7deg);"></div>
+        <div id="s3-x" class="lbl abs" style="left: 90px; top: 1000px; color: var(--red); opacity: 0;">✕ directamente</div>
+      </section>
+
+      <!-- S3b · paper flash: QUIZ FUNNEL, cropped letters + echoes -->
+      <section id="s3b" class="scene" style="background: var(--paper);" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s3b-crea" class="lbl abs" style="left: 90px; top: 250px; color: #2b2723;">crea un</div>
+        <div id="s3b-quiz" class="slam" style="left: -30px; top: 330px; width: 1140px; text-align: center; font-size: 560px; color: #111; opacity: 0;" data-layout-ignore><span class="red">Q</span>UIZ</div>
+        <div class="abs" style="left: 0; top: 820px; width: 1080px; height: 560px; overflow: hidden;" data-layout-ignore>
+          <div id="s3b-e2" class="slam" style="left: -40px; top: 150px; width: 1160px; text-align: center; font-size: 400px; color: transparent; -webkit-text-stroke: 2px rgba(17,17,17,0.25); opacity: 0;">FUNNEL</div>
+          <div id="s3b-e1" class="slam" style="left: -40px; top: 75px; width: 1160px; text-align: center; font-size: 400px; color: transparent; -webkit-text-stroke: 2px rgba(17,17,17,0.5); opacity: 0;">FUNNEL</div>
+          <div id="s3b-fun" class="slam" style="left: -40px; top: 0px; width: 1160px; text-align: center; font-size: 400px; color: #111;"></div>
+        </div>
+        <div class="lbl abs" style="left: 90px; top: 1430px; color: #6b655c; font-size: 24px;">fig. 01 — el formato</div>
+      </section>
+
+      <!-- S4 · question blocks stacked in depth, camera descends -->
+      <section id="s4" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px; perspective: 1500px; perspective-origin: 540px 640px;" data-layout-ignore>
+          <div id="s4-stack" class="abs" style="left: 190px; top: 520px; width: 700px; height: 440px; transform-style: preserve-3d; transform: rotateX(56deg) rotateZ(-22deg);">
+            <div id="s4-lift" class="abs" style="left: 0; top: 0; width: 700px; height: 440px; transform-style: preserve-3d;"></div>
+          </div>
+        </div>
+        <div id="s4-depth" class="mono abs" style="left: 70px; top: 190px; font-size: 26px; color: var(--warm); letter-spacing: 0.12em;"></div>
+        <div id="s4-n" class="mono abs" style="right: 70px; top: 170px; font-size: 96px; font-weight: 300; color: var(--cream); opacity: 0;">5<span class="hot">–</span><span id="s4-n8" style="opacity: 0;">8</span></div>
+        <div id="s4-k1" class="slam" style="left: 60px; top: 1170px; font-size: 230px; color: var(--cream); transform: rotate(-6deg); opacity: 0;" data-layout-ignore><span class="hot">¿QUI</span><span class="ol">ÉN?</span></div>
+        <div id="s4-k2" class="slam" style="left: 40px; top: 1170px; font-size: 230px; color: var(--cream); transform: rotate(-6deg); opacity: 0;" data-layout-ignore><span class="hot">¿QUÉ</span> <span class="ol">QUIERE?</span></div>
+        <div id="s4-k3" class="slam" style="left: 40px; top: 1190px; font-size: 186px; color: var(--cream); transform: rotate(-6deg); opacity: 0;" data-layout-ignore><span class="ol">¿SU</span> <span class="hot">PROBLEMA?</span></div>
+      </section>
+
+      <!-- S5 · type wall -->
+      <section id="s5" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s5-wall" class="abs" style="left: -260px; top: 120px; width: 1600px; transform: rotate(-5deg);" data-layout-ignore></div>
+        <div id="s5-box" class="abs mono" style="right: 60px; top: 1200px; width: 400px; padding: 16px 20px; background: #0b0a09; border: 2px solid var(--hot); font-size: 24px; color: var(--warm); opacity: 0;">PREGUNTAS ×8<br /><span style="font-size: 54px; color: var(--hot);">+ algo más</span></div>
+      </section>
+
+      <!-- S6 · a glowing screen in the dark -->
+      <section id="s6" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s6-pool" class="abs" style="left: 40px; top: 860px; width: 1000px; height: 560px; background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255, 214, 160, 0.32), rgba(255, 214, 160, 0) 70%); opacity: 0;" data-layout-ignore></div>
+        <div class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px; perspective: 1700px; perspective-origin: 540px 760px;" data-layout-ignore>
+          <div id="s6-rig" class="abs" style="left: 160px; top: 470px; width: 760px; height: 1000px; transform-style: preserve-3d; transform: rotateY(-22deg) rotateX(6deg);">
+            <div id="s6-lid" class="abs" style="left: 0; top: 0; width: 760px; height: 500px; background: #121110; border-radius: 26px 26px 6px 6px; padding: 22px; transform-origin: 50% 100%; transform: rotateX(-6deg); border: 2px solid #2a2622;">
+              <div id="s6-screen" class="abs" style="left: 22px; top: 22px; width: 716px; height: 456px; border-radius: 10px; background: #fff3e2; box-shadow: 0 0 140px 40px rgba(255, 210, 150, 0.45); overflow: hidden; opacity: 0;">
+                <div class="abs mono" style="left: 22px; top: 16px; font-size: 16px; color: #7a6f60; letter-spacing: 0.14em;">QUIZ · PREGUNTA 4 DE 8</div>
+                <div class="abs" style="left: 22px; top: 44px; width: 672px; height: 6px; background: #eadcc8; border-radius: 3px;"><div id="s6-prog" style="width: 50%; height: 6px; background: var(--red); border-radius: 3px;"></div></div>
+                <div id="s6-c1" class="card" style="left: 22px; top: 66px; opacity: 0;"><div class="k">CASO REAL</div><div class="v">3× demos<br />en 60 días</div><div class="e">ejemplo</div></div>
+                <div id="s6-c2" class="card" style="left: 372px; top: 66px; opacity: 0;"><div class="k">DATO</div><div class="v">7 de 10 se van<br />de una landing</div><div class="e">ejemplo</div></div>
+                <div id="s6-c3" class="card" style="left: 22px; top: 262px; opacity: 0;"><div class="k">RESULTADO</div><div class="v">+42% leads<br />cualificados</div><div class="e">ejemplo</div></div>
+                <div id="s6-c4" class="card" style="left: 372px; top: 262px; opacity: 0;"><div class="k">CONSEJO</div><div class="v">Pregunta el<br />problema antes</div><div class="e">ejemplo</div></div>
+              </div>
+              <div id="s6-line" class="abs" style="left: 40px; top: 246px; width: 680px; height: 4px; background: #fff6ea; box-shadow: 0 0 30px 8px rgba(255, 200, 140, 0.8); opacity: 0;"></div>
+            </div>
+            <div id="s6-base" class="abs" style="left: 0; top: 500px; width: 760px; height: 470px; border-radius: 6px 6px 26px 26px; transform-origin: 50% 0; transform: rotateX(80deg); background: repeating-linear-gradient(90deg, #1b1a18 0 46px, #0e0d0c 46px 52px), #151412; border: 2px solid #2a2622;"></div>
+          </div>
+        </div>
+        <div id="s6-spark" class="abs" style="left: 500px; top: 690px; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, #fff 0, rgba(255, 190, 120, 0.9) 18%, rgba(255, 120, 40, 0) 70%); opacity: 0;" data-layout-ignore></div>
+        <div id="s6-st" class="serif abs" style="left: 90px; top: 1250px; width: 900px; font-size: 92px; line-height: 1.02; opacity: 0;">«Vale, esto tiene <span id="s6-st2" style="color: var(--hot);">sentido.</span>»</div>
+      </section>
+
+      <!-- S7 · spotlight stage -->
+      <section id="s7" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="curtain" style="left: -40px; width: 230px;" data-layout-ignore></div>
+        <div class="curtain" style="left: 890px; width: 230px;" data-layout-ignore></div>
+        <div class="abs" style="left: 0; top: 0; width: 1080px; height: 150px; background: repeating-linear-gradient(90deg, #3a0906 0 40px, #5a100b 40px 70px); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);" data-layout-ignore></div>
+        <div id="s7-title" class="abs" style="left: 0; top: 230px; width: 1080px; text-align: center; font-size: 34px; letter-spacing: 0.32em; font-weight: 600; opacity: 0;"><span class="hot">SEGÚN</span> SUS RESPUESTAS</div>
+        <div id="s7-pool" class="abs" style="left: 190px; top: 1180px; width: 700px; height: 220px; border-radius: 50%; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 228, 190, 0.55), rgba(255, 228, 190, 0) 72%); opacity: 0;" data-layout-ignore></div>
+        <div id="s7-cone" class="abs" style="left: 140px; top: 140px; width: 800px; height: 1180px; clip-path: polygon(45% 0, 55% 0, 88% 100%, 12% 100%); background: linear-gradient(to bottom, rgba(255, 236, 205, 0.6), rgba(255, 220, 170, 0.1)); mix-blend-mode: screen; opacity: 0;" data-layout-ignore></div>
+        <div id="s7-card" class="abs" style="left: 270px; top: 560px; width: 540px; height: 660px; background: #0f0d0b; border: 3px solid var(--warm); border-radius: 22px; padding: 40px 42px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 60px rgba(255, 210, 160, 0.25); opacity: 0;">
+          <div class="lbl" style="color: var(--hot); font-size: 24px;">tu resultado</div>
+          <div style="font-size: 72px; font-weight: 800; line-height: 0.98; margin-top: 18px;">SaaS B2B<br />en fase<br />de tracción</div>
+          <div class="mono" style="font-size: 24px; color: rgba(243, 239, 230, 0.72); margin-top: 34px; line-height: 1.55;">reto nº1 · convertir tráfico<br />equipo · 10–50 personas<br />encaja · plan a medida</div>
+          <div class="mono" style="position: absolute; right: 26px; bottom: 20px; font-size: 18px; color: var(--grey);">ejemplo</div>
+        </div>
+        <div id="s7-stamp" class="abs" style="left: 330px; top: 1050px; padding: 12px 22px; border: 5px solid var(--red); color: var(--red); font-weight: 900; font-stretch: 75%; font-size: 58px; letter-spacing: 0.04em; transform: rotate(-8deg); opacity: 0;">PERSONALIZADO</div>
+      </section>
+
+      <!-- S8 · light burst + IMPORTANTE (cropped) -->
+      <section id="s8" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s8-pre" class="lbl abs" style="left: 0; top: 560px; width: 1080px; text-align: center; color: var(--warm); opacity: 0;">y aquí viene la parte</div>
+        <div id="s8-big" class="slam" style="left: -160px; top: 760px; width: 1400px; text-align: center; font-size: 330px; color: var(--cream); opacity: 0;" data-layout-ignore>IMPOR<span class="hot">TANTE</span></div>
+      </section>
+
+      <!-- S9 · the counter -->
+      <section id="s9" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s9-lab" class="lbl abs hot" style="left: 90px; top: 500px; font-size: 34px;"></div>
+        <div id="s9-num" data-layout-allow-overlap class="mono abs" style="left: 80px; top: 620px; font-size: 250px; font-weight: 300; line-height: 1; color: var(--cream); text-shadow: 0 0 40px rgba(255, 150, 80, 0.35); white-space: nowrap;"></div>
+        <div id="s9-tag" class="mono abs" style="left: 96px; top: 940px; font-size: 24px; color: var(--grey);"></div>
+        <div id="s9-bar" class="abs" style="left: 90px; top: 1040px; width: 900px; height: 40px;">
+          <div class="abs" style="left: 0; top: 18px; width: 900px; height: 4px; background: rgba(255, 90, 43, 0.25);"></div>
+          <div id="s9-fill" class="abs" style="left: 0; top: 17px; width: 900px; height: 6px; background: var(--hot); transform-origin: 0 50%; transform: scaleX(0); box-shadow: 0 0 18px rgba(255, 90, 43, 0.7);"></div>
+          <div id="s9-ticks" class="abs" style="left: 0; top: 30px; width: 900px; height: 14px; background: repeating-linear-gradient(90deg, rgba(243, 239, 230, 0.35) 0 2px, transparent 2px 90px);"></div>
+          <div id="s9-end" class="mono abs" style="right: 0; top: -34px; font-size: 22px; color: var(--grey);">tu producto →</div>
+        </div>
+        <div id="s9-grid" class="mono abs" style="left: 90px; top: 420px; width: 900px; white-space: pre; font-size: 80px; line-height: 1.32; color: var(--warm); text-shadow: 0 0 22px rgba(255, 120, 50, 0.55); opacity: 0;" data-layout-ignore></div>
+        <div id="s9-foot" class="mono abs" style="left: 90px; top: 1440px; font-size: 22px; color: #8f8a82;"></div>
+      </section>
+
+      <!-- S10 · collapse to a serif statement -->
+      <section id="s10" class="scene" data-layout-allow-overflow data-layout-allow-overlap>
+        <div id="s10-one" class="mono abs" style="left: 0; top: 700px; width: 1080px; text-align: center; font-size: 230px; font-weight: 300; color: var(--hot); text-shadow: 0 0 50px rgba(255, 90, 43, 0.7); opacity: 0;">1 lead</div>
+        <div id="s10-a" class="abs" style="left: 90px; top: 440px; font-size: 70px; font-weight: 600; opacity: 0;">No solo captas el lead.</div>
+        <div id="s10-b" class="serif abs" style="left: 90px; top: 600px; font-size: 130px; line-height: 1; opacity: 0;">lo segmentas,</div>
+        <div id="s10-c" class="serif abs" style="left: 90px; top: 740px; font-size: 130px; line-height: 1; opacity: 0;">lo educas…</div>
+        <div id="s10-fin" class="abs" style="left: 90px; top: 960px; width: 960px; white-space: nowrap; opacity: 0;">
+          <span class="serif" style="font-size: 160px; color: var(--hot); text-shadow: 0 0 40px rgba(255, 90, 43, 0.5);">Lead</span>
+          <span id="s10-arr" style="font-size: 100px; font-weight: 300; margin: 0 14px; display: inline-block;">→</span>
+          <span id="s10-buy" class="serif" style="font-size: 160px; display: inline-block; opacity: 0;">compra</span>
+          <span class="mono" style="font-size: 26px; color: var(--grey); vertical-align: top;">(1)</span>
+        </div>
+        <div id="s10-note" class="mono abs" style="left: 90px; top: 1290px; font-size: 22px; color: var(--grey); opacity: 0;">(1) segmentado, educado y con una oferta delante.</div>
+      </section>
+
+      <!-- S11 · CTA: spark + one button -->
+      <section id="s11" class="scene" data-layout-allow-overlap>
+        <div id="s11-spark" class="abs" style="left: 500px; top: 700px; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, #fff 0, rgba(255, 190, 120, 0.95) 16%, rgba(255, 120, 40, 0) 70%); opacity: 0;" data-layout-ignore></div>
+        <div id="s11-btn" class="abs mono" style="left: 290px; top: 900px; width: 500px; height: 110px; border: 2px solid rgba(243, 239, 230, 0.45); border-radius: 16px; background: #141312; display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 44px; font-weight: 600; color: var(--cream); opacity: 0;"><span style="font-size: 40px;">↻</span> Comenta <span id="s11-q" class="hot">QUIZ</span></div>
+        <div id="s11-sub" class="mono abs" style="left: 0; top: 1040px; width: 1080px; text-align: center; font-size: 26px; color: var(--grey); opacity: 0;">y te enseño cómo montarlo</div>
+        <svg id="s11-cur" class="abs" style="left: 760px; top: 1180px; width: 44px; height: 60px; opacity: 0;" viewBox="0 0 22 30" data-layout-ignore><path d="M1 1 L1 23 L7 17 L11 28 L15 26 L11 16 L19 16 Z" fill="#f3efe6" stroke="#060607" stroke-width="1.5" /></svg>
+        <div id="s11-lock" class="abs" style="left: 0; top: 1300px; width: 1080px; display: flex; justify-content: center; align-items: center; gap: 14px; opacity: 0;">
+          <div style="font-size: 52px; font-weight: 860; font-stretch: 118%; text-transform: uppercase;">SaaS</div>
+          <div class="mono" style="font-size: 28px; font-weight: 700; background: var(--red); color: var(--cream); padding: 8px 12px 6px; border-radius: 8px;">IN</div>
+          <div style="font-size: 52px; font-weight: 860; font-stretch: 118%; text-transform: uppercase;">House</div>
+        </div>
+      </section>
+
+      <div id="cap" data-layout-ignore></div>
+      <div id="flash" data-layout-ignore></div>
+      <div id="grain" data-layout-ignore></div>
+      <div id="vig" data-layout-ignore></div>
+      <div id="fade" data-layout-ignore></div>
+    </div>
+
+    <script>
+      /* word times from local `hyperframes transcribe` of quiz-funnel-es/assets/vo.mp3 (spellings fixed) */
+      const W = __W__;
+      const VO = 0.3;
+      const t = (i) => W[i][1] + VO;
+      const END = 57;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+      const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+      const sm = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+      const lerp = (a, b, k) => a + (b - a) * k;
+
+      /* ---------- scene windows (hard cuts on the first word) ---------- */
+      const T = { s2: t(14), s3: t(16), s3b: t(23), s4: t(27), s5: t(49), s6: t(54), s7: t(75), s8: t(83), s9: t(88), s10: t(120), s11: 51.95 };
+      const SC = [["s1", 0, T.s2], ["s2", T.s2, T.s3], ["s3", T.s3, T.s3b], ["s3b", T.s3b, T.s4], ["s4", T.s4, T.s5], ["s5", T.s5, T.s6],
+                  ["s6", T.s6, T.s7], ["s7", T.s7, T.s8], ["s8", T.s8, T.s9], ["s9", T.s9, T.s10], ["s10", T.s10, T.s11], ["s11", T.s11, END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b); });
+      const slamIn = (sel, at, from = 1.35, dur = 0.32) =>
+        tl.fromTo(sel, { opacity: 0, scale: from, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: dur, ease: "expo.out" }, at);
+      const cut = (sel, at) => tl.set(sel, { opacity: 0 }, at);
+
+      /* ---------- captions: phrase chunks, the spoken word lights up ---------- */
+      const CH = [[0, 5], [6, 13], [14, 15], [16, 22], [23, 26], [27, 33], [34, 39], [40, 42], [43, 48], [49, 53], [54, 58], [59, 65], [66, 69], [70, 73],
+                  [74, 77], [78, 82], [83, 87], [88, 93], [94, 97], [98, 105], [106, 110], [111, 115], [116, 119], [120, 125], [126, 129], [130, 136]];
+      const onPaper = (x) => x >= T.s3b && x < T.s4;
+      CH.forEach(([a, b], c) => {
+        const d = document.createElement("div"); d.className = "ch"; d.id = "ch" + c;
+        for (let i = a; i <= b; i++) {
+          const s = document.createElement("span"); s.className = "cw"; s.id = "cw" + i; s.textContent = W[i][0];
+          d.appendChild(s); d.appendChild(document.createTextNode(" "));
+          const done = onPaper(t(i)) ? "#1a1714" : "#f3efe6";
+          if (onPaper(t(i))) s.style.color = "#1a1714";
+          tl.set(s, { opacity: 1, color: onPaper(t(i)) ? "#e8382d" : "#ffb37a" }, t(i));
+          tl.set(s, { color: done }, i < b ? t(i + 1) : W[i][2] + VO);
+        }
+        $("cap").appendChild(d);
+        const end = c < CH.length - 1 ? Math.min(t(CH[c + 1][0]), W[b][2] + VO + 0.6) : W[b][2] + VO + 0.4;
+        tl.set(d, { visibility: "visible" }, t(a) - 0.04);
+        tl.set(d, { visibility: "hidden" }, end);
+      });
+
+      /* ---------- grain ---------- */
+      for (let k = 0, n = 0; k < END; k += 1 / 12, n++)
+        tl.set("#grain", { backgroundImage: `url(assets/grain${n % 3}.png)`, backgroundPosition: `${Math.floor(hash(n) * 384)}px ${Math.floor(hash(n + 99) * 384)}px` }, k);
+
+      /* =====================================================================
+         CANVAS: object field (identical "landing" monuments on a floor),
+         the chosen one under a spotlight, and the light burst. F(t) is pure.
+         ===================================================================== */
+      const cv = $("fx"), ctx = cv.getContext("2d");
+      const FOC = 1000, CX = 540, HY = 660, CAMY = 1.2, PW = 1.3, PH = 0.86, PT = 0.16;
+      const CHOSEN = { x: 0, z: 6.6 };
+      const P = (x, y, z, cz) => { const d = z - cz; return [CX + FOC * x / d, HY - FOC * (y - CAMY) / d]; };
+      function camZ(t) {
+        if (t < T.s2) return lerp(-4.2, 0.4, 1 - Math.pow(1 - t / T.s2, 2));
+        if (t < T.s3) return lerp(0.4, 0.8, (t - T.s2) / (T.s3 - T.s2));
+        return lerp(0.8, 2.9, sm((t - T.s3) / (T.s3b - T.s3)));
+      }
+      function poly(pts, fill, stroke, lw) {
+        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+      }
+      function panel(x, z, cz, lit, chosen) {
+        const d = z - cz; if (d < 0.45) return;
+        const fog = Math.exp(-d / 15), L = lit * fog, s = FOC / d;
+        const x0 = x - PW / 2, x1 = x + PW / 2;
+        const ftl = P(x0, PH, z, cz), ftr = P(x1, PH, z, cz), fbr = P(x1, 0, z, cz), fbl = P(x0, 0, z, cz);
+        const btl = P(x0, PH, z + PT, cz), btr = P(x1, PH, z + PT, cz), bbr = P(x1, 0, z + PT, cz), bbl = P(x0, 0, z + PT, cz);
+        // contact shadow
+        ctx.fillStyle = `rgba(0,0,0,${0.55 * fog})`; ctx.beginPath();
+        ctx.ellipse((fbl[0] + fbr[0]) / 2, fbl[1], (fbr[0] - fbl[0]) * 0.62, Math.max(2, s * 0.06), 0, 0, Math.PI * 2); ctx.fill();
+        // top + side faces
+        poly([ftl, ftr, btr, btl], `rgba(255,210,161,${0.32 * L + 0.02})`);
+        if (x1 < 0) poly([ftr, btr, bbr, fbr], `rgba(60,44,34,${0.9 * fog})`);
+        if (x0 > 0) poly([ftl, btl, bbl, fbl], `rgba(60,44,34,${0.9 * fog})`);
+        // front face: a tiny generic landing page
+        const fx = ftl[0], fy = ftl[1], fw = ftr[0] - ftl[0], fh = fbl[1] - ftl[1];
+        ctx.fillStyle = chosen && lit > 0.9 ? "#1a1612" : "#0f0d0b"; ctx.fillRect(fx, fy, fw, fh);
+        ctx.strokeStyle = `rgba(255,210,161,${0.75 * L + 0.04})`; ctx.lineWidth = Math.max(1, s * 0.012); ctx.strokeRect(fx, fy, fw, fh);
+        if (fw < 6) return;
+        ctx.fillStyle = `rgba(255,210,161,${0.35 * L})`;
+        ctx.fillRect(fx + fw * 0.07, fy + fh * 0.1, fw * 0.86, Math.max(1, fh * 0.035));          // nav bar
+        ctx.fillStyle = `rgba(243,239,230,${0.55 * L})`;
+        ctx.fillRect(fx + fw * 0.07, fy + fh * 0.24, fw * 0.6, fh * 0.1);                          // headline
+        ctx.fillRect(fx + fw * 0.07, fy + fh * 0.38, fw * 0.42, fh * 0.06);
+        ctx.fillStyle = `rgba(255,210,161,${0.18 * L})`;
+        ctx.fillRect(fx + fw * 0.07, fy + fh * 0.5, fw * 0.5, fh * 0.035);                         // body lines
+        ctx.fillRect(fx + fw * 0.07, fy + fh * 0.57, fw * 0.44, fh * 0.035);
+        ctx.fillStyle = `rgba(232,56,45,${0.95 * L})`;
+        const by = fy + fh * 0.7, bh = fh * 0.13, bw = fw * 0.36;                                  // the one button
+        ctx.beginPath(); ctx.roundRect(fx + fw * 0.07, by, bw, bh, bh / 2); ctx.fill();
+        ctx.fillStyle = `rgba(255,210,161,${0.12 * L})`; ctx.fillRect(fx + fw * 0.72, fy + fh * 0.24, fw * 0.21, fh * 0.42); // hero image
+      }
+      function field(t) {
+        const cz = camZ(t);
+        const dim = t < T.s2 ? 1 : lerp(1, 0.05, clamp((t - T.s2) / 0.25));
+        // floor glow + horizon
+        const g = ctx.createLinearGradient(0, HY, 0, 1920);
+        g.addColorStop(0, `rgba(70,40,22,${0.55 * dim + 0.05})`); g.addColorStop(0.35, "rgba(14,10,8,0.9)"); g.addColorStop(1, "#060607");
+        ctx.fillStyle = g; ctx.fillRect(0, HY, 1080, 1920 - HY);
+        const hz = ctx.createLinearGradient(0, HY - 120, 0, HY + 4);
+        hz.addColorStop(0, "rgba(255,150,80,0)"); hz.addColorStop(1, `rgba(255,150,80,${0.22 * dim})`);
+        ctx.fillStyle = hz; ctx.fillRect(0, HY - 120, 1080, 124);
+        // floor grid
+        ctx.lineWidth = 1;
+        for (let k = 0; k < 40; k++) {
+          const z = Math.ceil(cz) + k * 1.0; const d = z - cz; if (d < 0.5) continue;
+          const y = HY + FOC * CAMY / d; ctx.strokeStyle = `rgba(255,210,161,${0.1 * dim * Math.exp(-d / 12)})`;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1080, y); ctx.stroke();
+        }
+        for (let xi = -14; xi <= 14; xi++) {
+          const a = P(xi * 0.9 + 0.45, 0, cz + 0.5, cz), b = P(xi * 0.9 + 0.45, 0, cz + 60, cz);
+          ctx.strokeStyle = `rgba(255,210,161,${0.06 * dim})`; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+        }
+        // monuments, far to near
+        const list = [];
+        for (let r = 0; r < 30; r++) {
+          const z = 0.2 + r * 1.6, off = r % 2 ? 0.9 : 0;
+          for (let c = -6; c <= 6; c++) list.push([c * 1.8 + off, z]);
+        }
+        list.sort((p, q) => q[1] - p[1] || Math.abs(q[0]) - Math.abs(p[0]));
+        const spot = t < T.s2 ? 0 : (t < T.s2 + 0.07 ? 0.7 : t < T.s2 + 0.12 ? 0.15 : t < T.s2 + 0.2 ? 0.85 : 1);
+        for (const [x, z] of list) {
+          const ch = x === CHOSEN.x && Math.abs(z - CHOSEN.z) < 0.01;
+          if (t >= T.s2 && z < CHOSEN.z - 0.01 && Math.abs(x) < 4) continue; // clear the sightline to the chosen one
+          panel(x, z, cz, ch ? Math.max(dim, spot) : dim, ch);
+        }
+        if (spot > 0) {
+          ctx.save(); ctx.globalCompositeOperation = "lighter";
+          const base = P(0, 0, CHOSEN.z + PT / 2, cz), half = (P(PW * 0.95, 0, CHOSEN.z, cz)[0] - CX);
+          const cg = ctx.createLinearGradient(0, -80, 0, base[1]);
+          cg.addColorStop(0, `rgba(255,236,205,${0.42 * spot})`); cg.addColorStop(1, `rgba(255,214,160,${0.1 * spot})`);
+          poly([[CX - 36, -80], [CX + 36, -80], [base[0] + half, base[1]], [base[0] - half, base[1]]], cg);
+          const pg = ctx.createRadialGradient(base[0], base[1], 0, base[0], base[1], half * 1.1);
+          pg.addColorStop(0, `rgba(255,228,190,${0.5 * spot})`); pg.addColorStop(1, "rgba(255,228,190,0)");
+          ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(base[0], base[1], half * 1.1, half * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        }
+      }
+      function burst(u) {
+        const cx = 540, cy = 930, K = t(87) - T.s8; // explode on "importante"
+        ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
+        if (u < K) {
+          const p = u / K;
+          for (let i = 0; i < 110; i++) {
+            const a = hash(i) * Math.PI * 2, f = (p * (1.2 + hash(i + 5)) + hash(i + 7)) % 1, r = lerp(1100, 30, f);
+            const al = 0.5 * Math.sin(f * Math.PI) * p;
+            ctx.strokeStyle = `rgba(255,190,120,${al})`; ctx.lineWidth = 1 + 2 * hash(i + 3);
+            ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); ctx.lineTo(cx + Math.cos(a) * (r + 90), cy + Math.sin(a) * (r + 90)); ctx.stroke();
+          }
+          const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30 + 120 * p);
+          cg.addColorStop(0, `rgba(255,240,220,${0.9 * p})`); cg.addColorStop(1, "rgba(255,120,40,0)");
+          ctx.fillStyle = cg; ctx.fillRect(0, 0, 1080, 1920);
+        } else {
+          const v = u - K, fade = clamp(1 - v / 1.0);
+          for (let i = 0; i < 300; i++) {
+            const a = hash(i) * Math.PI * 2, sp = 0.4 + hash(i + 3);
+            const r1 = 40 + Math.pow(v, 0.6) * sp * 1500, r0 = r1 * lerp(0.15, 0.7, hash(i + 9));
+            ctx.strokeStyle = `rgba(255,${150 + Math.floor(80 * hash(i + 11))},90,${0.75 * fade})`; ctx.lineWidth = 1 + 3 * hash(i + 13);
+            ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); ctx.stroke();
+          }
+          const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 520);
+          cg.addColorStop(0, `rgba(255,236,210,${0.85 * fade})`); cg.addColorStop(1, "rgba(255,110,40,0)");
+          ctx.fillStyle = cg; ctx.fillRect(0, 0, 1080, 1920);
+          ctx.strokeStyle = `rgba(255,90,43,${0.6 * fade})`; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(cx, cy, 120 + v * 900, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      /* ---------- counters & labels: also pure functions of t ---------- */
+      const pad = (n) => String(n).padStart(2, "0");
+      const hms = (s) => `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(Math.floor(s) % 60)}`;
+      const QT = [t(27), t(30), t(32), t(33), t(36), t(41), t(44), t(47)]; // one question block per stop
+      function TXT(x) {
+        // S4 depth label
+        if (x >= T.s4 && x < T.s5) { let q = 0; QT.forEach((a, i) => { if (x >= a) q = i; }); $("s4-depth").textContent = `PROFUNDIDAD · P.${pad(q + 1)} / 08`; }
+        // S9 counter stages
+        if (x >= T.s9 && x < T.s10) {
+          let lab, num, tag = "", foot = "", fill = 0;
+          if (x < t(98)) {
+            const n = x < t(90) ? 6 : x < t(94) ? 7 : 8;
+            lab = "CARD(n)"; num = pad(n) + "/08"; fill = lerp(0.62, 1, sm((x - t(88)) / (t(97) - t(88))));
+            foot = "* las últimas cards empujan hacia el producto";
+          } else if (x < t(106)) {
+            const v = lerp(0.12, 0.97, sm((x - t(102)) / 0.9));
+            lab = "ENCAJE(producto, situación)"; num = v.toFixed(2); fill = v; tag = "ejemplo";
+            foot = "* encaja con su situación, no con la de todos";
+          } else if (x < t(111)) {
+            lab = "OFERTA(específica)"; num = x < t(109) ? "—" : "−30%"; tag = x < t(109) ? "" : "ejemplo · para su caso";
+            foot = "* una oferta, una persona";
+          } else {
+            lab = "CONTADOR(tiempo)"; const left = 86399 - Math.max(0, x - t(114)) * 37; num = x < t(114) ? "--:--:--" : hms(left);
+            fill = x < t(114) ? 1 : clamp(left / 86399); foot = "* tiempo limitado para canjearla";
+          }
+          $("s9-lab").textContent = lab; $("s9-num").textContent = num; $("s9-num").style.fontSize = num.length > 5 ? "180px" : "250px"; $("s9-tag").textContent = tag; $("s9-foot").textContent = foot;
+          $("s9-fill").style.transform = `scaleX(${fill})`;
+          // countdown grid (the counter multiplies on "limitado")
+          if (x >= t(117)) {
+            const base = 86399 - (x - t(114)) * 37; let s = "";
+            for (let r = 0; r < 9; r++) { for (let c = 0; c < 2; c++) s += hms(Math.max(0, base - (r * 2 + c) * 613)) + (c ? "" : "  "); s += "\n"; }
+            $("s9-grid").textContent = s;
+          }
+        }
+      }
+      function F(x) { ctx.clearRect(0, 0, 1080, 1920); if (x < T.s3b) field(x); if (x >= T.s8 && x < T.s9) burst(x - T.s8); TXT(x); }
+      const CLK = { v: 0 };
+      tl.to(CLK, { v: END, duration: END, ease: "none", onUpdate: () => F(CLK.v) }, 0);
+      tl.set("#fx", { opacity: 1 }, 0);
+
+      /* ---------- S1 · field + slams ---------- */
+      slamIn("#s1-a", t(7), 1.5, 0.28);
+      cut("#s1-a", t(12));
+      slamIn("#s1-b", t(12), 1.4, 0.28);
+      tl.fromTo("#s1-land", { scaleX: 1.18 }, { scaleX: 1, duration: 0.6, ease: "expo.out" }, t(13));
+      tl.to("#s1-b", { opacity: 0, duration: 0.12 }, T.s2 - 0.05);
+
+      /* ---------- S2 · spot ---------- */
+      tl.fromTo("#s2-t", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3 }, t(14) + 0.1);
+      tl.fromTo("#s2-e", { opacity: 0 }, { opacity: 1, duration: 0.2 }, t(15));
+
+      /* ---------- S3a · DEMO ---------- */
+      tl.to("#s3-tag", { opacity: 1, duration: 0.2 }, T.s3);
+      slamIn("#s3-demo", t(21), 1.3, 0.3);
+      tl.to("#s3-strike", { scaleX: 1, rotate: -7, duration: 0.22, ease: "power3.out" }, t(22));
+      tl.to("#s3-demo", { color: "rgba(243,239,230,0.18)", y: 40, duration: 0.4, ease: "power2.out" }, t(22) + 0.05);
+      tl.to("#s3-x", { opacity: 1, duration: 0.15 }, t(22) + 0.1);
+      tl.to("#s3-demo", { x: -30, duration: 0.05, yoyo: true, repeat: 3 }, t(22) + 0.05);
+
+      /* ---------- S3b · QUIZ FUNNEL ---------- */
+      slamIn("#s3b-quiz", t(25), 1.25, 0.26);
+      "FUNNEL".split("").forEach((c, i) => {
+        const s = document.createElement("span"); s.textContent = c; s.style.display = "inline-block"; $("s3b-fun").appendChild(s);
+        tl.fromTo(s, { y: -420, opacity: 0 }, { y: 0, opacity: 1, duration: 0.24, ease: "power4.out" }, t(26) + i * 0.045);
+      });
+      tl.to(["#s3b-e1", "#s3b-e2"], { opacity: 1, duration: 0.1, stagger: 0.06 }, t(26) + 0.3);
+      tl.to("#s3b-quiz", { scale: 1.04, duration: 0.9, ease: "sine.out" }, t(25) + 0.3);
+
+      /* ---------- S4 · question blocks ---------- */
+      const QS = ["¿Qué vendes?", "¿Cuántos sois<br>en el equipo?", "¿Qué quieres<br>conseguir?", "¿De dónde<br>llegan tus leads?",
+                  "¿Qué has<br>probado ya?", "¿Cuál es tu<br>mayor problema?", "¿Cuánto inviertes<br>en captación?", "¿Cuándo quieres<br>empezar?"];
+      const GAP = 330;
+      QS.forEach((q, i) => {
+        const s = document.createElement("div"); s.className = "slab"; s.id = "q" + i;
+        s.style.transform = `translateZ(${-i * GAP}px)`;
+        s.innerHTML = `<div class="edge"></div><div class="qn">PREGUNTA ${pad(i + 1)}</div><div class="qq">${q}</div><div class="opt">A ·  ·  ·</div><div class="opt">B ·  ·  ·</div>`;
+        $("s4-lift").appendChild(s);
+        s.style.opacity = i > 3 ? 0 : 1 - i * 0.22;
+      });
+      QT.forEach((a, k) => {
+        tl.to("#s4-lift", { z: k * GAP, duration: 0.5, ease: "expo.out" }, a);
+        if (k > 0) tl.to("#q" + (k - 1), { opacity: 0.18, borderColor: "rgba(255,210,161,0.3)", duration: 0.3 }, a);
+        if (k > 1) tl.to("#q" + (k - 2), { opacity: 0, duration: 0.2 }, a);
+        tl.to("#q" + k, { opacity: 1, borderColor: "#ff5a2b", boxShadow: "0 0 60px rgba(255,90,43,0.45)", duration: 0.3 }, a);
+        if (k + 3 < QS.length) tl.to("#q" + (k + 3), { opacity: 0.35, duration: 0.3 }, a);
+      });
+      tl.fromTo("#s4-stack", { rotateZ: -26 }, { rotateZ: -14, duration: T.s5 - T.s4, ease: "none" }, T.s4);
+      tl.fromTo("#s4-n", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25 }, t(30));
+      tl.to("#s4-n8", { opacity: 1, duration: 0.1 }, t(32));
+      [["#s4-k1", t(36), t(41)], ["#s4-k2", t(41), t(44)], ["#s4-k3", t(47), T.s5]].forEach(([id, a, b]) => { slamIn(id, a, 1.3, 0.26); cut(id, b - 0.02); });
+
+      /* ---------- S5 · type wall ---------- */
+      for (let r = 0; r < 11; r++) {
+        const d = document.createElement("div"); d.className = "wrow"; d.id = "wr" + r;
+        d.innerHTML = r === 5 ? `<span id="s5-solo" style="margin-left: 330px;">SOLO</span> <span id="s5-preg">PREGUNTAS?</span> PREGUNTAS?` : "PREGUNTAS? PREGUNTAS? PREGUNTAS? PREGUNTAS?";
+        if (r % 2) d.style.color = "#262421";
+        $("s5-wall").appendChild(d);
+        tl.fromTo(d, { x: r % 2 ? -120 : 0 }, { x: r % 2 ? 0 : -120, duration: T.s6 - T.s5, ease: "none" }, T.s5);
+      }
+      tl.fromTo("#s5-wall", { scale: 1.25, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "expo.out" }, T.s5);
+      tl.set("#s5-solo", { color: "#f3efe6" }, t(52));
+      tl.set("#s5-preg", { color: "#ff5a2b" }, t(53));
+      tl.fromTo("#s5-box", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.25 }, t(53));
+
+      /* ---------- S6 · glowing screen ---------- */
+      tl.fromTo("#s6-rig", { rotateY: -24, scale: 0.9 }, { rotateY: -9, scale: 1.04, duration: T.s7 - T.s6, ease: "sine.inOut" }, T.s6);
+      tl.set("#s6-screen", { opacity: 1 }, T.s6 + 0.12);
+      tl.fromTo("#s6-screen", { filter: "brightness(2.2)" }, { filter: "brightness(1)", duration: 0.5 }, T.s6 + 0.12);
+      tl.to("#s6-pool", { opacity: 1, duration: 0.6 }, T.s6 + 0.12);
+      tl.fromTo("#s6-prog", { width: "38%" }, { width: "62%", duration: 4, ease: "power1.inOut" }, t(58));
+      [["#s6-c1", t(60)], ["#s6-c2", t(62)], ["#s6-c3", t(63)], ["#s6-c4", t(65)]].forEach(([id, a]) =>
+        tl.fromTo(id, { opacity: 0, y: 30, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, a));
+      tl.fromTo("#s6-st", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35 }, t(70));
+      tl.fromTo("#s6-st2", { opacity: 0 }, { opacity: 1, duration: 0.2 }, t(73));
+      // screen powers off on "Después": collapse to a line, then a spark
+      const OFF = t(74);
+      tl.to("#s6-st", { opacity: 0, duration: 0.15 }, OFF - 0.1);
+      tl.to("#s6-screen", { filter: "brightness(2.4)", duration: 0.06 }, OFF);
+      tl.to("#s6-screen", { scaleY: 0.012, duration: 0.14, ease: "power3.in" }, OFF + 0.06);
+      tl.set("#s6-line", { opacity: 1 }, OFF + 0.2); tl.set("#s6-screen", { opacity: 0 }, OFF + 0.2);
+      tl.to("#s6-line", { scaleX: 0, duration: 0.14, ease: "power3.in" }, OFF + 0.22);
+      tl.to(["#s6-lid", "#s6-base"], { opacity: 0.12, duration: 0.15 }, OFF + 0.1);
+      tl.to("#s6-pool", { opacity: 0, duration: 0.2 }, OFF + 0.1);
+      tl.fromTo("#s6-spark", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.1 }, OFF + 0.34);
+      tl.to("#s6-spark", { opacity: 0, scale: 0.2, duration: 0.25 }, OFF + 0.48);
+
+      /* ---------- S7 · spotlight stage ---------- */
+      const ON = T.s7 + 0.05;
+      [[0, 0.7], [0.06, 0.1], [0.11, 0.9], [0.16, 0.3], [0.2, 1]].forEach(([d, o]) => { tl.set("#s7-cone", { opacity: o }, ON + d); tl.set("#s7-pool", { opacity: o }, ON + d); });
+      tl.fromTo("#s7-title", { opacity: 0, scaleX: 1.25 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "expo.out" }, t(75) + 0.15);
+      tl.fromTo("#s7-card", { opacity: 0, y: -700, rotate: -4 }, { opacity: 1, y: 0, rotate: 0, duration: 0.55, ease: "bounce.out" }, t(79));
+      tl.fromTo("#s7-stamp", { opacity: 0, scale: 2.4 }, { opacity: 1, scale: 1, duration: 0.18, ease: "power4.in" }, t(82));
+
+      /* ---------- S8 · burst + IMPORTANTE ---------- */
+      tl.fromTo("#s8-pre", { opacity: 0, scaleX: 1.3 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: "expo.out" }, T.s8 + 0.05);
+      tl.to("#s8-pre", { opacity: 0, duration: 0.1 }, t(87) - 0.05);
+      tl.set("#flash", { opacity: 0.9 }, t(87)); tl.to("#flash", { opacity: 0, duration: 0.35 }, t(87) + 0.02);
+      slamIn("#s8-big", t(87), 2.2, 0.35);
+      tl.to("#s8-big", { scale: 1.08, duration: T.s9 - t(87) - 0.35, ease: "none" }, t(87) + 0.35);
+
+      /* ---------- S9 · counter ---------- */
+      tl.fromTo("#s9-num", { opacity: 0 }, { opacity: 1, duration: 0.15 }, T.s9);
+      tl.set("#s9-end", { color: "#ff5a2b" }, t(97));
+      tl.set("#s9-num", { scale: 1.12, transformOrigin: "0% 50%" }, t(109)); tl.to("#s9-num", { scale: 1, duration: 0.3, ease: "expo.out" }, t(109) + 0.01);
+      tl.to("#s9-grid", { opacity: 1, duration: 0.12 }, t(117));
+      tl.to(["#s9-num", "#s9-tag", "#s9-bar", "#s9-lab"], { opacity: 0, duration: 0.1 }, t(117));
+      tl.to("#s9-grid", { scaleY: 0.01, duration: 0.25, ease: "power3.in" }, t(119) + 0.2);
+      tl.to("#s9-grid", { scaleX: 0, duration: 0.2, ease: "power3.in" }, t(119) + 0.45);
+
+      /* ---------- S10 · statement ---------- */
+      tl.fromTo("#s10-one", { opacity: 0, scale: 0.4, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, T.s10);
+      tl.fromTo("#s10-a", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3 }, t(123));
+      tl.to("#s10-one", { opacity: 0, y: 260, scale: 0.5, duration: 0.3, ease: "power2.in" }, t(127) - 0.15);
+      tl.fromTo("#s10-b", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.3 }, t(127));
+      tl.fromTo("#s10-c", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.3 }, t(129));
+      tl.to(["#s10-a", "#s10-b", "#s10-c"], { opacity: 0.28, duration: 0.3 }, t(132));
+      tl.fromTo("#s10-fin", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, t(132));
+      tl.fromTo("#s10-arr", { x: -40 }, { x: 0, duration: 0.6, ease: "expo.out" }, t(133));
+      tl.fromTo("#s10-buy", { opacity: 0, y: 60, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, t(136));
+      tl.to("#s10-note", { opacity: 1, duration: 0.3 }, t(136) + 0.3);
+
+      /* ---------- S11 · CTA ---------- */
+      const C = T.s11;
+      tl.fromTo("#s11-spark", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.4 }, C + 0.05);
+      tl.to("#s11-spark", { y: 40, scale: 0.8, duration: 4.5, ease: "sine.inOut" }, C + 0.45);
+      tl.fromTo("#s11-btn", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35 }, C + 0.35);
+      tl.to("#s11-sub", { opacity: 1, duration: 0.3 }, C + 0.6);
+      tl.fromTo("#s11-cur", { opacity: 0, x: 120, y: 160 }, { opacity: 1, x: 0, y: 0, duration: 0.2 }, C + 0.7);
+      tl.to("#s11-cur", { x: -170, y: -200, duration: 0.8, ease: "power2.inOut" }, C + 0.95);
+      const CLICK = C + 1.75;
+      tl.to("#s11-btn", { scale: 0.95, duration: 0.07, yoyo: true, repeat: 1 }, CLICK);
+      tl.set("#s11-btn", { backgroundColor: "#e8382d", borderColor: "#e8382d" }, CLICK + 0.07);
+      tl.set("#s11-q", { color: "#f3efe6" }, CLICK + 0.07);
+      tl.fromTo("#s11-lock", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, CLICK + 0.6);
+      tl.to("#fade", { opacity: 1, duration: 0.4 }, END - 0.4);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

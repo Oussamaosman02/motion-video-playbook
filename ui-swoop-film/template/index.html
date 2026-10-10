@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --ink: #14141d; --night: #0e0e12; --paper: #f7f5ef; --cream: #f2efe6; --line: #e6e2d8; --muted: #6b6976;
+        --red: #e8382d; --red-deep: #b8251c; --gold: #f5c51b; --gold-soft: #fbefb4; --pill: #dedad2;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); font-family: "Archivo", sans-serif; color: var(--ink); }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; perspective: 1600px; }
+      .full { position: absolute; inset: 0; }
+      .abs { position: absolute; }
+      .tx { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; white-space: nowrap; }
+      .tx .w { display: inline-block; margin-right: 0.22em; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.08em; }
+      .card { position: absolute; background: #fff; border-radius: 40px; box-shadow: 0 40px 90px rgba(20,20,29,0.16), 0 6px 18px rgba(20,20,29,0.08); }
+      .phone { position: absolute; background: var(--ink); border-radius: 46px; padding: 12px; box-shadow: 0 40px 90px rgba(0,0,0,0.28); }
+      .phone .scr { width: 100%; height: 100%; border-radius: 36px; overflow: hidden; position: relative; }
+      .opt { height: 92px; border-radius: 24px; border: 3px solid var(--line); margin-top: 20px; display: flex; align-items: center; padding: 0 30px; font-size: 38px; font-weight: 700; color: #4a4854; }
+      .opt .dot { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #c9c4b8; margin-right: 22px; }
+      .opt.on { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+      .opt.on .dot { background: var(--ink); border-color: var(--ink); }
+      .bar { position: absolute; height: 26px; border-radius: 13px; }
+      .vert { position: absolute; font-weight: 900; font-size: 168px; letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 3px #d6d0c2; writing-mode: vertical-rl; white-space: nowrap; }
+      .pillg { position: absolute; width: 440px; height: 150px; border-radius: 75px; background: var(--pill); }
+      .pilld { position: absolute; width: 520px; height: 170px; border-radius: 85px; background: #1d1b16; display: flex; align-items: center; justify-content: space-between; padding: 0 34px 0 56px; color: var(--cream); font-size: 54px; font-weight: 600; box-shadow: 0 24px 50px rgba(0,0,0,0.25); }
+      .tag { position: absolute; background: var(--gold); color: var(--ink); font-weight: 800; font-size: 40px; padding: 18px 28px 18px 24px; border-radius: 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 16px 34px rgba(0,0,0,0.22); white-space: nowrap; }
+      .tag i { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); display: inline-block; }
+      .row { position: absolute; left: 130px; width: 820px; height: 140px; border-radius: 30px; background: #fff; border: 3px solid var(--line); display: flex; align-items: center; padding: 0 36px; font-size: 46px; font-weight: 700; overflow: hidden; }
+      .row .ic { width: 64px; height: 64px; border-radius: 18px; background: var(--ink); margin-right: 30px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 36px; font-weight: 900; position: relative; z-index: 1; }
+      .row .lb { position: relative; z-index: 1; }
+      .row .sw { margin-left: auto; width: 120px; height: 66px; border-radius: 33px; background: #d9d5cc; position: relative; z-index: 1; }
+      .row .sw b { position: absolute; left: 6px; top: 6px; width: 54px; height: 54px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+      .row .hl { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(245,197,27,0.0), rgba(245,197,27,0.55) 60%, rgba(245,197,27,0.85)); transform-origin: left center; transform: scaleX(0); }
+      .fcard { position: absolute; background: #fff; border-radius: 26px; box-shadow: 0 20px 50px rgba(20,20,29,0.18); padding: 22px; overflow: hidden; }
+      .fcard .h { height: 18px; border-radius: 9px; background: var(--ink); width: 60%; }
+      .fcard .l { height: 14px; border-radius: 7px; background: var(--line); margin-top: 14px; }
+      .fcard .g { height: 46px; border-radius: 14px; background: var(--gold); margin-top: 18px; }
+      .fcard .r { height: 46px; border-radius: 14px; background: var(--red); margin-top: 18px; }
+      .dots { background-image: radial-gradient(rgba(20,20,29,0.09) 2px, transparent 2.4px); background-size: 30px 30px; }
+      #cap { position: absolute; left: 70px; right: 70px; top: 1500px; display: flex; justify-content: center; pointer-events: none; }
+      #cap .box { background: rgba(20,20,29,0.92); color: var(--cream); border-radius: 34px; padding: 26px 40px 28px; font-size: 52px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.18; text-align: center; max-width: 940px; box-shadow: 0 20px 50px rgba(0,0,0,0.22); }
+      #cap .w { display: inline-block; margin: 0 0.12em; opacity: 0.32; }
+      #fade { position: absolute; inset: 0; background: #fff; opacity: 0; }
+      svg { overflow: visible; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="28" data-width="1080" data-height="1920">
+      <!-- audio: reused VO (sih-quiz-film, Gabriel-style short take, 26.1s), reused bed (ui-launch-reel, fitted to 28s), library SFX -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="26.1" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="28" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="a1" src="assets/swoosh_in.mp3" data-start="0" data-duration="0.8" data-track-index="12" data-volume="0.4"></audio>
+      <audio id="a2" src="assets/key.mp3" data-start="0.95" data-duration="0.5" data-track-index="13" data-volume="0.3"></audio>
+      <audio id="a3" src="assets/key.mp3" data-start="1.3" data-duration="0.5" data-track-index="14" data-volume="0.3"></audio>
+      <audio id="a4" src="assets/click.mp3" data-start="2.05" data-duration="0.5" data-track-index="15" data-volume="0.8"></audio>
+      <audio id="a5" src="assets/stamp.mp3" data-start="2.3" data-duration="0.8" data-track-index="16" data-volume="0.35"></audio>
+      <audio id="a6" src="assets/whoosh.mp3" data-start="2.55" data-duration="1.2" data-track-index="17" data-volume="0.5"></audio>
+      <audio id="a7" src="assets/pop.mp3" data-start="3.75" data-duration="0.5" data-track-index="18" data-volume="0.45"></audio>
+      <audio id="a8" src="assets/impact.mp3" data-start="3.78" data-duration="2" data-track-index="19" data-volume="0.45"></audio>
+      <audio id="a9" src="assets/swoosh_up.mp3" data-start="4.25" data-duration="1" data-track-index="20" data-volume="0.4"></audio>
+      <audio id="a10" src="assets/click.mp3" data-start="6.05" data-duration="0.5" data-track-index="21" data-volume="0.55"></audio>
+      <audio id="a11" src="assets/click.mp3" data-start="7.1" data-duration="0.5" data-track-index="22" data-volume="0.55"></audio>
+      <audio id="a12" src="assets/click.mp3" data-start="7.92" data-duration="0.5" data-track-index="23" data-volume="0.55"></audio>
+      <audio id="a13" src="assets/whoosh.mp3" data-start="8.6" data-duration="1.2" data-track-index="24" data-volume="0.4"></audio>
+      <audio id="a14" src="assets/ding.mp3" data-start="9.05" data-duration="1" data-track-index="25" data-volume="0.4"></audio>
+      <audio id="a15" src="assets/ding.mp3" data-start="9.75" data-duration="1" data-track-index="26" data-volume="0.4"></audio>
+      <audio id="a16" src="assets/thump.mp3" data-start="10.1" data-duration="0.8" data-track-index="27" data-volume="0.7"></audio>
+      <audio id="a17" src="assets/pop.mp3" data-start="10.25" data-duration="0.5" data-track-index="28" data-volume="0.35"></audio>
+      <audio id="a18" src="assets/pop.mp3" data-start="11.05" data-duration="0.5" data-track-index="29" data-volume="0.35"></audio>
+      <audio id="a19" src="assets/pop.mp3" data-start="11.4" data-duration="0.5" data-track-index="30" data-volume="0.35"></audio>
+      <audio id="a20" src="assets/pop.mp3" data-start="11.9" data-duration="0.5" data-track-index="31" data-volume="0.35"></audio>
+      <audio id="a21" src="assets/swoosh_in.mp3" data-start="12.4" data-duration="0.8" data-track-index="32" data-volume="0.45"></audio>
+      <audio id="a22" src="assets/chime.mp3" data-start="13.1" data-duration="1.2" data-track-index="33" data-volume="0.4"></audio>
+      <audio id="a23" src="assets/whoosh.mp3" data-start="13.6" data-duration="1.2" data-track-index="34" data-volume="0.4"></audio>
+      <audio id="a24" src="assets/swoosh_in.mp3" data-start="16.15" data-duration="0.8" data-track-index="35" data-volume="0.45"></audio>
+      <audio id="a25" src="assets/impact.mp3" data-start="16.4" data-duration="2" data-track-index="36" data-volume="0.4"></audio>
+      <audio id="a26" src="assets/whoosh.mp3" data-start="17.45" data-duration="1.2" data-track-index="37" data-volume="0.45"></audio>
+      <audio id="a27" src="assets/key.mp3" data-start="18.55" data-duration="0.5" data-track-index="38" data-volume="0.4"></audio>
+      <audio id="a28" src="assets/key.mp3" data-start="19.05" data-duration="0.5" data-track-index="39" data-volume="0.4"></audio>
+      <audio id="a29" src="assets/swoosh_up.mp3" data-start="19.25" data-duration="1" data-track-index="40" data-volume="0.35"></audio>
+      <audio id="a30" src="assets/click.mp3" data-start="20.05" data-duration="0.5" data-track-index="41" data-volume="0.8"></audio>
+      <audio id="a31" src="assets/ding.mp3" data-start="20.4" data-duration="1" data-track-index="42" data-volume="0.45"></audio>
+      <audio id="a32" src="assets/pop.mp3" data-start="21.0" data-duration="0.5" data-track-index="43" data-volume="0.35"></audio>
+      <audio id="a33" src="assets/pop.mp3" data-start="21.92" data-duration="0.5" data-track-index="44" data-volume="0.35"></audio>
+      <audio id="a34" src="assets/pop.mp3" data-start="23.1" data-duration="0.5" data-track-index="45" data-volume="0.4"></audio>
+      <audio id="a35" src="assets/whoosh.mp3" data-start="23.55" data-duration="1.2" data-track-index="46" data-volume="0.4"></audio>
+      <audio id="a36" src="assets/chime.mp3" data-start="24.12" data-duration="1.2" data-track-index="47" data-volume="0.4"></audio>
+      <audio id="a37" src="assets/riser.mp3" data-start="15.0" data-duration="1.4" data-track-index="48" data-volume="0.25"></audio>
+
+      <!-- ============ S1 · dark stage, red scallop circles, headline + URL card (ref: "COPY & PASTE") ============ -->
+      <section id="s1" class="scene" style="background: var(--night);">
+        <div id="s1-circ" class="full"></div>
+        <div id="s1-h1" class="tx" style="left: 70px; top: 300px; font-size: 128px; font-weight: 900; color: var(--cream); white-space: normal; width: 960px;"></div>
+        <div id="s1-h2" class="tx" style="left: 74px; top: 590px; font-size: 62px; font-weight: 700; color: #b9b6c2;"></div>
+        <div id="s1-cardw" class="abs" style="left: 110px; top: 820px; width: 860px; height: 330px; transform-style: preserve-3d;">
+          <div id="s1-card" class="card" style="inset: 0; position: absolute; padding: 44px 46px;">
+            <div style="font-size: 30px; font-weight: 700; color: var(--muted);">Pega aquí tu enlace</div>
+            <div id="s1-url" style="margin-top: 18px; font-size: 54px; font-weight: 700; color: var(--ink); position: relative; display: inline-block;">
+              <span id="s1-urltx"></span><span id="s1-caret" style="display: inline-block; width: 4px; height: 52px; background: var(--ink); vertical-align: -8px; margin-left: 4px;"></span>
+              <div id="s1-strike" style="position: absolute; left: -6px; right: -6px; top: 32px; height: 8px; border-radius: 4px; background: var(--red); transform: scaleX(0); transform-origin: left center;"></div>
+            </div>
+            <div style="position: absolute; left: 46px; bottom: 40px; display: flex; gap: 26px; align-items: center; font-size: 40px; color: #6a6874; font-weight: 700;">
+              <span>+</span><span>≡</span><span>↻</span>
+              <span style="font-size: 26px; padding: 8px 18px; border-radius: 12px; background: #f1eee7; color: #4a4854;">Landing</span>
+            </div>
+            <div id="s1-send" style="position: absolute; right: 40px; bottom: 34px; width: 92px; height: 92px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center;">
+              <svg width="40" height="44" viewBox="0 0 40 44"><path d="M20 40 V6 M5 20 L20 5 L35 20" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div id="s1-x" style="position: absolute; right: 150px; top: 44px; font-size: 30px; font-weight: 800; color: var(--red); opacity: 0;">0 leads</div>
+          </div>
+        </div>
+        <svg id="s1-cur" class="abs" style="left: 900px; top: 1400px;" width="56" height="70" viewBox="0 0 56 70"><path d="M4 4 L4 56 L18 44 L28 66 L38 61 L28 40 L46 40 Z" fill="#fff" stroke="#14141d" stroke-width="4" stroke-linejoin="round"/></svg>
+      </section>
+
+      <!-- ============ S2 · zoomed send button morphs into the QUIZ pill ============ -->
+      <section id="s2" class="scene" style="background: radial-gradient(ellipse 70% 50% at 50% 52%, #fff, var(--paper) 60%, #ece8de);">
+        <div id="s2-t" class="tx" style="left: 0; right: 0; top: 470px; text-align: center; font-size: 104px; color: var(--ink);"></div>
+        <div id="s2-btn" class="abs" style="left: 280px; top: 700px; width: 520px; height: 520px; border-radius: 260px; background: var(--ink); display: flex; align-items: center; justify-content: center; box-shadow: 0 50px 110px rgba(20,20,29,0.3);">
+          <svg id="s2-arrow" width="200" height="220" viewBox="0 0 40 44"><path d="M20 40 V6 M5 20 L20 5 L35 20" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div id="s2-pill" class="abs" style="left: 130px; top: 780px; width: 820px; height: 360px; border-radius: 180px; background: var(--red); box-shadow: 0 50px 110px rgba(232,56,45,0.35); opacity: 0;">
+          <div id="s2-quiz" class="abs" style="inset: 0; display: flex; align-items: center; justify-content: center; font-size: 210px; font-weight: 900; color: var(--cream); letter-spacing: -0.02em; opacity: 0;">QUIZ</div>
+        </div>
+      </section>
+
+      <!-- ============ S3 · "ANALYZING" outline columns -> PREGUNTAS, tilted quiz card, timeline bars ============ -->
+      <section id="s3" class="scene" style="background: var(--paper);">
+        <div id="s3-vl" data-layout-ignore class="vert" style="left: -10px; top: -900px;">PREGUNTAS · PREGUNTAS · PREGUNTAS ·</div>
+        <div id="s3-vr" data-layout-ignore class="vert" style="right: -10px; top: -300px;">PREGUNTAS · PREGUNTAS · PREGUNTAS ·</div>
+        <div id="s3-chip" class="abs" style="left: 0; right: 0; top: 200px; text-align: center;">
+          <span id="s3-chiptx" style="display: inline-block; background: var(--red); color: var(--cream); font-size: 64px; font-weight: 900; padding: 14px 40px; border-radius: 22px;">5</span>
+          <span style="font-size: 56px; font-weight: 800; margin-left: 16px;">preguntas</span>
+        </div>
+        <div id="s3-card" class="card" style="left: 150px; top: 360px; width: 780px; height: 680px; padding: 48px 50px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="px" style="font-size: 26px; color: var(--muted);">QUIZ · SAAS</div>
+            <div id="s3-n" style="font-size: 34px; font-weight: 800; background: var(--ink); color: var(--gold); padding: 8px 20px; border-radius: 14px;">1/8</div>
+          </div>
+          <div style="height: 10px; border-radius: 5px; background: var(--line); margin-top: 26px; overflow: hidden;"><div id="s3-prog" style="height: 100%; width: 12.5%; background: var(--red);"></div></div>
+          <div id="s3-qs" style="position: relative; height: 470px; margin-top: 30px;">
+            <div id="s3-q1" class="abs" style="inset: 0;">
+              <div style="font-size: 60px; font-weight: 900; letter-spacing: -0.03em;">¿Quién eres?</div>
+              <div class="opt" id="s3-q1o"><span class="dot"></span>Founder</div>
+              <div class="opt"><span class="dot"></span>Marketing</div>
+              <div class="opt"><span class="dot"></span>Ventas</div>
+            </div>
+            <div id="s3-q2" class="abs" style="inset: 0; opacity: 0;">
+              <div style="font-size: 60px; font-weight: 900; letter-spacing: -0.03em;">¿Qué quieres?</div>
+              <div class="opt"><span class="dot"></span>Más demos</div>
+              <div class="opt" id="s3-q2o"><span class="dot"></span>Más MRR</div>
+              <div class="opt"><span class="dot"></span>Menos churn</div>
+            </div>
+            <div id="s3-q3" class="abs" style="inset: 0; opacity: 0;">
+              <div style="font-size: 60px; font-weight: 900; letter-spacing: -0.03em;">¿Qué te duele?</div>
+              <div class="opt"><span class="dot"></span>Leads fríos</div>
+              <div class="opt"><span class="dot"></span>Sin seguimiento</div>
+              <div class="opt" id="s3-q3o"><span class="dot"></span>Landing genérica</div>
+            </div>
+          </div>
+        </div>
+        <div id="s3-tl" class="abs" style="left: 150px; top: 1110px; width: 780px; height: 300px;">
+          <div style="font-size: 30px; font-weight: 700; color: var(--muted);">Analizando respuestas…</div>
+          <div id="s3-b1" class="bar" style="left: 0; top: 80px; width: 0; background: var(--gold);"></div>
+          <div id="s3-b2" class="bar" style="left: 120px; top: 140px; width: 0; background: var(--red);"></div>
+          <div id="s3-b3" class="bar" style="left: 300px; top: 200px; width: 0; background: var(--ink);"></div>
+          <div id="s3-ph" class="abs" style="left: 0; top: 50px; width: 4px; height: 210px; background: var(--ink);"><div style="position: absolute; left: -12px; top: -8px; width: 28px; height: 28px; border-radius: 8px 8px 14px 14px; background: var(--ink);"></div></div>
+        </div>
+      </section>
+
+      <!-- ============ S4 · pill grid pan, dark "Pregunta ✓" pills (ref: "Clipped ✓") ============ -->
+      <section id="s4" class="scene" style="background: var(--paper);">
+        <div id="s4-grid" class="abs" style="left: 0; top: 0; width: 2400px; height: 2600px;"></div>
+      </section>
+
+      <!-- ============ S5 · black blob mask, case card + gold feature tags ============ -->
+      <section id="s5" class="scene" style="background: #fff;">
+        <div id="s5-b1" class="abs" style="left: -500px; top: 200px; width: 1000px; height: 1000px; border-radius: 50%; background: var(--night);"></div>
+        <div id="s5-b2" class="abs" style="left: 640px; top: 900px; width: 900px; height: 900px; border-radius: 50%; background: var(--night);"></div>
+        <div id="s5-b3" class="abs" style="left: 300px; top: -700px; width: 900px; height: 900px; border-radius: 50%; background: var(--night);"></div>
+        <div id="s5-card" class="abs" style="left: 310px; top: 420px; width: 460px; height: 760px; border-radius: 40px; background: linear-gradient(170deg, #22222e, #14141d); box-shadow: 0 40px 100px rgba(0,0,0,0.45); padding: 50px 44px; color: var(--cream); overflow: hidden;">
+          <div class="px" style="font-size: 26px; color: var(--gold);">CASO REAL</div>
+          <div style="font-size: 46px; font-weight: 800; margin-top: 22px;">SaaS B2B</div>
+          <div style="font-size: 116px; font-weight: 900; color: var(--gold); letter-spacing: -0.04em; margin-top: 30px; line-height: 1; margin-bottom: 14px;">4→19</div>
+          <div style="font-size: 36px; font-weight: 700; color: #b9b6c2;">demos al mes</div>
+          <div id="s5-chart" class="abs" style="left: 44px; right: 44px; bottom: 60px; height: 220px; display: flex; align-items: flex-end; gap: 22px;"></div>
+          <div id="s5-gl" class="abs" style="inset: 0; background: linear-gradient(180deg, transparent, rgba(232,56,45,0.9) 45%, rgba(245,197,27,0.9) 60%, transparent); opacity: 0;"></div>
+        </div>
+        <div id="s5-t1" class="tag" style="left: 60px; top: 330px;"><i></i>Casos reales</div>
+        <div id="s5-t2" class="tag" style="left: 700px; top: 640px;"><i></i>Datos</div>
+        <div id="s5-t3" class="tag" style="left: 60px; top: 960px;"><i></i>Resultados</div>
+        <div id="s5-t4" class="tag" style="left: 680px; top: 1110px;"><i></i>Consejos</div>
+      </section>
+
+      <!-- ============ S6 · "Esto [phone] tiene sentido" sandwich (ref: "Built to [phone] go viral") ============ -->
+      <section id="s6" class="scene dots" style="background-color: var(--paper);">
+        <div id="s6-l" class="tx" style="right: 700px; top: 760px; font-size: 92px; text-align: right;">Esto</div>
+        <div id="s6-ph" class="phone" style="left: 410px; top: 470px; width: 260px; height: 600px;">
+          <div class="scr" style="background: #fff; padding: 30px 22px;">
+            <div class="px" style="font-size: 16px; color: var(--muted);">CASO · DATO</div>
+            <div style="font-size: 30px; font-weight: 900; margin-top: 14px; line-height: 1.1;">El 68% de equipos como el tuyo…</div>
+            <div style="height: 12px; border-radius: 6px; background: var(--line); margin-top: 24px;"></div>
+            <div style="height: 12px; border-radius: 6px; background: var(--line); margin-top: 12px; width: 70%;"></div>
+            <div style="height: 120px; border-radius: 18px; background: var(--gold-soft); margin-top: 26px; display: flex; align-items: flex-end; gap: 10px; padding: 14px;">
+              <i style="flex: 1; height: 30%; background: var(--gold); border-radius: 5px;"></i><i style="flex: 1; height: 55%; background: var(--gold); border-radius: 5px;"></i><i style="flex: 1; height: 90%; background: var(--red); border-radius: 5px;"></i>
+            </div>
+            <div id="s6-ok" style="margin-top: 30px; height: 70px; border-radius: 20px; background: var(--ink); color: var(--cream); font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center;">Vale, tiene sentido</div>
+          </div>
+        </div>
+        <div id="s6-r1" class="tx" style="left: 710px; top: 760px; font-size: 92px;">tiene</div>
+        <div id="s6-r2" class="tx" style="left: 0; right: 0; top: 1150px; text-align: center; font-size: 150px; color: var(--red); font-style: italic; font-weight: 900;">sentido.</div>
+        <div id="s6-burst" class="full"></div>
+      </section>
+
+      <!-- ============ S7 · result card + answer tracks (ref: clip + track editor) ============ -->
+      <section id="s7" class="scene" style="background: radial-gradient(ellipse 80% 50% at 60% 45%, #fffaf0, #fff 60%);">
+        <div id="s7-card" class="phone" style="left: 70px; top: 470px; width: 360px; height: 720px;">
+          <div class="scr" style="background: linear-gradient(170deg, #22222e, #14141d); padding: 40px 30px; color: var(--cream);">
+            <div class="px" style="font-size: 20px; color: var(--gold);">TU RESULTADO</div>
+            <div style="width: 120px; height: 120px; border-radius: 50%; margin-top: 30px; background: conic-gradient(var(--gold) 0 72%, #33333f 72% 100%); display: flex; align-items: center; justify-content: center;"><div style="width: 86px; height: 86px; border-radius: 50%; background: #1b1b25; font-size: 32px; font-weight: 900; display: flex; align-items: center; justify-content: center;">72</div></div>
+            <div style="font-size: 44px; font-weight: 900; margin-top: 30px; line-height: 1.05;">Perfil: Escalando</div>
+            <div style="font-size: 26px; color: #b9b6c2; margin-top: 16px; line-height: 1.3;">Tu cuello de botella es la landing genérica.</div>
+            <div id="s7-badge" style="position: absolute; left: 30px; right: 30px; bottom: 40px; height: 76px; border-radius: 22px; background: var(--gold); color: var(--ink); font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center;">Hecho para ti ✓</div>
+          </div>
+        </div>
+        <div id="s7-trk" class="abs" style="left: 480px; top: 560px; width: 540px; height: 560px;">
+          <div class="abs" style="left: 0; top: 0; font-size: 28px; font-weight: 700; color: var(--muted);">Respuestas → resultado</div>
+          <div id="s7-ph" class="abs" style="left: 90px; top: 60px; width: 4px; height: 470px; background: var(--ink);"><div style="position: absolute; left: -12px; top: -8px; width: 28px; height: 28px; border-radius: 8px 8px 14px 14px; background: var(--ink);"></div></div>
+        </div>
+      </section>
+
+      <!-- ============ S8 · black, "Una oferta [phone] a su medida" (ref: "Every [phone] Time") ============ -->
+      <section id="s8" class="scene" style="background: var(--night);">
+        <div id="s8-l1" class="tx" style="right: 715px; top: 820px; font-size: 80px; color: var(--cream); text-align: right;">una</div>
+        <div id="s8-l2" class="tx" style="right: 715px; top: 910px; font-size: 80px; color: var(--cream); text-align: right;">oferta</div>
+        <div id="s8-ph" class="phone" style="left: 395px; top: 560px; width: 290px; height: 620px; background: #2a2a36;">
+          <div class="scr" style="background: #fff; padding: 36px 24px; text-align: center;">
+            <div class="px" style="font-size: 18px; color: var(--muted);">SOLO PARA TU PERFIL</div>
+            <div style="font-size: 84px; font-weight: 900; color: var(--red); letter-spacing: -0.05em; margin-top: 50px;">−30%</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 4px;">Plan Growth</div>
+            <div style="font-size: 22px; color: var(--muted); margin-top: 10px;">99€ → 69€ / mes</div>
+            <div style="position: absolute; left: 24px; right: 24px; bottom: 34px; height: 76px; border-radius: 22px; background: var(--ink); color: var(--gold); font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center;">Canjear</div>
+          </div>
+        </div>
+        <div id="s8-r1" class="tx" style="left: 715px; top: 820px; font-size: 80px; color: var(--cream);">a su</div>
+        <div id="s8-r2" class="tx" style="left: 715px; top: 910px; font-size: 80px; color: var(--gold); font-style: italic; font-weight: 900;">medida</div>
+        <div id="s8-spark" class="full"></div>
+      </section>
+
+      <!-- ============ S9 · floating 3D cards + countdown (ref: "Generate multiple clips") ============ -->
+      <section id="s9" class="scene" style="background: var(--paper);">
+        <div id="s9-f" class="full" style="transform-style: preserve-3d;"></div>
+        <div id="s9-lab" class="abs" style="left: 0; right: 0; top: 650px; text-align: center; font-size: 46px; font-weight: 800;">La oferta caduca en</div>
+        <div id="s9-cd" class="card" style="left: 150px; top: 740px; width: 780px; height: 280px; display: flex; align-items: center; justify-content: center; gap: 30px;">
+          <svg width="96" height="96" viewBox="0 0 48 48"><circle cx="24" cy="26" r="18" fill="none" stroke="#e8382d" stroke-width="5"/><path d="M24 16 V27 L31 31" stroke="#14141d" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M18 4 H30" stroke="#14141d" stroke-width="5" stroke-linecap="round"/></svg>
+          <div id="s9-num" style="font-size: 170px; font-weight: 900; letter-spacing: -0.04em; font-variant-numeric: tabular-nums;">14:59</div>
+        </div>
+      </section>
+
+      <!-- ============ S10 · gold button -> "Lead captado ✓" -> toggle list (ref: Publish / Completed / platform toggles) ============ -->
+      <section id="s10" class="scene" style="background: radial-gradient(ellipse 90% 60% at 50% 40%, #fffdf3, #fbefc0 70%, #f5e39a);">
+        <div id="s10-btn" class="abs" style="left: 250px; top: 560px; width: 580px; height: 160px; border-radius: 80px; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: 800; box-shadow: 0 24px 50px rgba(150,110,0,0.25);">
+          <span id="s10-b1">Captar lead</span>
+          <span id="s10-b2" class="abs" style="inset: 0; display: flex; align-items: center; justify-content: center; gap: 22px; color: var(--cream); opacity: 0;">Lead captado <svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="24" fill="none" stroke="#f5c51b" stroke-width="4"/><path d="M15 28 L24 36 L39 19" stroke="#f5c51b" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+        <div id="s10-r1" class="row" style="top: 860px;"><div class="hl"></div><div class="ic">1</div><div class="lb">Segmentado</div><div class="sw"><b></b></div></div>
+        <div id="s10-r2" class="row" style="top: 1030px;"><div class="hl"></div><div class="ic">2</div><div class="lb">Educado</div><div class="sw"><b></b></div></div>
+        <div id="s10-r3" class="row" style="top: 1200px;"><div class="hl"></div><div class="ic">3</div><div class="lb">Listo para comprar</div><div class="sw"><b></b></div></div>
+        <svg id="s10-cur" class="abs" style="left: 900px; top: 1300px;" width="56" height="70" viewBox="0 0 56 70"><path d="M4 4 L4 56 L18 44 L28 66 L38 61 L28 40 L46 40 Z" fill="#fff" stroke="#14141d" stroke-width="4" stroke-linejoin="round"/></svg>
+      </section>
+
+      <!-- ============ S11 · CTA + lockup ============ -->
+      <section id="s11" class="scene" style="background: #fff;">
+        <div id="s11-circ" class="full"></div>
+        <div id="s11-cta" class="abs" style="left: 0; right: 0; top: 640px; text-align: center; font-size: 112px; font-weight: 900; letter-spacing: -0.04em;">
+          <span id="s11-w1" style="display: inline-block;">Comenta</span>
+          <span id="s11-w2" style="display: inline-block; background: var(--red); color: var(--cream); padding: 6px 34px 14px; border-radius: 30px; margin-left: 12px;">QUIZ</span>
+        </div>
+        <div id="s11-sub" class="tx" style="left: 0; right: 0; top: 830px; text-align: center; font-size: 54px; font-weight: 700; color: #4a4854;"></div>
+        <div id="s11-lock" class="abs" style="left: 0; right: 0; top: 1060px; display: flex; justify-content: center; align-items: center; gap: 16px;">
+          <div style="font-size: 70px; font-weight: 900; letter-spacing: -0.03em;">SaaS</div>
+          <div class="px" style="font-size: 40px; background: var(--red); color: var(--cream); padding: 10px 16px 6px; border-radius: 10px; box-shadow: 5px 5px 0 #7e140d;">IN</div>
+          <div style="font-size: 70px; font-weight: 900; letter-spacing: -0.03em;">House</div>
+        </div>
+      </section>
+
+      <div id="cap"><div id="capbox" class="box" style="opacity: 0;"></div></div>
+      <div id="fade" data-layout-ignore></div>
+    </div>
+
+    <script>
+      // word times of assets/vo.mp3 (sih-quiz-film take; local whisper transcript, same array as x-batch/jordan)
+      const W = [["Tu",0.09,0.13],["próximo",0.13,0.67],["cliente",0.67,1.13],["no",1.13,1.26],["llega",1.26,1.59],["por",1.59,1.79],["la",1.79,1.91],["landing,",1.91,2.45],["llega",2.63,3],["por",3,3.32],["un",3.32,3.45],["quiz.",3.45,4.12],["Cinco",4.21,4.4],["a",4.4,4.45],["ocho",4.45,4.67],["preguntas",4.7,5.19],["para",5.19,5.42],["saber",5.42,5.7],["quién",5.7,6.03],["es,",6.03,6.24],["qué",6.31,6.33],["quiere",6.75,6.88],["y",6.88,7],["qué",7,7.48],["le",7.48,7.57],["duele.",7.57,8.34],["Entre",8.43,8.64],["pregunta",8.66,9.17],["y",9.17,9.23],["pregunta,",9.23,9.86],["casos",9.86,10.18],["reales",10.18,10.47],["y",10.47,10.72],["datos",10.72,10.97],["que",10.97,11.13],["le",11.13,11.26],["hacen",11.26,11.57],["pensar.",11.57,12.06],["Esto",12.33,12.48],["tiene",12.48,12.79],["sentido.",12.82,13.42],["Al",13.42,13.56],["final,",13.56,14.1],["un",14.1,14.25],["resultado",14.25,14.93],["hecho",14.93,15.31],["para",15.31,15.61],["él",15.61,15.69],["y",15.69,15.95],["una",15.95,16.03],["oferta",16.1,16.48],["a",16.53,16.55],["su",16.55,16.7],["medida,",16.7,17.21],["con",17.22,17.32],["un",17.41,17.45],["contador",17.45,17.97],["para",17.97,18.23],["canjearla.",18.23,19.04],["No",19.04,19.19],["solo",19.19,19.43],["captas",19.79,19.94],["el",19.95,20.09],["lead,",20.09,20.55],["lo",20.55,20.69],["segmentas,",20.69,21.44],["lo",21.44,21.61],["educas",21.61,22.14],["y",22.18,22.2],["lo",22.2,22.28],["llevas",22.28,22.59],["a",22.59,22.69],["la",22.69,22.78],["compra.",22.8,23.37],["Comenta",23.37,23.82],["quiz",23.82,24.04],["y",24.09,24.14],["te",24.14,24.27],["enseño",24.27,24.71],["cómo",24.71,24.74],["montarlo.",25.23,25.8]];
+      const VO = 0.3;
+      const t = (i) => W[i][1] + VO;            // start of word i on the film clock
+      const END = 28;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (id) => document.getElementById(id);
+      const el = (tag, css, parent, html) => { const d = document.createElement(tag); Object.assign(d.style, css); if (html) d.innerHTML = html; parent.appendChild(d); return d; };
+
+      // scene windows (cuts land on word starts)
+      const T3 = t(12) - 0.05, T4 = t(26) - 0.05, T5 = t(30) - 0.08, T6 = t(38) - 0.05, T7 = t(41) - 0.05, T8 = t(49) - 0.05, T9 = t(54) - 0.05, T10 = t(59) - 0.05, T11 = t(74) - 0.05;
+      const SC = [["s1", 0, t(8)], ["s2", t(8), T3], ["s3", T3, T4], ["s4", T4, T5], ["s5", T5, T6], ["s6", T6, T7], ["s7", T7, T8], ["s8", T8, T9], ["s9", T9, T10], ["s10", T10, T11], ["s11", T11, END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b); });
+
+      // whip-in: content arrives with a short directional motion blur (the reference's cut grammar)
+      const whip = (sel, at, dx = 0, dy = 160) => tl.fromTo(sel, { x: dx, y: dy, filter: "blur(18px)", opacity: 0 }, { x: 0, y: 0, filter: "blur(0px)", opacity: 1, duration: 0.38, ease: "expo.out" }, at);
+      // word-by-word headline
+      function words(host, from, to, at0, opts = {}) {
+        const h = $(host);
+        for (let i = from; i <= to; i++) {
+          const s = document.createElement("span"); s.className = "w"; s.id = `${host}-w${i}`;
+          s.textContent = opts.map && opts.map[i] !== undefined ? opts.map[i] : W[i][0];
+          h.appendChild(s);
+          tl.fromTo(s, { opacity: 0, y: 40, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.25, ease: "power3.out" }, Math.max(at0 || 0, t(i) - 0.04));
+        }
+      }
+
+      /* ---------- caption pill (dark UI pill, active word brightens) ---------- */
+      const CAP = [[12, 19], [20, 25], [26, 29], [30, 37], [41, 47], [54, 58], [59, 63], [64, 73]];
+      const capEnd = { 25: T4 - 0.02, 29: T5 - 0.02, 37: T6 - 0.02, 47: T8 - 0.02, 58: T10 - 0.02, 73: T11 - 0.02 };
+      const box = $("capbox");
+      CAP.forEach(([a, b], k) => {
+        const grp = el("span", { position: "absolute", left: 0, right: 0, opacity: 0 }, box); grp.id = "cap-g" + k;
+        for (let i = a; i <= b; i++) { const s = el("span", {}, grp); s.className = "w"; s.id = "cap-w" + i; s.textContent = W[i][0]; }
+      });
+      // box sizing: render each group in flow so the pill hugs the active line
+      CAP.forEach(([a, b], k) => {
+        const g = $("cap-g" + k), start = t(a) - 0.06, stop = capEnd[b] !== undefined ? capEnd[b] : t(b + 1) - 0.06;
+        tl.set(g, { opacity: 1, position: "relative" }, start);
+        tl.set(g, { opacity: 0, position: "absolute" }, stop);
+        for (let i = a; i <= b; i++) tl.to("#cap-w" + i, { opacity: 1, duration: 0.12 }, t(i));
+        if ([12, 26, 30, 41, 54, 59].includes(a)) tl.fromTo(box, { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: "back.out(2)", immediateRender: false }, start);
+        if (capEnd[b] !== undefined) tl.to(box, { opacity: 0, duration: 0.1 }, stop - 0.1);
+      });
+      ["cap-w15", "cap-w31", "cap-w44", "cap-w56", "cap-w63", "cap-w73"].forEach((id) => tl.set("#" + id, { color: "#f5c51b" }, 0));
+
+      /* ---------- S1 · dark stage ---------- */
+      const C1 = $("s1-circ");
+      for (let k = 0; k < 5; k++) {
+        const top = el("div", { position: "absolute", width: "560px", height: "560px", borderRadius: "50%", left: -260 + k * 330 + "px", top: "-360px", background: k % 2 ? "#b8251c" : "#e8382d", boxShadow: "-30px 20px 60px rgba(0,0,0,0.45)" }, C1); top.id = "s1-ct" + k;
+        const bot = el("div", { position: "absolute", width: "560px", height: "560px", borderRadius: "50%", left: -120 + k * 330 + "px", top: "1700px", background: k % 2 ? "#e8382d" : "#b8251c", boxShadow: "-30px -20px 60px rgba(0,0,0,0.45)" }, C1); bot.id = "s1-cb" + k;
+        tl.fromTo(top, { y: -260, x: 0 }, { y: 0, x: -120, duration: 2.6, ease: "power2.out" }, 0.02 * k);
+        tl.fromTo(bot, { y: 260, x: 0 }, { y: 0, x: 120, duration: 2.6, ease: "power2.out" }, 0.02 * k);
+      }
+      words("s1-h1", 0, 2, 0.05);
+      words("s1-h2", 3, 7);
+      tl.fromTo("#s1-cardw", { rotationX: 28, rotationY: -22, y: 220, opacity: 0 }, { rotationX: 10, rotationY: -8, y: 0, opacity: 1, duration: 0.8, ease: "expo.out" }, 0.25);
+      tl.to("#s1-cardw", { rotationX: 4, rotationY: 6, duration: 1.45, ease: "sine.inOut" }, 1.05);
+      const URL = "tusaas.com/landing";
+      for (let n = 1; n <= URL.length; n++) tl.set("#s1-urltx", { textContent: URL.slice(0, n) }, 0.7 + n * 0.055);
+      tl.set("#s1-caret", { opacity: 0 }, 1.9);
+      tl.fromTo("#s1-cur", { x: 0, y: 0 }, { x: -50, y: -290, duration: 0.7, ease: "power3.inOut" }, 1.3);
+      tl.to("#s1-cur", { scale: 0.85, duration: 0.06, yoyo: true, repeat: 1 }, 2.03);
+      tl.to("#s1-send", { scale: 0.88, duration: 0.07, yoyo: true, repeat: 1 }, 2.03);
+      tl.to("#s1-strike", { scaleX: 1, duration: 0.25, ease: "power2.out" }, t(7) + 0.05);
+      tl.to("#s1-urltx", { color: "#9b98a3", duration: 0.2 }, t(7) + 0.1);
+      tl.fromTo("#s1-x", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.2 }, t(7) + 0.15);
+      tl.to("#s1-h2-w7", { color: "#e8382d", duration: 0.15 }, t(7));
+      // camera swoop into the send button
+      tl.to("#s1-cur", { opacity: 0, duration: 0.1 }, 2.5);
+      tl.to("#s1-cardw", { rotationX: 18, rotationY: -26, scale: 5.5, x: -2900, y: -1200, duration: 0.42, ease: "power3.in", transformOrigin: "50% 50%" }, 2.52);
+      tl.to(["#s1-h1", "#s1-h2"], { opacity: 0, filter: "blur(14px)", duration: 0.25 }, 2.52);
+
+      /* ---------- S2 · button -> QUIZ ---------- */
+      tl.fromTo("#s2-btn", { scale: 2.6, filter: "blur(16px)" }, { scale: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, t(8));
+      words("s2-t", 8, 10);
+      tl.to("#s2-btn", { scaleX: 1.4, scaleY: 0.75, opacity: 0, duration: 0.16, ease: "power2.in" }, t(11) - 0.04);
+      tl.fromTo("#s2-pill", { scaleX: 0.63, scaleY: 1.3, opacity: 0 }, { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.34, ease: "back.out(1.8)" }, t(11) - 0.02);
+      tl.fromTo("#s2-quiz", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.2)" }, t(11) + 0.06);
+      tl.to("#s2-t", { y: -40, duration: 0.3, ease: "power2.out" }, t(11));
+      tl.to("#s2-pill", { scale: 7, backgroundColor: "#f7f5ef", duration: 0.32, ease: "power3.in" }, T3 - 0.3);
+      tl.to("#s2-quiz", { opacity: 0, duration: 0.12 }, T3 - 0.3);
+
+      /* ---------- S3 · quiz card ---------- */
+      tl.fromTo("#s3-vl", { y: 0 }, { y: 700, duration: T4 - T3, ease: "none" }, T3);
+      tl.fromTo("#s3-vr", { y: 0 }, { y: -700, duration: T4 - T3, ease: "none" }, T3);
+      tl.fromTo("#s3-card", { rotationY: -24, rotationX: 14, y: 140, opacity: 0, filter: "blur(16px)" }, { rotationY: -8, rotationX: 6, y: 0, opacity: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, T3);
+      tl.to("#s3-card", { rotationY: 7, rotationX: 3, duration: T4 - T3 - 0.55, ease: "sine.inOut" }, T3 + 0.55);
+      whip("#s3-chip", T3 + 0.02, 0, -60);
+      tl.set("#s3-chiptx", { textContent: "5–8" }, t(14));
+      tl.fromTo("#s3-chiptx", { scale: 1.25 }, { scale: 1, duration: 0.25, ease: "back.out(3)", immediateRender: false }, t(14));
+      const Q = [[18, "s3-q1", "s3-q1o", "1/8", 12.5], [21, "s3-q2", "s3-q2o", "2/8", 25], [23, "s3-q3", "s3-q3o", "3/8", 37.5]];
+      Q.forEach(([wi, q, o, n, p], k) => {
+        if (k > 0) {
+          tl.to("#" + Q[k - 1][1], { opacity: 0, x: -60, duration: 0.14 }, t(wi) - 0.22);
+          tl.fromTo("#" + q, { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.2, ease: "power2.out" }, t(wi) - 0.1);
+          tl.set("#s3-n", { textContent: n }, t(wi) - 0.1);
+          tl.to("#s3-prog", { width: p + "%", duration: 0.3 }, t(wi) - 0.1);
+        }
+        tl.set("#" + o, { className: "opt on" }, t(wi) + 0.25 + (k === 2 ? 0.3 : 0));
+        tl.fromTo("#" + o, { scale: 0.96 }, { scale: 1, duration: 0.2, ease: "back.out(3)", immediateRender: false }, t(wi) + 0.25 + (k === 2 ? 0.3 : 0));
+      });
+      whip("#s3-tl", T3 + 0.15, 0, 80);
+      tl.fromTo("#s3-ph", { x: 0 }, { x: 760, duration: T4 - T3 - 0.4, ease: "none" }, T3 + 0.3);
+      tl.to("#s3-b1", { width: 560, duration: 2.0, ease: "none" }, T3 + 0.3);
+      tl.to("#s3-b2", { width: 520, duration: 2.4, ease: "none" }, T3 + 0.9);
+      tl.to("#s3-b3", { width: 440, duration: 2.0, ease: "none" }, T3 + 1.9);
+
+      /* ---------- S4 · pill grid ---------- */
+      const G = $("s4-grid");
+      const DARK = { "2,1": "Pregunta 2", "4,2": "Pregunta 3" };
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 6; c++) {
+        const x = c * 480 + (r % 2 ? 240 : 0) - 100, y = r * 200 + 200, key = r + "," + c;
+        if (DARK[key]) {
+          const d = el("div", { left: x - 40 + "px", top: y - 10 + "px" }, G,
+            `<span>${DARK[key]}</span><svg width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="32" fill="none" stroke="#9fd36b" stroke-width="5"/><path id="s4-ck${r}" pathLength="1" d="M22 39 L33 50 L54 27" stroke="#9fd36b" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:1;stroke-dashoffset:1"/></svg>`);
+          d.className = "pilld"; d.id = "s4-d" + r;
+        } else { const p = el("div", { left: x + "px", top: y + "px" }, G); p.className = "pillg"; }
+      }
+      // pill (2,1) centre ≈ (620, 685); pill (4,2) centre ≈ (1100, 1085)
+      tl.fromTo("#s4-grid", { x: 540 - 620 + 500, y: 760 - 685 + 300, filter: "blur(14px)" }, { x: 540 - 620, y: 760 - 685, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, T4);
+      tl.fromTo("#s4-d2", { scale: 0.85 }, { scale: 1, duration: 0.3, ease: "back.out(2.5)" }, T4 + 0.15);
+      tl.to("#s4-ck2", { strokeDashoffset: 0, duration: 0.3 }, t(27) + 0.05);
+      tl.to("#s4-grid", { x: 540 - 1100, y: 760 - 1085, duration: 0.42, ease: "power3.inOut" }, t(28) - 0.05);
+      tl.fromTo("#s4-grid", { filter: "blur(0px)" }, { filter: "blur(10px)", duration: 0.2, yoyo: true, repeat: 1, immediateRender: false }, t(28) - 0.05);
+      tl.fromTo("#s4-d4", { scale: 0.85 }, { scale: 1, duration: 0.3, ease: "back.out(2.5)" }, t(29) - 0.1);
+      tl.to("#s4-ck4", { strokeDashoffset: 0, duration: 0.3 }, t(29) + 0.12);
+
+      /* ---------- S5 · blob mask + tags ---------- */
+      tl.fromTo("#s5-b1", { x: 600, y: 0, scale: 1.6 }, { x: 0, y: 120, scale: 1, duration: 0.6, ease: "expo.out" }, T5);
+      tl.fromTo("#s5-b2", { x: -500, y: -400, scale: 1.8 }, { x: 0, y: 0, scale: 1, duration: 0.6, ease: "expo.out" }, T5);
+      tl.fromTo("#s5-b3", { x: -300, y: 500, scale: 1.8 }, { x: 0, y: 0, scale: 1, duration: 0.6, ease: "expo.out" }, T5);
+      tl.to("#s5-b1", { x: -180, y: 260, duration: T6 - T5 - 0.6, ease: "sine.inOut" }, T5 + 0.6);
+      tl.to("#s5-b2", { x: 160, y: 120, duration: T6 - T5 - 0.6, ease: "sine.inOut" }, T5 + 0.6);
+      tl.to("#s5-b3", { x: 120, y: -160, duration: T6 - T5 - 0.6, ease: "sine.inOut" }, T5 + 0.6);
+      tl.fromTo("#s5-card", { scale: 0.7, rotation: -6, opacity: 0, filter: "blur(14px)" }, { scale: 1, rotation: 0, opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "back.out(1.6)" }, T5 + 0.05);
+      tl.to("#s5-card", { rotation: 2, y: -20, duration: T6 - T5 - 0.6, ease: "sine.inOut" }, T5 + 0.55);
+      const CH = $("s5-chart");
+      [26, 38, 52, 70, 100].forEach((h, k) => {
+        const b = el("i", { flex: "1", height: h + "%", borderRadius: "10px", background: k === 4 ? "#e8382d" : "#f5c51b", transformOrigin: "50% 100%" }, CH); b.id = "s5-bar" + k;
+        tl.fromTo(b, { scaleY: 0 }, { scaleY: 1, duration: 0.35, ease: "back.out(1.8)" }, t(33) + k * 0.07);
+      });
+      [["s5-t1", t(30) + 0.05, -1], ["s5-t2", t(33), 1], ["s5-t3", t(33) + 0.35, -1], ["s5-t4", t(36) + 0.0, 1]].forEach(([id, at, s]) => {
+        tl.fromTo("#" + id, { scale: 0, rotation: s * 14, opacity: 0 }, { scale: 1, rotation: s * -3, opacity: 1, duration: 0.35, ease: "back.out(2.6)" }, at);
+        tl.to("#" + id, { y: s * 26, x: s * -10, duration: Math.max(0.5, T6 - at - 0.4), ease: "sine.inOut" }, at + 0.35);
+      });
+      // glitch wipe out (ref: green glitch)
+      tl.to("#s5-gl", { opacity: 1, duration: 0.05, yoyo: true, repeat: 3 }, T6 - 0.26);
+      tl.fromTo("#s5-gl", { yPercent: -60 }, { yPercent: 60, duration: 0.26, ease: "none", immediateRender: false }, T6 - 0.26);
+      tl.to("#s5-card", { skewX: 8, x: 30, duration: 0.05, yoyo: true, repeat: 3 }, T6 - 0.26);
+
+      /* ---------- S6 · sandwich ---------- */
+      tl.fromTo("#s6-ph", { y: 500, rotation: 8, filter: "blur(16px)" }, { y: 0, rotation: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, T6);
+      tl.fromTo("#s6-l", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, t(38) - 0.02);
+      tl.fromTo("#s6-r1", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, t(39) - 0.02);
+      tl.fromTo("#s6-r2", { opacity: 0, y: 80, skewX: -12, scale: 0.8 }, { opacity: 1, y: 0, skewX: 0, scale: 1, duration: 0.3, ease: "power3.out" }, t(40) - 0.02);
+      tl.fromTo("#s6-ok", { scale: 1 }, { scale: 1.08, backgroundColor: "#e8382d", duration: 0.14, yoyo: true, repeat: 1, immediateRender: false }, t(40));
+      const B6 = $("s6-burst");
+      for (let k = 0; k < 7; k++) {
+        const ang = -1.9 + k * 0.42, r = 170 + rnd() * 80;
+        const d = el("div", { position: "absolute", left: "640px", top: "550px", width: "64px", height: "64px", borderRadius: "50%", background: k % 2 ? "#f5c51b" : "#e8382d", color: "#fff", fontSize: "38px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" }, B6, "✓");
+        d.id = "s6-b" + k;
+        tl.fromTo(d, { x: 0, y: 0, scale: 0, opacity: 0 }, { x: Math.cos(ang) * r, y: Math.sin(ang) * r, scale: 0.6 + rnd() * 0.6, opacity: 1, duration: 0.45, ease: "expo.out" }, t(40) + 0.04 + k * 0.03);
+        tl.to(d, { opacity: 0, y: "-=60", duration: 0.3 }, T7 - 0.35);
+      }
+      tl.to(["#s6-l", "#s6-r1", "#s6-r2", "#s6-ph"], { x: -300, filter: "blur(16px)", opacity: 0, duration: 0.2, ease: "power2.in" }, T7 - 0.2);
+
+      /* ---------- S7 · result + tracks ---------- */
+      whip("#s7-card", T7, -200, 0);
+      const TR = $("s7-trk");
+      const ICON = ["?", "◎", "↗", "€"];
+      [[100, 300, "#9b5cf6"], [30, 260, "#f5c51b"], [170, 250, "#f5c51b"], [60, 140, "#9b5cf6"]].forEach(([x0, w, c], k) => {
+        el("div", { position: "absolute", left: "0px", top: 80 + k * 120 + "px", width: "60px", height: "60px", borderRadius: "16px", background: "#14141d", color: "#f5c51b", fontSize: "32px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" }, TR, ICON[k]);
+        const b = el("div", { position: "absolute", left: 100 + x0 + "px", top: 96 + k * 120 + "px", width: w + "px", height: "28px", borderRadius: "14px", background: c === "#9b5cf6" ? "#e8382d" : c, transformOrigin: "0 50%", boxShadow: "0 8px 20px rgba(0,0,0,0.12)" }, TR); b.id = "s7-b" + k;
+        tl.fromTo(b, { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, t(43) + k * 0.18);
+      });
+      whip("#s7-trk", T7 + 0.1, 200, 0);
+      tl.fromTo("#s7-ph", { x: 0 }, { x: 420, duration: T8 - T7 - 0.3, ease: "none" }, T7 + 0.2);
+      tl.fromTo("#s7-badge", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2.5)" }, t(45));
+      tl.to(["#s7-card", "#s7-trk"], { x: 400, filter: "blur(16px)", opacity: 0, duration: 0.2, ease: "power2.in" }, T8 - 0.2);
+
+      /* ---------- S8 · offer sandwich on black ---------- */
+      tl.fromTo("#s8-ph", { scale: 0.6, opacity: 0, filter: "blur(18px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, T8);
+      [["s8-l1", 49, -60], ["s8-l2", 50, -60], ["s8-r1", 51, 60], ["s8-r2", 53, 60]].forEach(([id, wi, dx]) => tl.fromTo("#" + id, { opacity: 0, x: dx }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, t(wi) - 0.03));
+      const SP = $("s8-spark");
+      for (let k = 0; k < 6; k++) {
+        const d = el("div", { position: "absolute", left: 700 + rnd() * 60 + "px", top: 520 + rnd() * 60 + "px", width: "30px", height: "30px", background: "#f5c51b", clipPath: "polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)" }, SP); d.id = "s8-s" + k;
+        tl.fromTo(d, { scale: 0, opacity: 0 }, { scale: 0.8 + rnd(), opacity: 1, x: -40 + rnd() * 140, y: -120 + rnd() * 100, rotation: 90, duration: 0.5, ease: "expo.out" }, t(50) + 0.05 + k * 0.05);
+        tl.to(d, { opacity: 0, duration: 0.3 }, t(53) + 0.2);
+      }
+      tl.to("#s8-ph", { scale: 1.06, duration: 0.6, ease: "sine.inOut" }, t(50) + 0.4);
+
+      /* ---------- S9 · floating cards + countdown ---------- */
+      const F = $("s9-f");
+      const SPOTS = [[60, 220, 260, 330], [760, 160, 280, 220], [40, 1120, 300, 230], [800, 1050, 230, 320], [340, 1180, 260, 200], [700, 330, 220, 260], [120, 520, 200, 150], [860, 560, 180, 200]];
+      SPOTS.forEach(([x, y, w, h], k) => {
+        const c = el("div", { left: x + "px", top: y + "px", width: w + "px", height: h + "px" }, F, `<div class="h"></div><div class="l"></div><div class="l" style="width:70%"></div><div class="${k % 3 === 0 ? "r" : "g"}"></div>`);
+        c.className = "fcard"; c.id = "s9-c" + k;
+        const z = -300 + rnd() * 500, rot = -18 + rnd() * 36;
+        tl.fromTo(c, { x: (x < 540 ? -1 : 1) * 700, y: 200 - rnd() * 400, rotation: rot * 2, filter: "blur(24px)", opacity: 0 }, { x: 0, y: 0, rotation: rot, filter: "blur(" + (z < -100 ? 3 : 0) + "px)", opacity: 1, duration: 0.55, ease: "expo.out" }, T9 + k * 0.035);
+        tl.to(c, { x: (x < 540 ? -1 : 1) * 60, y: -80 + rnd() * 60, rotation: rot * 0.6, duration: T10 - T9 - 0.6, ease: "sine.inOut" }, T9 + 0.6);
+      });
+      tl.fromTo("#s9-cd", { scale: 0.5, opacity: 0, rotationX: 40 }, { scale: 1, opacity: 1, rotationX: 0, duration: 0.45, ease: "back.out(1.6)" }, t(56) - 0.25);
+      tl.fromTo("#s9-lab", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25 }, t(56) - 0.1);
+      tl.set("#s9-num", { textContent: "14:58" }, 18.55);
+      tl.set("#s9-num", { textContent: "14:57" }, 19.05);
+      [18.55, 19.05].forEach((a) => tl.fromTo("#s9-num", { scale: 1.06, color: "#e8382d" }, { scale: 1, color: "#14141d", duration: 0.3, immediateRender: false }, a));
+
+      /* ---------- S10 · captar lead -> toggles ---------- */
+      tl.fromTo("#s10-btn", { scale: 0.6, opacity: 0, y: 60 }, { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(2)" }, T10);
+      tl.fromTo("#s10-cur", { x: 0, y: 0, opacity: 0 }, { x: -260, y: -640, opacity: 1, duration: 0.6, ease: "power3.inOut" }, T10 + 0.1);
+      tl.to("#s10-btn", { scale: 0.93, duration: 0.07, yoyo: true, repeat: 1 }, t(61) - 0.04);
+      tl.to("#s10-btn", { backgroundColor: "#1d1b16", duration: 0.2 }, t(63) - 0.02);
+      tl.to("#s10-b1", { opacity: 0, duration: 0.12 }, t(63) - 0.02);
+      tl.to("#s10-b2", { opacity: 1, duration: 0.2 }, t(63) + 0.04);
+      tl.to("#s10-cur", { x: 0, y: 0, opacity: 0, duration: 0.5, ease: "power2.in" }, t(63) + 0.25);
+      tl.to("#s10-btn", { y: -110, scale: 0.86, duration: 0.4, ease: "power3.inOut" }, t(64) - 0.1);
+      [["s10-r1", t(64) - 0.05, t(65) + 0.05], ["s10-r2", t(64) + 0.05, t(67) + 0.05], ["s10-r3", t(64) + 0.15, t(73) - 0.02]].forEach(([id, a, on]) => {
+        tl.fromTo("#" + id, { y: 160, opacity: 0, filter: "blur(10px)" }, { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, a);
+        tl.to(`#${id} .hl`, { scaleX: 1, duration: 0.35, ease: "power2.out" }, on);
+        tl.to(`#${id} .sw`, { backgroundColor: "#9fd36b", duration: 0.15 }, on);
+        tl.to(`#${id} .sw b`, { x: 54, duration: 0.18, ease: "back.out(2)" }, on);
+      });
+      tl.to("#s10-r3", { borderColor: "#f5c51b", duration: 0.2 }, t(70));
+
+      /* ---------- S11 · CTA + lockup ---------- */
+      const C11 = $("s11-circ");
+      for (let k = 0; k < 5; k++) {
+        const d = el("div", { position: "absolute", width: "520px", height: "520px", borderRadius: "50%", left: -160 + k * 320 + "px", top: "1640px", background: k % 2 ? "#b8251c" : "#e8382d" }, C11); d.id = "s11-c" + k;
+        tl.fromTo(d, { y: 500 }, { y: 0, duration: 0.7, ease: "expo.out" }, T11 + 0.1 + k * 0.05);
+      }
+      tl.fromTo("#s11-w1", { opacity: 0, x: -120, filter: "blur(14px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, t(74) - 0.02);
+      tl.fromTo("#s11-w2", { opacity: 0, scale: 0.3, rotation: -10 }, { opacity: 1, scale: 1, rotation: -3, duration: 0.4, ease: "back.out(2.6)" }, t(75) - 0.02);
+      words("s11-sub", 76, 80);
+      tl.fromTo("#s11-lock", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, t(78));
+      tl.to("#fade", { opacity: 1, duration: 0.5 }, END - 0.5);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

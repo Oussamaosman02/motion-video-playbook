@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      @font-face { font-family: "Caveat"; src: url("assets/Caveat.ttf") format("truetype"); font-weight: 400 700; }
+      :root {
+        --bg: #fbfaf7; --ink: #16141b; --muted: #67646e; --line: #ebe7de;
+        --red: #e8382d; --red-small: #c42a20; --red-deep: #7e140d; --gold: #f5c51b; --cream: #f2efe6; --soft: #fff4f1;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Archivo", sans-serif; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+      .hand { font-family: "Caveat", cursive; font-weight: 700; color: var(--red-small); }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .full { position: absolute; inset: 0; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+
+      /* background glow (the Retti blue wave, in brand red/gold) */
+      #glow { position: absolute; left: -240px; right: -240px; bottom: -380px; height: 1000px; }
+      .blob { position: absolute; width: 900px; height: 620px; border-radius: 50%; filter: blur(70px); }
+      #stripes {
+        position: absolute; inset: 0;
+        background: repeating-linear-gradient(90deg, rgba(251, 250, 247, 0.55) 0 14px, rgba(251, 250, 247, 0) 14px 46px);
+        filter: blur(5px);
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 75%); mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 75%);
+      }
+
+      /* captions: words sharpen from blur one by one */
+      .cap { position: absolute; left: 60px; right: 60px; top: 190px; height: 340px; }
+      .capg { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 62px; font-weight: 620; line-height: 1.16; letter-spacing: -0.025em; }
+      .capg.big { top: 0; bottom: auto; font-size: 116px; font-weight: 720; line-height: 1.04; letter-spacing: -0.04em; }
+      .bigwrap { position: absolute; left: 70px; right: 70px; top: 760px; }
+      .w { display: inline-block; }
+      .acc { color: var(--red); }
+
+      /* UI */
+      .card { position: absolute; background: #fff; border-radius: 34px; box-shadow: 0 30px 80px rgba(60, 30, 20, 0.10), 0 0 0 1px rgba(30, 20, 10, 0.06); }
+      .glass { position: absolute; border-radius: 46px; background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(255, 214, 200, 0.55)); box-shadow: 0 0 0 1px rgba(232, 56, 45, 0.10), 0 40px 120px rgba(232, 56, 45, 0.16); }
+      .chrome { height: 58px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 24px; }
+      .chrome i { width: 14px; height: 14px; border-radius: 50%; background: #e4e0d7; display: block; }
+      .url { margin-left: 18px; flex: 1; height: 34px; border-radius: 10px; background: #f3f1ec; color: var(--muted); font-size: 20px; display: flex; align-items: center; padding: 0 16px; }
+      .btn { position: absolute; display: flex; align-items: center; justify-content: center; background: var(--red); color: #fff; border-radius: 18px; font-weight: 700; }
+      .btn.dark { background: var(--ink); }
+      .chip { display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px; border-radius: 999px; font-size: 26px; font-weight: 650; background: #f4f1ea; color: var(--ink); }
+      .chip.red { background: var(--red-small); color: #fff; }
+      .chip.gold { background: var(--gold); color: var(--ink); }
+      .opt { position: absolute; left: 0; right: 0; height: 100px; border: 2px solid var(--line); border-radius: 20px; display: flex; align-items: center; padding: 0 30px; font-size: 38px; font-weight: 600; background: #fff; overflow: hidden; }
+      .opt .sel { position: absolute; inset: 0; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+      .qt { font-size: 54px; font-weight: 760; letter-spacing: -0.03em; }
+      .seg { flex: 1; height: 14px; border-radius: 8px; background: #efebe3; overflow: hidden; }
+      .seg i { display: block; height: 100%; background: var(--red); transform-origin: left center; transform: scaleX(0); }
+      .av { position: absolute; border-radius: 26px; overflow: hidden; box-shadow: 0 20px 50px rgba(40, 20, 10, 0.16); }
+      .av img, .ic img { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .ic { position: absolute; }
+      .ic img { object-fit: contain; }
+      .mini { display: flex; align-items: center; gap: 26px; padding: 26px 30px; }
+      .mini .k { font-size: 24px; font-weight: 700; color: var(--red-small); text-transform: uppercase; letter-spacing: 0.08em; }
+      .mini .v { font-size: 38px; font-weight: 720; letter-spacing: -0.02em; line-height: 1.12; margin-top: 6px; }
+      .tag { font-size: 18px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+      .pill { position: absolute; height: 70px; padding: 0 26px; border-radius: 999px; background: var(--ink); color: #fff; display: flex; align-items: center; font-size: 26px; font-weight: 650; }
+      .row { display: flex; align-items: center; gap: 20px; font-size: 36px; font-weight: 620; margin-top: 22px; }
+      .tick { width: 50px; height: 50px; border-radius: 50%; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; flex: none; }
+      .lane { position: absolute; left: 0; right: 0; height: 96px; }
+      .lane .lbl { position: absolute; left: 30px; top: 30px; font-size: 30px; font-weight: 700; }
+      .bar { position: absolute; top: 14px; height: 68px; border-radius: 18px; transform-origin: left center; }
+      .cursor { position: absolute; left: 0; top: 0; width: 54px; height: 60px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.25)); }
+      .appicon { display: flex; align-items: center; justify-content: center; background: linear-gradient(150deg, #ff5a4c, #c42a20); color: #fff8f0; font-family: "Silkscreen", monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="58.4" data-width="1080" data-height="1920">
+      <!-- audio: VO starts at 0.30s; SFX carry absolute times -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="53.9" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="58.4" data-track-index="11" data-volume="0.2"></audio>
+      <audio id="wh1" src="assets/whoosh.mp3" data-start="4.3" data-duration="1.0" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="wh2" src="assets/whoosh.mp3" data-start="10.1" data-duration="1.0" data-track-index="13" data-volume="0.35"></audio>
+      <audio id="wh3" src="assets/whoosh.mp3" data-start="18.1" data-duration="1.0" data-track-index="14" data-volume="0.35"></audio>
+      <audio id="wh4" src="assets/whoosh.mp3" data-start="29.6" data-duration="1.0" data-track-index="15" data-volume="0.35"></audio>
+      <audio id="wh5" src="assets/whoosh.mp3" data-start="34.05" data-duration="1.0" data-track-index="16" data-volume="0.35"></audio>
+      <audio id="wh6" src="assets/whoosh.mp3" data-start="47.65" data-duration="1.0" data-track-index="17" data-volume="0.35"></audio>
+      <audio id="pop1" src="assets/pop.mp3" data-start="8.25" data-duration="0.5" data-track-index="18" data-volume="0.5"></audio>
+      <audio id="pop2" src="assets/pop.mp3" data-start="22.73" data-duration="0.5" data-track-index="19" data-volume="0.5"></audio>
+      <audio id="pop3" src="assets/pop.mp3" data-start="24.02" data-duration="0.5" data-track-index="20" data-volume="0.5"></audio>
+      <audio id="pop4" src="assets/pop.mp3" data-start="24.81" data-duration="0.5" data-track-index="21" data-volume="0.5"></audio>
+      <audio id="pop5" src="assets/pop.mp3" data-start="25.55" data-duration="0.5" data-track-index="22" data-volume="0.5"></audio>
+      <audio id="pop6" src="assets/pop.mp3" data-start="31.85" data-duration="0.5" data-track-index="23" data-volume="0.5"></audio>
+      <audio id="pop7" src="assets/pop.mp3" data-start="38.7" data-duration="0.5" data-track-index="24" data-volume="0.5"></audio>
+      <audio id="pop8" src="assets/pop.mp3" data-start="43.2" data-duration="0.5" data-track-index="25" data-volume="0.5"></audio>
+      <audio id="pop9" src="assets/pop.mp3" data-start="45.05" data-duration="0.5" data-track-index="26" data-volume="0.5"></audio>
+      <audio id="pop10" src="assets/pop.mp3" data-start="53.5" data-duration="0.5" data-track-index="27" data-volume="0.55"></audio>
+      <audio id="clk1" src="assets/click.mp3" data-start="9.75" data-duration="0.5" data-track-index="28" data-volume="0.6"></audio>
+      <audio id="clk2" src="assets/click.mp3" data-start="13.8" data-duration="0.5" data-track-index="29" data-volume="0.6"></audio>
+      <audio id="clk3" src="assets/click.mp3" data-start="15.5" data-duration="0.5" data-track-index="30" data-volume="0.6"></audio>
+      <audio id="clk4" src="assets/click.mp3" data-start="17.3" data-duration="0.5" data-track-index="31" data-volume="0.6"></audio>
+      <audio id="clk5" src="assets/click.mp3" data-start="47.17" data-duration="0.5" data-track-index="32" data-volume="0.6"></audio>
+      <audio id="tck" src="assets/tick.mp3" data-start="45.1" data-duration="1.5" data-track-index="33" data-volume="0.4"></audio>
+      <audio id="chm" src="assets/chime.mp3" data-start="54.45" data-duration="2.0" data-track-index="34" data-volume="0.6"></audio>
+
+      <!-- persistent background: off-white + bottom glow wave -->
+      <div id="bg" class="full" data-layout-ignore>
+        <div id="glow">
+          <div class="blob" id="b1" style="left: 80px; top: 260px; background: rgba(232, 56, 45, 0.55);"></div>
+          <div class="blob" id="b2" style="left: 640px; top: 220px; background: rgba(245, 197, 27, 0.50);"></div>
+          <div class="blob" id="b3" style="left: 360px; top: 420px; background: rgba(255, 120, 90, 0.50);"></div>
+          <div id="stripes"></div>
+        </div>
+      </div>
+
+      <!-- ============ S1 · everyone goes to the same landing ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="4.3" data-track-index="1">
+        <div id="s1-grid" class="full"></div>
+        <div id="s1-land" class="card" style="left: 160px; top: 800px; width: 760px; height: 460px; overflow: hidden;">
+          <div class="chrome"><i></i><i></i><i></i><div class="url">tusaas.com</div></div>
+          <div style="padding: 44px 48px;">
+            <div style="font-size: 46px; font-weight: 760; letter-spacing: -0.03em; line-height: 1.08;">La plataforma que tu equipo necesita</div>
+            <div style="font-size: 26px; color: var(--muted); margin-top: 16px;">Para startups, agencias y empresas.</div>
+          </div>
+          <div class="btn" style="left: 48px; top: 330px; width: 280px; height: 80px; font-size: 32px;">Pedir demo</div>
+        </div>
+        <div class="center" style="top: 1330px;"><div id="s1-note" class="hand" style="font-size: 76px; transform: rotate(-3deg);">el mismo mensaje para todos</div></div>
+        <div class="cap" id="s1-cap"></div>
+      </section>
+
+      <!-- ============ S2 · "Haz esto." ============ -->
+      <section id="s2" class="scene clip" data-start="4.3" data-duration="1.2" data-track-index="1">
+        <div class="bigwrap" id="s2-cap" style="top: 820px; height: 260px;"></div>
+      </section>
+
+      <!-- ============ S3 · no demo button → quiz funnel ============ -->
+      <section id="s3" class="scene clip" data-start="5.5" data-duration="4.6" data-track-index="1">
+        <div id="s3-land" class="card" style="left: 110px; top: 600px; width: 860px; height: 470px; overflow: hidden;">
+          <div class="chrome"><i></i><i></i><i></i><div class="url">tusaas.com</div></div>
+          <div style="padding: 44px 60px;">
+            <div style="font-size: 50px; font-weight: 760; letter-spacing: -0.03em; line-height: 1.08;">La plataforma que tu equipo necesita</div>
+            <div style="font-size: 28px; color: var(--muted); margin-top: 16px;">Para startups, agencias y empresas.</div>
+          </div>
+          <div class="btn" style="left: 60px; top: 330px; width: 300px; height: 84px; font-size: 34px;">Pedir demo</div>
+        </div>
+        <svg id="s3-strike" data-layout-ignore style="position: absolute; left: 140px; top: 900px; width: 360px; height: 140px; overflow: visible;" viewBox="0 0 360 140">
+          <path id="s3-st1" d="M20 40 C 110 70, 230 100, 340 120" fill="none" stroke="#e8382d" stroke-width="12" stroke-linecap="round" />
+          <path id="s3-st2" d="M24 118 C 120 96, 240 62, 336 30" fill="none" stroke="#e8382d" stroke-width="12" stroke-linecap="round" />
+        </svg>
+        <svg id="s3-arrow" data-layout-ignore style="position: absolute; left: 560px; top: 1050px; width: 260px; height: 130px; overflow: visible;" viewBox="0 0 260 130">
+          <path id="s3-ar" d="M30 10 C 120 0, 200 40, 180 115 M150 92 L 180 118 L 206 88" fill="none" stroke="#16141b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div id="s3-quiz" class="glass" style="left: 90px; top: 1170px; width: 900px; height: 420px;">
+          <div class="card" style="left: 14px; top: 14px; right: 14px; bottom: 14px;">
+            <div class="ic" style="left: 40px; top: 50px; width: 170px; height: 189px;"><img src="assets/ic_q.png" alt="" /></div>
+            <div style="position: absolute; left: 240px; top: 56px; right: 40px;">
+              <div class="tag">Nuevo</div>
+              <div style="font-size: 64px; font-weight: 800; letter-spacing: -0.035em; margin-top: 6px;">Quiz Funnel</div>
+              <div style="font-size: 30px; color: var(--muted); margin-top: 8px; line-height: 1.2;">Tu plan ideal en 1 minuto</div>
+            </div>
+            <div id="s3-go" class="btn" style="left: 240px; top: 270px; width: 300px; height: 84px; font-size: 34px;">Empezar →</div>
+          </div>
+        </div>
+        <svg class="cursor" id="s3-cur" viewBox="0 0 54 60"><path d="M4 3 L4 48 L16 37 L25 57 L33 53 L24 34 L41 34 Z" fill="#16141b" stroke="#fff" stroke-width="3" stroke-linejoin="round" /></svg>
+        <div class="cap" id="s3-cap"></div>
+      </section>
+
+      <!-- ============ S4 · 5–8 questions, answered live ============ -->
+      <section id="s4" class="scene clip" data-start="10.1" data-duration="8.0" data-track-index="1">
+        <div id="s4-wrap" class="glass" style="left: 76px; top: 600px; width: 928px; height: 720px;">
+          <div class="card" style="left: 14px; top: 14px; right: 14px; bottom: 14px;">
+            <div style="position: absolute; left: 50px; right: 50px; top: 42px; display: flex; justify-content: space-between; align-items: center;">
+              <div class="chip red" style="font-size: 22px;">Quiz · tu SaaS</div>
+              <div style="font-size: 26px; font-weight: 650; color: var(--muted);">Pregunta <span id="s4-n">1</span> de 8</div>
+            </div>
+            <div style="position: absolute; left: 50px; right: 50px; top: 116px; display: flex; gap: 10px;">
+              <div class="seg"><i id="sg1"></i></div><div class="seg"><i id="sg2"></i></div><div class="seg"><i id="sg3"></i></div><div class="seg"><i id="sg4"></i></div>
+              <div class="seg"><i id="sg5"></i></div><div class="seg"><i id="sg6"></i></div><div class="seg"><i id="sg7"></i></div><div class="seg"><i id="sg8"></i></div>
+            </div>
+            <div id="q1" style="position: absolute; left: 50px; right: 50px; top: 170px; height: 500px;">
+              <div class="qt">¿Quién eres?</div>
+              <div class="opt" style="top: 110px;">Founder SaaS<div class="sel" id="q1s"><span>Founder SaaS</span><span>✓</span></div></div>
+              <div class="opt" style="top: 230px;">Equipo de marketing</div>
+              <div class="opt" style="top: 350px;">Agencia</div>
+            </div>
+            <div id="q2" style="position: absolute; left: 50px; right: 50px; top: 170px; height: 500px;">
+              <div class="qt">¿Qué quieres conseguir?</div>
+              <div class="opt" style="top: 110px;">Más demos cualificadas<div class="sel" id="q2s"><span>Más demos cualificadas</span><span>✓</span></div></div>
+              <div class="opt" style="top: 230px;">Reducir el churn</div>
+              <div class="opt" style="top: 350px;">Subir el ticket medio</div>
+            </div>
+            <div id="q3" style="position: absolute; left: 50px; right: 50px; top: 170px; height: 500px;">
+              <div class="qt">¿Tu principal problema?</div>
+              <div class="opt" style="top: 110px;">Leads que no compran<div class="sel" id="q3s"><span>Leads que no compran</span><span>✓</span></div></div>
+              <div class="opt" style="top: 230px;">Poco tráfico</div>
+              <div class="opt" style="top: 350px;">Ciclo de venta largo</div>
+            </div>
+          </div>
+        </div>
+        <div class="center" style="top: 1380px;">
+          <div id="s4-big" style="display: flex; align-items: baseline; gap: 24px;">
+            <div style="font-size: 190px; font-weight: 860; letter-spacing: -0.05em; color: var(--red);">5–8</div>
+            <div style="font-size: 54px; font-weight: 700; letter-spacing: -0.03em;">preguntas</div>
+          </div>
+        </div>
+        <svg class="cursor" id="s4-cur" viewBox="0 0 54 60"><path d="M4 3 L4 48 L16 37 L25 57 L33 53 L24 34 L41 34 Z" fill="#16141b" stroke="#fff" stroke-width="3" stroke-linejoin="round" /></svg>
+        <div class="cap" id="s4-cap"></div>
+      </section>
+
+      <!-- ============ S5 · "Pero no hagas solo preguntas." ============ -->
+      <section id="s5" class="scene clip" data-start="18.1" data-duration="1.9" data-track-index="1">
+        <div class="bigwrap" id="s5-cap" style="top: 760px; height: 300px;"></div>
+      </section>
+
+      <!-- ============ S6 · cards between the questions ============ -->
+      <section id="s6" class="scene clip" data-start="20.0" data-duration="9.6" data-track-index="1">
+        <div id="s6-stack" class="full" data-layout-allow-overflow>
+          <div id="s6-line" data-layout-ignore style="position: absolute; left: 538px; top: 600px; width: 4px; height: 1000px; background: repeating-linear-gradient(to bottom, #d9d3c7 0 12px, transparent 12px 24px);"></div>
+          <div class="pill" id="s6-p1" style="left: 690px; top: 650px;">Pregunta 1</div>
+          <div class="card" id="s6-c1" style="left: 70px; top: 600px; width: 600px; height: 200px;">
+            <div class="mini"><div class="av" style="position: relative; width: 130px; height: 140px; border-radius: 22px; box-shadow: none; flex: none;"><img src="assets/av5.png" alt="" /></div>
+              <div><div class="k">Caso real</div><div class="v">De 4 a 19 demos al mes</div></div></div>
+          </div>
+          <div class="pill" id="s6-p2" style="left: 150px; top: 890px;">Pregunta 2</div>
+          <div class="card" id="s6-c2" style="left: 410px; top: 840px; width: 600px; height: 200px;">
+            <div class="mini"><div class="ic" style="position: relative; width: 130px; height: 144px; flex: none;"><img src="assets/ic_chart.png" alt="" /></div>
+              <div><div class="k">Dato</div><div class="v">7 de cada 10 aún no quieren una demo</div></div></div>
+          </div>
+          <div class="pill" id="s6-p3" style="left: 690px; top: 1130px;">Pregunta 3</div>
+          <div class="card" id="s6-c3" style="left: 70px; top: 1080px; width: 600px; height: 200px;">
+            <div class="mini"><div class="ic" style="position: relative; width: 130px; height: 144px; flex: none;"><img src="assets/ic_trophy.png" alt="" /></div>
+              <div><div class="k">Resultado</div><div class="v">−42% en coste por lead</div></div></div>
+          </div>
+          <div class="pill" id="s6-p4" style="left: 150px; top: 1370px;">Pregunta 4</div>
+          <div class="card" id="s6-c4" style="left: 410px; top: 1320px; width: 600px; height: 200px;">
+            <div class="mini"><div class="ic" style="position: relative; width: 130px; height: 144px; flex: none;"><img src="assets/ic_bulb.png" alt="" /></div>
+              <div><div class="k">Consejo</div><div class="v">Pregunta por el problema, no por el precio</div></div></div>
+          </div>
+          <div style="position: absolute; left: 70px; top: 1290px; font-size: 18px; color: var(--muted); font-weight: 600;" id="s6-ej">* cifras de ejemplo</div>
+        </div>
+        <div id="s6-note" class="hand" style="position: absolute; left: 90px; top: 1580px; font-size: 92px; transform: rotate(-4deg); white-space: nowrap;">“vale, esto tiene sentido”</div>
+        <svg id="s6-arrow" data-layout-ignore style="position: absolute; left: 820px; top: 1540px; width: 140px; height: 120px; overflow: visible;" viewBox="0 0 140 120">
+          <path id="s6-ar" d="M10 110 C 60 100, 110 70, 110 12 M86 34 L 110 10 L 132 36" fill="none" stroke="#c42a20" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div class="cap" id="s6-cap"></div>
+      </section>
+
+      <!-- ============ S7 · personalised result ============ -->
+      <section id="s7" class="scene clip" data-start="29.6" data-duration="4.45" data-track-index="1">
+        <div class="center" style="top: 590px;">
+          <div style="display: flex; gap: 14px;">
+            <div class="chip" id="s7-a1">Founder SaaS</div><div class="chip" id="s7-a2">Más demos</div><div class="chip" id="s7-a3">Leads que no compran</div>
+          </div>
+        </div>
+        <div id="s7-card" class="glass" style="left: 90px; top: 720px; width: 900px; height: 860px;">
+          <div class="card" style="left: 14px; top: 14px; right: 14px; bottom: 14px;">
+            <div style="position: absolute; left: 50px; top: 46px; display: flex; gap: 14px;">
+              <div class="chip red" style="font-size: 22px;">Tu resultado</div>
+              <div class="chip gold" id="s7-pers" style="font-size: 22px;">✦ personalizado</div>
+            </div>
+            <div class="av" style="left: 50px; top: 140px; width: 150px; height: 150px; border-radius: 50%;"><img src="assets/av1.png" alt="" /></div>
+            <div style="position: absolute; left: 230px; top: 160px;">
+              <div style="font-size: 50px; font-weight: 800; letter-spacing: -0.03em;">Founder SaaS</div>
+              <div style="font-size: 30px; color: var(--muted); margin-top: 6px;">en fase de tracción</div>
+            </div>
+            <svg style="position: absolute; right: 50px; top: 340px; width: 220px; height: 220px;" viewBox="0 0 220 220">
+              <circle cx="110" cy="110" r="90" fill="none" stroke="#f1ede5" stroke-width="22" />
+              <circle id="s7-ring" cx="110" cy="110" r="90" fill="none" stroke="#e8382d" stroke-width="22" stroke-linecap="round" transform="rotate(-90 110 110)" stroke-dasharray="565.5" stroke-dashoffset="565.5" />
+            </svg>
+            <div style="position: absolute; right: 50px; top: 405px; width: 220px; text-align: center;">
+              <div style="font-size: 64px; font-weight: 820; letter-spacing: -0.04em;"><span id="s7-pct">0</span>%</div>
+              <div style="font-size: 22px; color: var(--muted); font-weight: 600;">encaje</div>
+            </div>
+            <div style="position: absolute; left: 50px; top: 350px; width: 520px;">
+              <div id="s7-r1" style="padding: 22px 0; border-bottom: 1px solid var(--line);"><div class="tag">Tu cuello de botella</div><div style="font-size: 40px; font-weight: 740; margin-top: 6px;">Cualificar leads</div></div>
+              <div id="s7-r2" style="padding: 22px 0; border-bottom: 1px solid var(--line);"><div class="tag">Siguiente paso</div><div style="font-size: 40px; font-weight: 740; margin-top: 6px;">Demo solo a los listos</div></div>
+            </div>
+            <div style="position: absolute; left: 50px; right: 50px; bottom: 50px; height: 96px; border-radius: 20px; background: var(--soft); display: flex; align-items: center; padding: 0 30px; font-size: 30px; font-weight: 620; color: var(--red-small);" id="s7-r3">Basado en tus 8 respuestas</div>
+          </div>
+        </div>
+        <div id="s7-note" class="hand" style="position: absolute; left: 600px; top: 1610px; font-size: 80px; transform: rotate(-5deg);">hecho para ti</div>
+        <div class="cap" id="s7-cap"></div>
+      </section>
+
+      <!-- ============ S8 · "Y aquí viene la parte importante." ============ -->
+      <section id="s8" class="scene clip" data-start="34.05" data-duration="1.8" data-track-index="1">
+        <div id="s8-grid" class="full" data-layout-ignore style="filter: blur(6px); opacity: 0.35;"></div>
+        <div class="bigwrap" id="s8-cap" style="top: 740px; height: 380px;"></div>
+      </section>
+
+      <!-- ============ S9 · fit, offer, countdown ============ -->
+      <section id="s9" class="scene clip" data-start="35.85" data-duration="11.8" data-track-index="1">
+        <div id="s9-c1" class="card" style="left: 90px; top: 590px; width: 900px; height: 340px; padding: 40px 50px;">
+          <div class="tag" style="color: var(--red-small);">Por qué encaja contigo</div>
+          <div class="row" id="s9-r1"><div class="tick">✓</div>Hecho para founders SaaS</div>
+          <div class="row" id="s9-r2"><div class="tick">✓</div>Cualifica tus demos solo</div>
+          <div class="row" id="s9-r3"><div class="tick">✓</div>Resuelve “leads que no compran”</div>
+        </div>
+        <div id="s9-c2" class="card" style="left: 90px; top: 960px; width: 900px; height: 300px;">
+          <div class="ic" style="left: 40px; top: 50px; width: 180px; height: 200px;"><img src="assets/ic_gift.png" alt="" /></div>
+          <div style="position: absolute; left: 260px; top: 50px; right: 40px;">
+            <div class="tag" style="color: var(--red-small);">Oferta para tu perfil</div>
+            <div style="display: flex; align-items: baseline; gap: 26px; margin-top: 14px;">
+              <div style="position: relative; font-size: 64px; font-weight: 700; color: var(--muted);">99€
+                <svg data-layout-ignore style="position: absolute; left: -10px; top: 18px; width: 140px; height: 50px; overflow: visible;" viewBox="0 0 140 50"><path id="s9-st" d="M4 34 C 40 20, 90 30, 136 12" fill="none" stroke="#e8382d" stroke-width="8" stroke-linecap="round" /></svg>
+              </div>
+              <div id="s9-new" style="font-size: 92px; font-weight: 840; letter-spacing: -0.04em;">69€<span style="font-size: 36px; color: var(--muted); font-weight: 600;">/mes</span></div>
+            </div>
+            <div class="chip gold" id="s9-off" style="margin-top: 12px; font-size: 24px;">−30% · solo para ti</div>
+          </div>
+        </div>
+        <div id="s9-c3" class="glass" style="left: 76px; top: 1290px; width: 928px; height: 390px;">
+          <div class="card" style="left: 14px; top: 14px; right: 14px; bottom: 14px;">
+            <div class="ic" style="left: 40px; top: 30px; width: 150px; height: 167px;"><img src="assets/ic_clock.png" alt="" /></div>
+            <div style="position: absolute; left: 220px; top: 44px;">
+              <div class="tag">Tu oferta caduca en</div>
+              <div id="s9-time" style="margin-top: 14px; font-size: 110px; font-weight: 820; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; line-height: 1;">15:00</div>
+            </div>
+            <div id="s9-go" class="btn" style="left: 40px; right: 40px; top: 240px; height: 96px; font-size: 38px;">Canjear oferta</div>
+          </div>
+        </div>
+        <div style="position: absolute; right: 100px; top: 1690px; font-size: 18px; color: var(--muted); font-weight: 600;">* oferta de ejemplo</div>
+        <svg class="cursor" id="s9-cur" viewBox="0 0 54 60"><path d="M4 3 L4 48 L16 37 L25 57 L33 53 L24 34 L41 34 Z" fill="#16141b" stroke="#fff" stroke-width="3" stroke-linejoin="round" /></svg>
+        <div class="cap" id="s9-cap"></div>
+      </section>
+
+      <!-- ============ S10 · captas → segmentas → educas → compra ============ -->
+      <section id="s10" class="scene clip" data-start="47.65" data-duration="6.65" data-track-index="1">
+        <div id="s10-lead" class="card" style="left: 140px; top: 590px; width: 800px; height: 170px;">
+          <div class="av" style="left: 30px; top: 25px; width: 120px; height: 120px; border-radius: 50%; box-shadow: none;"><img src="assets/av1.png" alt="" /></div>
+          <div style="position: absolute; left: 180px; top: 34px;">
+            <div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em;">Nuevo lead</div>
+            <div style="font-size: 28px; color: var(--muted); margin-top: 4px;">Founder SaaS · quiere más demos</div>
+          </div>
+        </div>
+        <div id="s10-tl" class="card" style="left: 60px; top: 800px; width: 960px; height: 560px;">
+          <div style="position: absolute; left: 250px; right: 40px; top: 30px; display: flex; justify-content: space-between; font-size: 22px; color: var(--muted); font-weight: 600;"><span>día 1</span><span>día 3</span><span>día 7</span><span>día 14</span></div>
+          <div class="lane" style="top: 100px;"><div class="lbl">Segmenta</div>
+            <div class="bar" id="s10-b1" style="left: 250px; width: 230px; background: var(--red);"></div><div class="bar" id="s10-b2" style="left: 495px; width: 120px; background: var(--red);"></div></div>
+          <div class="lane" style="top: 240px;"><div class="lbl">Educa</div>
+            <div class="bar" id="s10-b3" style="left: 330px; width: 180px; background: var(--gold);"></div><div class="bar" id="s10-b4" style="left: 525px; width: 140px; background: var(--gold);"></div><div class="bar" id="s10-b5" style="left: 680px; width: 110px; background: var(--gold);"></div></div>
+          <div class="lane" style="top: 380px;"><div class="lbl">Compra</div>
+            <div class="bar" id="s10-b6" style="left: 640px; width: 280px; background: var(--ink);"></div></div>
+          <div id="s10-ph" data-layout-ignore style="position: absolute; left: 250px; top: 70px; width: 6px; height: 440px; background: var(--red); border-radius: 3px; box-shadow: 0 0 18px rgba(232, 56, 45, 0.5);"></div>
+        </div>
+        <div id="s10-toast" class="card" style="left: 180px; top: 1420px; width: 720px; height: 150px; display: flex; align-items: center; gap: 26px; padding: 0 36px;">
+          <div class="tick" style="width: 80px; height: 80px; font-size: 46px;">✓</div>
+          <div><div style="font-size: 42px; font-weight: 800; letter-spacing: -0.03em;">Pago completado</div><div style="font-size: 28px; color: var(--muted);">69€ · plan Founder</div></div>
+        </div>
+        <div class="cap" id="s10-cap"></div>
+      </section>
+
+      <!-- ============ S11 · logo end card ============ -->
+      <section id="s11" class="scene clip" data-start="54.3" data-duration="4.1" data-track-index="1">
+        <div class="center" style="top: 600px;"><div id="s11-icon" class="appicon" style="width: 260px; height: 260px; border-radius: 64px; font-size: 110px; box-shadow: 0 40px 90px rgba(232, 56, 45, 0.35);">IN</div></div>
+        <div class="center" style="top: 960px;">
+          <div id="s11-word" style="display: flex; align-items: center; gap: 22px;">
+            <div style="font-size: 120px; font-weight: 880; font-stretch: 118%; letter-spacing: -0.02em; line-height: 1;">SaaS</div>
+            <div class="px" style="font-size: 56px; background: var(--red-small); color: #fff; padding: 14px 18px 8px; border-radius: 14px; box-shadow: 6px 6px 0 var(--red-deep);">IN</div>
+            <div style="font-size: 120px; font-weight: 880; font-stretch: 118%; letter-spacing: -0.02em; line-height: 1;">House</div>
+          </div>
+        </div>
+        <div class="center" style="top: 1170px;"><div id="s11-sub" style="font-size: 44px; font-weight: 600; color: var(--muted); letter-spacing: -0.02em;">Quiz Funnels que venden tu SaaS</div></div>
+        <div class="center" style="top: 1290px;"><div id="s11-cta" class="px" style="height: 110px; padding: 0 50px; display: flex; align-items: center; border-radius: 26px; background: var(--ink); color: #fff; font-size: 40px;">comenta «quiz»</div></div>
+      </section>
+
+      <!-- persistent corner app icon (Retti's mascot slot) -->
+      <div id="corner" class="appicon" style="position: absolute; left: 40px; top: 1800px; width: 76px; height: 76px; border-radius: 20px; font-size: 30px; box-shadow: 0 10px 24px rgba(232, 56, 45, 0.3);">IN</div>
+    </div>
+
+    <script>
+      const VO = 0.3; // voiceover offset
+      const W = /*W*/[["¿Quieres",0.0],["vender",0.464],["tu",0.836],["SaaS",1.022],["sin",1.254],["mandar",1.463],["a",1.834],["todo",1.939],["el",2.322],["mundo",2.438],["a",2.717],["la",2.775],["misma",2.879],["landing?",3.181],["Haz",4.122],["esto.",4.389],["En",5.283],["lugar",5.433],["de",5.735],["pedir",5.817],["una",6.13],["demo",6.304],["directamente,",6.908],["crea",7.953],["un",8.29],["Quiz",8.475],["Funnel.",8.789],["Primero",9.938],["haces",10.356],["entre",10.623],["cinco",10.89],["y",11.331],["ocho",11.517],["preguntas",11.761],["para",12.307],["saber",12.504],["quién",12.852],["es",13.177],["esa",13.34],["persona,",13.537],["qué",14.385],["quiere",14.582],["conseguir",14.861],["y",15.662],["cuál",15.871],["es",16.15],["su",16.219],["principal",16.405],["problema.",17.009],["Pero",17.949],["no",18.228],["hagas",18.344],["solo",18.588],["preguntas.",18.82],["Entre",19.819],["medias,",20.155],["añade",20.794],["pequeñas",21.177],["cards",21.665],["con",22.152],["casos",22.431],["reales,",22.918],["datos,",23.72],["resultados",24.509],["o",25.171],["consejos",25.252],["que",25.809],["le",25.937],["hagan",26.065],["pensar:",26.367],["\"vale,",27.156],["esto",27.841],["tiene",28.166],["sentido\".",28.41],["Después,",29.478],["según",30.128],["sus",30.442],["respuestas,",30.627],["le",31.463],["muestras",31.614],["un",32.172],["resultado",32.381],["personalizado.",32.938],["Y",33.913],["aquí",34.041],["viene",34.227],["la",34.459],["parte",34.563],["importante.",34.853],["Las",35.678],["últimas",35.898],["cards",36.281],["ya",36.897],["tienen",37.071],["que",37.35],["llevarlo",37.454],["hacia",37.942],["tu",38.348],["producto:",38.522],["le",39.323],["explicas",39.463],["por",39.973],["qué",40.159],["encaja",40.322],["con",40.751],["su",40.925],["situación,",41.076],["le",42.11],["presentas",42.261],["una",42.771],["oferta",42.922],["específica",43.294],["y",43.979],["añades",44.153],["un",44.629],["contador",44.757],["con",45.558],["tiempo",45.825],["limitado",46.185],["para",46.661],["canjearla.",46.87],["Así",47.555],["no",47.984],["solo",48.147],["captas",48.379],["el",48.797],["lead.",48.948],["Lo",49.644],["segmentas,",49.83],["lo",50.666],["educas",50.863],["y",51.432],["lo",51.572],["llevas",51.688],["directamente",51.943],["hacia",52.709],["la",53.092],["compra.",53.22]]/*W*/; // [word, start] from assets/words.json (tools/embed_words.py)
+      const w = (i) => W[i][1] + VO; // absolute time of word i
+      const END = 58.4;
+      const tl = gsap.timeline({ paused: true });
+
+      /* ---------- helpers ---------- */
+      // captions: groups of word indices; each word sharpens from blur at its start, the group blurs out before the next
+      function caption(hostId, groups, sceneEnd) {
+        const host = document.getElementById(hostId);
+        groups.forEach((g, gi) => {
+          const el = document.createElement("div");
+          el.className = "capg" + (g.big ? " big" : "");
+          el.id = `${hostId}-g${gi}`;
+          for (let i = g.a; i <= g.b; i++) {
+            const s = document.createElement("span");
+            s.className = "w" + ((g.acc || []).includes(i) ? " acc" : "");
+            s.id = `${hostId}-w${i}`;
+            s.textContent = W[i][0].replace(/^"/, "“").replace(/"([.,]?)$/, "”$1");
+            el.appendChild(s);
+            el.appendChild(document.createTextNode(" "));
+            tl.fromTo(s, { opacity: 0, y: 12, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.32, ease: "power2.out" }, w(i) - 0.06);
+          }
+          host.appendChild(el);
+          const next = groups[gi + 1];
+          if (next) tl.to(el, { opacity: 0, filter: "blur(8px)", duration: 0.18 }, w(next.a) - 0.22);
+          else tl.to(el, { opacity: 0, filter: "blur(8px)", duration: 0.2 }, sceneEnd - 0.22);
+        });
+      }
+      const pop = (sel, at, from = {}) =>
+        tl.fromTo(sel, { opacity: 0, y: 40, scale: 0.92, filter: "blur(8px)", ...from }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "back.out(1.6)" }, at);
+      const out = (sel, at, d = 0.25) => tl.to(sel, { opacity: 0, filter: "blur(10px)", duration: d }, at);
+      function draw(id, at, dur) {
+        const p = document.getElementById(id);
+        const L = Math.ceil(p.getTotalLength()) + 2;
+        p.style.strokeDasharray = L;
+        tl.fromTo(p, { strokeDashoffset: L }, { strokeDashoffset: 0, duration: dur, ease: "power1.inOut" }, at);
+      }
+      const write = (sel, at, dur) => tl.fromTo(sel, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: dur, ease: "none" }, at);
+      const click = (sel, at) => tl.to(sel, { scale: 0.85, duration: 0.08, yoyo: true, repeat: 1 }, at);
+
+      /* ---------- background glow: slow drift + intensity per beat ---------- */
+      tl.to("#b1", { x: 160, duration: 9, yoyo: true, repeat: 5, ease: "sine.inOut" }, 0);
+      tl.to("#b2", { x: -180, duration: 11, yoyo: true, repeat: 4, ease: "sine.inOut" }, 0);
+      tl.to("#b3", { x: 120, y: -60, duration: 7, yoyo: true, repeat: 7, ease: "sine.inOut" }, 0);
+      tl.set("#glow", { opacity: 0.45, y: 120 }, 0);
+      const glow = (at, opacity, y) => tl.to("#glow", { opacity, y, duration: 0.6, ease: "power2.out" }, at);
+      glow(4.3, 1, -80); glow(5.5, 0.5, 120); glow(18.1, 1, -80); glow(20.0, 0.4, 160); glow(29.6, 0.55, 100);
+      glow(34.05, 1, -160); glow(35.85, 0.45, 160); glow(47.65, 0.55, 100); glow(54.3, 1, -220);
+
+      /* ---------- S1 · avatar grid → one landing ---------- */
+      const grid = document.getElementById("s1-grid");
+      const cols = [95, 325, 555, 785], rows = [600, 840, 1080];
+      for (let i = 0; i < 12; i++) {
+        const d = document.createElement("div");
+        d.className = "av"; d.id = "s1-av" + i;
+        d.style.cssText = `left:${cols[i % 4]}px; top:${rows[Math.floor(i / 4)]}px; width:200px; height:210px;`;
+        d.innerHTML = `<img src="assets/av${i + 1}.png" alt="" />`;
+        grid.appendChild(d);
+        tl.fromTo(d, { opacity: 0, scale: 0.85, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.5, ease: "power2.out" }, 0.15 + ((i * 7) % 12) * 0.11);
+        // everyone gets sucked into the same landing
+        tl.to(d, { x: 540 - (cols[i % 4] + 100), y: 1030 - (rows[Math.floor(i / 4)] + 105), scale: 0.12, opacity: 0, duration: 0.55, ease: "power3.in" }, w(10) + (i % 6) * 0.06);
+      }
+      pop("#s1-land", w(10) - 0.15, { scale: 0.8 });
+      tl.to("#s1-land", { scale: 1.04, duration: 0.15, yoyo: true, repeat: 1 }, w(12) + 0.35);
+      write("#s1-note", w(12) + 0.1, 0.7);
+      caption("s1-cap", [{ a: 0, b: 13, acc: [11, 12, 13] }], 4.3);
+
+      /* ---------- S2 ---------- */
+      caption("s2-cap", [{ a: 14, b: 15, big: true }], 5.5);
+
+      /* ---------- S3 · strike the demo button, open the quiz ---------- */
+      pop("#s3-land", 5.5);
+      draw("s3-st1", w(22), 0.3);
+      draw("s3-st2", w(22) + 0.3, 0.3);
+      tl.to("#s3-land", { opacity: 0.55, scale: 0.96, duration: 0.4 }, w(22) + 0.5);
+      draw("s3-ar", w(23) - 0.1, 0.5);
+      pop("#s3-quiz", w(23) + 0.05, { y: 80 });
+      tl.fromTo("#s3-cur", { x: 900, y: 1750, opacity: 0 }, { x: 470, y: 1480, opacity: 1, duration: 0.7, ease: "power2.inOut" }, w(26) - 0.2);
+      click("#s3-cur", 9.75);
+      click("#s3-go", 9.75);
+      caption("s3-cap", [{ a: 16, b: 22, acc: [21] }, { a: 23, b: 26, acc: [25, 26] }], 10.1);
+
+      /* ---------- S4 · questions answered in sync ---------- */
+      pop("#s4-wrap", 10.1, { y: 60 });
+      tl.to("#sg1", { scaleX: 1, duration: 0.3 }, 10.4);
+      tl.fromTo("#s4-big", { opacity: 0, y: 30, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4 }, w(30));
+      tl.to("#s4-big", { scale: 1.08, duration: 0.15, yoyo: true, repeat: 1 }, w(32));
+      const answer = (n, at) => {
+        tl.fromTo(`#q${n}s`, { opacity: 0, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 0.22 }, at);
+      };
+      const swap = (from, to, at, n) => {
+        tl.to(`#q${from}`, { x: -80, opacity: 0, duration: 0.25 }, at);
+        tl.fromTo(`#q${to}`, { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" }, at + 0.15);
+        tl.set("#s4-n", { textContent: n }, at + 0.15);
+        tl.to(`#sg${n}`, { scaleX: 1, duration: 0.3 }, at + 0.15);
+      };
+      // cursor: option 1 centre ≈ (560, 940) in frame coords
+      tl.fromTo("#s4-cur", { x: 980, y: 1650, opacity: 0 }, { x: 600, y: 935, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 12.5);
+      click("#s4-cur", 13.8); answer(1, 13.8);
+      swap(1, 2, w(40) - 0.1, 2);
+      tl.to("#s4-cur", { x: 640, y: 1000, duration: 0.3 }, w(40));
+      tl.to("#s4-cur", { x: 600, y: 935, duration: 0.4, ease: "power2.inOut" }, 15.0);
+      click("#s4-cur", 15.5); answer(2, 15.5);
+      swap(2, 3, w(43) - 0.05, 3);
+      tl.to("#s4-cur", { x: 650, y: 1010, duration: 0.3 }, w(43) + 0.1);
+      tl.to("#s4-cur", { x: 600, y: 935, duration: 0.4, ease: "power2.inOut" }, 16.8);
+      click("#s4-cur", 17.3); answer(3, 17.3);
+      caption("s4-cap", [{ a: 27, b: 33, acc: [30, 31, 32] }, { a: 34, b: 39 }, { a: 40, b: 42 }, { a: 43, b: 48, acc: [47, 48] }], 18.1);
+
+      /* ---------- S5 ---------- */
+      caption("s5-cap", [{ a: 49, b: 53, big: true, acc: [52] }], 20.0);
+
+      /* ---------- S6 · cards between questions ---------- */
+      tl.fromTo("#s6-line", { scaleY: 0, transformOrigin: "top center" }, { scaleY: 1, duration: 1.2, ease: "power2.out" }, 20.0);
+      [["#s6-p1", 20.1], ["#s6-p2", 20.5], ["#s6-p3", 20.9], ["#s6-p4", 21.3]].forEach(([s, at]) => pop(s, at, { scale: 0.6, y: 0 }));
+      pop("#s6-c1", w(60) - 0.1, { x: -60, y: 0 });
+      pop("#s6-c2", w(62) - 0.1, { x: 60, y: 0 });
+      pop("#s6-c3", w(63) - 0.1, { x: -60, y: 0 });
+      pop("#s6-c4", w(65) - 0.1, { x: 60, y: 0 });
+      tl.fromTo("#s6-ej", { opacity: 0 }, { opacity: 1, duration: 0.4 }, w(65) + 0.3);
+      tl.to("#s6-stack", { y: -50, duration: 3, ease: "sine.inOut" }, w(66));
+      write("#s6-note", w(70) - 0.05, 1.3);
+      draw("s6-ar", w(72), 0.5);
+      caption("s6-cap", [{ a: 54, b: 61, acc: [58] }, { a: 62, b: 65, acc: [62, 63, 65] }, { a: 66, b: 73, acc: [70, 71, 72, 73] }], 29.6);
+
+      /* ---------- S7 · answers → result ---------- */
+      pop("#s7-a1", w(77) - 0.1, { y: 20 }); pop("#s7-a2", w(77) + 0.1, { y: 20 }); pop("#s7-a3", w(77) + 0.3, { y: 20 });
+      tl.to(["#s7-a1", "#s7-a2", "#s7-a3"], { y: 260, scale: 0.5, opacity: 0, duration: 0.45, ease: "power3.in", stagger: 0.07 }, w(79));
+      pop("#s7-card", w(80) - 0.25, { y: 80 });
+      const ring = { v: 0 };
+      tl.to(ring, { v: 78, duration: 1.1, ease: "power2.out", onUpdate: () => {
+        document.getElementById("s7-pct").textContent = Math.round(ring.v);
+        document.getElementById("s7-ring").setAttribute("stroke-dashoffset", (565.5 * (1 - ring.v / 100)).toFixed(1));
+      } }, w(81));
+      pop("#s7-r1", w(81) + 0.1, { y: 20 }); pop("#s7-r2", w(81) + 0.3, { y: 20 }); pop("#s7-r3", w(81) + 0.5, { y: 20 });
+      tl.fromTo("#s7-pers", { scale: 0, rotation: -12 }, { scale: 1, rotation: 0, duration: 0.4, ease: "back.out(3)" }, w(82));
+      write("#s7-note", w(82) + 0.5, 0.6);
+      caption("s7-cap", [{ a: 74, b: 77 }, { a: 78, b: 82, acc: [82] }], 34.05);
+
+      /* ---------- S8 · big line over a blurred crowd ---------- */
+      const g8 = document.getElementById("s8-grid");
+      for (let i = 0; i < 20; i++) {
+        const d = document.createElement("div");
+        d.className = "av"; d.id = "s8-av" + i;
+        d.style.cssText = `left:${-60 + (i % 5) * 245}px; top:${280 + Math.floor(i / 5) * 360}px; width:200px; height:210px;`;
+        d.innerHTML = `<img src="assets/av${(i % 12) + 1}.png" alt="" />`;
+        g8.appendChild(d);
+      }
+      tl.fromTo("#s8-grid", { scale: 1.12 }, { scale: 1, duration: 1.8, ease: "power2.out" }, 34.05);
+      caption("s8-cap", [{ a: 83, b: 88, big: true, acc: [87, 88] }], 35.85);
+
+      /* ---------- S9 · fit → offer → countdown → redeem ---------- */
+      pop("#s9-c1", w(98) - 0.15);
+      pop("#s9-r1", w(103) - 0.05, { y: 0, x: -30 }); pop("#s9-r2", w(104) + 0.05, { y: 0, x: -30 }); pop("#s9-r3", w(106) - 0.05, { y: 0, x: -30 });
+      pop("#s9-c2", w(110) - 0.1);
+      draw("s9-st", w(111), 0.35);
+      tl.fromTo("#s9-new", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2.5)" }, w(111) + 0.3);
+      tl.fromTo("#s9-off", { scale: 0 }, { scale: 1, duration: 0.35, ease: "back.out(3)" }, w(111) + 0.6);
+      pop("#s9-c3", w(115) - 0.05);
+      const clock = { v: 900 };
+      tl.to(clock, { v: 888, duration: 47.65 - w(115), ease: "none", onUpdate: () => {
+        const s = Math.floor(clock.v);
+        document.getElementById("s9-time").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      } }, w(115));
+      tl.to("#s9-time", { color: "#e8382d", duration: 0.3 }, w(117));
+      tl.fromTo("#s9-cur", { x: 960, y: 1800, opacity: 0 }, { x: 560, y: 1590, opacity: 1, duration: 0.7, ease: "power2.inOut" }, w(118) - 0.2);
+      click("#s9-cur", 47.17);
+      tl.to("#s9-go", { scale: 0.94, duration: 0.08, yoyo: true, repeat: 1 }, 47.17);
+      tl.set("#s9-go", { textContent: "✓ Oferta canjeada" }, 47.3);
+      caption("s9-cap", [{ a: 89, b: 98, acc: [98] }, { a: 99, b: 106 }, { a: 107, b: 111, acc: [110, 111] }, { a: 112, b: 120, acc: [115] }], 47.65);
+
+      /* ---------- S10 · captas, segmentas, educas, compra ---------- */
+      pop("#s10-lead", w(124) - 0.1);
+      pop("#s10-tl", w(126));
+      tl.set(["#s10-b1", "#s10-b2", "#s10-b3", "#s10-b4", "#s10-b5", "#s10-b6"], { scaleX: 0 }, 47.65);
+      tl.to(["#s10-b1", "#s10-b2"], { scaleX: 1, duration: 0.35, ease: "power2.out", stagger: 0.18 }, w(128));
+      tl.to(["#s10-b3", "#s10-b4", "#s10-b5"], { scaleX: 1, duration: 0.3, ease: "power2.out", stagger: 0.15 }, w(130));
+      tl.to("#s10-b6", { scaleX: 1, duration: 1.1, ease: "power1.inOut" }, w(133));
+      tl.fromTo("#s10-ph", { x: 0 }, { x: 660, duration: w(137) - w(127), ease: "none" }, w(127));
+      pop("#s10-toast", w(137) - 0.05, { y: 60 });
+      caption("s10-cap", [{ a: 121, b: 126, acc: [124] }, { a: 127, b: 137, acc: [128, 130, 137] }], 54.3);
+
+      /* ---------- S11 · logo ---------- */
+      tl.fromTo("#s11-icon", { scale: 0.4, opacity: 0, rotation: -12, filter: "blur(12px)" }, { scale: 1, opacity: 1, rotation: 0, filter: "blur(0px)", duration: 0.6, ease: "back.out(2)" }, 54.4);
+      tl.fromTo("#s11-word", { opacity: 0, y: 30, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, 54.85);
+      tl.fromTo("#s11-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45 }, 55.3);
+      tl.fromTo("#s11-cta", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 55.8);
+      tl.to("#s11-cta", { scale: 1.05, duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 56.4);
+      tl.fromTo("#corner", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 0.4);
+      tl.to("#corner", { opacity: 0, duration: 0.3 }, 54.3);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

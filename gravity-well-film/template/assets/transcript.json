@@ -1,0 +1,392 @@
+[
+  {
+    "text": "Bends",
+    "start": 0.03,
+    "end": 0.26,
+    "id": "w0"
+  },
+  {
+    "text": "un",
+    "start": 0.26,
+    "end": 0.37,
+    "id": "w1"
+  },
+  {
+    "text": "sas",
+    "start": 0.37,
+    "end": 0.52,
+    "id": "w2"
+  },
+  {
+    "text": "y",
+    "start": 0.52,
+    "end": 0.57,
+    "id": "w3"
+  },
+  {
+    "text": "mantas",
+    "start": 0.57,
+    "end": 0.88,
+    "id": "w4"
+  },
+  {
+    "text": "a",
+    "start": 0.88,
+    "end": 0.93,
+    "id": "w5"
+  },
+  {
+    "text": "todo",
+    "start": 0.93,
+    "end": 1.1,
+    "id": "w6"
+  },
+  {
+    "text": "el",
+    "start": 1.19,
+    "end": 1.25,
+    "id": "w7"
+  },
+  {
+    "text": "mundo",
+    "start": 1.25,
+    "end": 1.51,
+    "id": "w8"
+  },
+  {
+    "text": "a",
+    "start": 1.51,
+    "end": 1.56,
+    "id": "w9"
+  },
+  {
+    "text": "la",
+    "start": 1.56,
+    "end": 1.67,
+    "id": "w10"
+  },
+  {
+    "text": "mismalanding?",
+    "start": 1.67,
+    "end": 2.57,
+    "id": "w11"
+  },
+  {
+    "text": "Eroor,",
+    "start": 2.61,
+    "end": 4.34,
+    "id": "w12"
+  },
+  {
+    "text": "hath",
+    "start": 4.34,
+    "end": 4.56,
+    "id": "w13"
+  },
+  {
+    "text": "un",
+    "start": 4.63,
+    "end": 4.77,
+    "id": "w14"
+  },
+  {
+    "text": "cuid",
+    "start": 4.77,
+    "end": 5.05,
+    "id": "w15"
+  },
+  {
+    "text": "fanel.",
+    "start": 5.05,
+    "end": 5.65,
+    "id": "w16"
+  },
+  {
+    "text": "Uno,",
+    "start": 5.7,
+    "end": 6.06,
+    "id": "w17"
+  },
+  {
+    "text": "entre",
+    "start": 6.06,
+    "end": 6.46,
+    "id": "w18"
+  },
+  {
+    "text": "cinco",
+    "start": 6.46,
+    "end": 6.86,
+    "id": "w19"
+  },
+  {
+    "text": "yo",
+    "start": 6.86,
+    "end": 7.02,
+    "id": "w20"
+  },
+  {
+    "text": "chopreguntas",
+    "start": 7.02,
+    "end": 8.04,
+    "id": "w21"
+  },
+  {
+    "text": "para",
+    "start": 8.04,
+    "end": 8.24,
+    "id": "w22"
+  },
+  {
+    "text": "saber",
+    "start": 8.65,
+    "end": 9.5,
+    "id": "w23"
+  },
+  {
+    "text": "quienes",
+    "start": 9.5,
+    "end": 9.61,
+    "id": "w24"
+  },
+  {
+    "text": "y",
+    "start": 9.61,
+    "end": 9.61,
+    "id": "w25"
+  },
+  {
+    "text": "que",
+    "start": 9.61,
+    "end": 9.67,
+    "id": "w26"
+  },
+  {
+    "text": "necesita.",
+    "start": 9.67,
+    "end": 9.84,
+    "id": "w27"
+  },
+  {
+    "text": "Dos,",
+    "start": 9.87,
+    "end": 10.24,
+    "id": "w28"
+  },
+  {
+    "text": "entre",
+    "start": 10.24,
+    "end": 10.64,
+    "id": "w29"
+  },
+  {
+    "text": "medias,",
+    "start": 10.64,
+    "end": 11.28,
+    "id": "w30"
+  },
+  {
+    "text": "cards",
+    "start": 11.28,
+    "end": 11.67,
+    "id": "w31"
+  },
+  {
+    "text": "con",
+    "start": 11.67,
+    "end": 11.92,
+    "id": "w32"
+  },
+  {
+    "text": "caso",
+    "start": 11.92,
+    "end": 12.24,
+    "id": "w33"
+  },
+  {
+    "text": "reales.",
+    "start": 12.24,
+    "end": 13,
+    "id": "w34"
+  },
+  {
+    "text": "Tres,",
+    "start": 13.03,
+    "end": 13.42,
+    "id": "w35"
+  },
+  {
+    "text": "le",
+    "start": 13.42,
+    "end": 13.56,
+    "id": "w36"
+  },
+  {
+    "text": "ensegnas",
+    "start": 13.56,
+    "end": 14.1,
+    "id": "w37"
+  },
+  {
+    "text": "un",
+    "start": 14.19,
+    "end": 14.26,
+    "id": "w38"
+  },
+  {
+    "text": "resultado",
+    "start": 14.26,
+    "end": 14.9,
+    "id": "w39"
+  },
+  {
+    "text": "personalizado.",
+    "start": 14.9,
+    "end": 16.12,
+    "id": "w40"
+  },
+  {
+    "text": "Cuatro,",
+    "start": 16.16,
+    "end": 16.68,
+    "id": "w41"
+  },
+  {
+    "text": "una",
+    "start": 16.68,
+    "end": 16.89,
+    "id": "w42"
+  },
+  {
+    "text": "oferta",
+    "start": 16.89,
+    "end": 17.22,
+    "id": "w43"
+  },
+  {
+    "text": "a",
+    "start": 17.31,
+    "end": 17.38,
+    "id": "w44"
+  },
+  {
+    "text": "medida.",
+    "start": 17.38,
+    "end": 18.02,
+    "id": "w45"
+  },
+  {
+    "text": "Ycinco,",
+    "start": 18.05,
+    "end": 18.65,
+    "id": "w46"
+  },
+  {
+    "text": "un",
+    "start": 18.66,
+    "end": 18.82,
+    "id": "w47"
+  },
+  {
+    "text": "contador",
+    "start": 18.82,
+    "end": 19.47,
+    "id": "w48"
+  },
+  {
+    "text": "para",
+    "start": 19.47,
+    "end": 19.8,
+    "id": "w49"
+  },
+  {
+    "text": "que",
+    "start": 19.8,
+    "end": 20,
+    "id": "w50"
+  },
+  {
+    "text": "la",
+    "start": 20.07,
+    "end": 20.19,
+    "id": "w51"
+  },
+  {
+    "text": "canjilla.",
+    "start": 20.2,
+    "end": 21.16,
+    "id": "w52"
+  },
+  {
+    "text": "Nada",
+    "start": 21.19,
+    "end": 21.42,
+    "id": "w53"
+  },
+  {
+    "text": "de",
+    "start": 21.49,
+    "end": 21.6,
+    "id": "w54"
+  },
+  {
+    "text": "mandara",
+    "start": 21.6,
+    "end": 22.12,
+    "id": "w55"
+  },
+  {
+    "text": "todos",
+    "start": 22.12,
+    "end": 22.49,
+    "id": "w56"
+  },
+  {
+    "text": "a",
+    "start": 22.49,
+    "end": 22.56,
+    "id": "w57"
+  },
+  {
+    "text": "la",
+    "start": 22.56,
+    "end": 22.71,
+    "id": "w58"
+  },
+  {
+    "text": "mismalanding.",
+    "start": 22.71,
+    "end": 23.73,
+    "id": "w59"
+  },
+  {
+    "text": "Hací,",
+    "start": 23.95,
+    "end": 24.45,
+    "id": "w60"
+  },
+  {
+    "text": "segmentas,",
+    "start": 24.45,
+    "end": 25.31,
+    "id": "w61"
+  },
+  {
+    "text": "educas,",
+    "start": 25.31,
+    "end": 25.9,
+    "id": "w62"
+  },
+  {
+    "text": "y",
+    "start": 25.97,
+    "end": 26.01,
+    "id": "w63"
+  },
+  {
+    "text": "bendes.",
+    "start": 26.01,
+    "end": 26.5,
+    "id": "w64"
+  }
+]

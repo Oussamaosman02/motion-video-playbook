@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "JetBrains Mono"; src: url("assets/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      :root {
+        --bg: #0a0c13; --text: #f4f2ee; --dim: #9a98a2; --faint: #7c7a86;
+        --red: #e8382d; --acc: #ff7d6e; --paper: #ebeae6; --ink: #17171c;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: "Archivo", sans-serif; }
+      .full { position: absolute; inset: 0; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .mono { font-family: "JetBrains Mono", monospace; }
+      .glow { position: absolute; border-radius: 50%; }
+      canvas { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+
+      /* HUD */
+      #hud { position: absolute; inset: 0; color: #8d8b96; font-family: "JetBrains Mono", monospace; font-size: 21px; letter-spacing: 0.12em; }
+      .br { position: absolute; width: 34px; height: 34px; border-color: currentColor; border-style: solid; border-width: 0; opacity: 0.8; }
+      .st { position: absolute; right: 74px; bottom: 58px; text-align: right; white-space: nowrap; opacity: 0; }
+      .st b { color: var(--hb, #f4f2ee); font-weight: 600; }
+
+      /* captions: bottom-left, word by word, keywords underlined */
+      #caps { --cap: #f4f2ee; --key: #ff7d6e; }
+      .cap { position: absolute; left: 72px; width: 900px; top: 1480px; font-size: 58px; font-weight: 500; line-height: 1.22; letter-spacing: -0.012em; color: var(--cap); opacity: 0; }
+      .cap span { display: inline-block; opacity: 0; }
+      .cap .k { color: var(--key); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 9px; text-decoration-color: color-mix(in srgb, var(--key) 55%, transparent); }
+
+      .cube { position: absolute; }
+      #s6 .lbl { background: rgba(10,12,19,0.82); padding: 8px 14px; border-radius: 8px; border: 1px solid #2c2d39; }
+      .term { position: absolute; left: 90px; width: 900px; height: 104px; border-radius: 18px; background: rgba(14,15,22,0.92); border: 1px solid #2a2b36; display: flex; align-items: center; padding: 0 34px; font-family: "JetBrains Mono", monospace; font-size: 34px; color: #e9e7e2; white-space: nowrap; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+      .term .pr { color: #7c7a86; margin-right: 18px; }
+      .term .sq { width: 22px; height: 22px; border-radius: 5px; background: var(--text); margin-right: 22px; flex: none; }
+      .caret { display: inline-block; width: 18px; height: 38px; background: var(--text); margin-left: 4px; vertical-align: -6px; }
+      .lbl { position: absolute; font-family: "JetBrains Mono", monospace; font-size: 25px; letter-spacing: 0.08em; white-space: nowrap; }
+      .chip { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 18px; letter-spacing: 0.1em; padding: 5px 10px; border-radius: 6px; border: 1px solid currentColor; vertical-align: middle; }
+      .card { position: absolute; left: 90px; width: 900px; border-radius: 22px; background: rgba(16,17,25,0.9); border: 1px solid #2c2d39; padding: 30px 36px; box-shadow: 0 24px 70px rgba(0,0,0,0.5); }
+      .card .h { font-family: "JetBrains Mono", monospace; font-size: 22px; letter-spacing: 0.12em; color: #8d8b96; display: flex; justify-content: space-between; }
+      .card .b { font-size: 46px; font-weight: 600; margin-top: 14px; letter-spacing: -0.015em; line-height: 1.15; }
+      .node { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: #2a2b36; border: 2px solid #4a4b58; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 600; color: var(--text); }
+      .cursor { position: absolute; width: 58px; height: 58px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="58.9" data-width="1080" data-height="1920">
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="55.41" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="58.9" data-track-index="11" data-volume="0.2"></audio>
+      <div id="sfx"></div>
+
+      <!-- background: navy base + two drifting glows (maroon / blue) + vignette -->
+      <div id="bg" class="full">
+        <div id="g1" class="glow" style="left: 80px; top: 300px; width: 1300px; height: 1300px; background: radial-gradient(circle, rgba(150,38,52,0.55) 0%, rgba(150,38,52,0.0) 62%);"></div>
+        <div id="g2" class="glow" style="left: -500px; top: 900px; width: 1200px; height: 1200px; background: radial-gradient(circle, rgba(36,52,96,0.55) 0%, rgba(36,52,96,0.0) 62%);"></div>
+        <div class="full" style="background: radial-gradient(120% 80% at 50% 45%, rgba(0,0,0,0) 40%, rgba(4,5,9,0.75) 100%);"></div>
+      </div>
+      <canvas id="fa" width="1080" height="1920" style="filter: blur(2.5px);"></canvas>
+      <canvas id="fb" width="1080" height="1920"></canvas>
+
+      <!-- S1 · hook: every visitor streams into the same landing -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="4.45" data-track-index="1">
+        <div id="s1-lbl" class="lbl" style="left: 0; right: 0; top: 300px; text-align: center; color: #8d8b96;">LA MISMA LANDING · PARA TODOS</div>
+        <div id="s1-slab" style="position: absolute; left: 230px; top: 360px; width: 620px; height: 150px; border-radius: 22px; background: rgba(20,21,30,0.92); border: 1px solid #34354a; box-shadow: 0 30px 80px rgba(0,0,0,0.5);">
+          <div class="mono" style="position: absolute; left: 30px; top: 26px; font-size: 22px; color: #8a8894;">tusaas.com/demo</div>
+          <div style="position: absolute; left: 30px; top: 70px; font-size: 40px; font-weight: 600;">Pide una demo</div>
+          <div style="position: absolute; right: 30px; top: 66px; width: 150px; height: 56px; border-radius: 12px; background: #3a3b4a;"></div>
+        </div>
+      </section>
+
+      <!-- S2 · "Haz esto." -->
+      <section id="s2" class="scene clip" data-start="4.45" data-duration="0.95" data-track-index="1">
+        <div id="s2-dot" style="position: absolute; left: 522px; top: 802px; width: 36px; height: 36px; border-radius: 8px; background: var(--text); box-shadow: 0 0 40px rgba(255,255,255,0.35);"></div>
+      </section>
+
+      <!-- S3 · terminal: pedir demo -> crear quiz funnel; the hero object appears -->
+      <section id="s3" class="scene clip" data-start="5.4" data-duration="4.08" data-track-index="1">
+        <div id="s3-t1" class="term" style="top: 300px;"><span class="sq"></span><span class="pr">tú $</span><span id="s3-a" style="position: relative;">pedir-demo --a-todos<span id="s3-strike" style="position: absolute; left: -6px; right: -6px; top: 22px; height: 4px; background: var(--red); transform-origin: left center;"></span></span></div>
+        <div id="s3-t2" class="term" style="top: 430px;"><span class="sq" style="background: var(--red);"></span><span class="pr">tú $</span><span id="s3-b"></span><span id="s3-c" class="caret"></span></div>
+        <img id="s3-cube" class="cube" src="assets/cube.png" style="left: 320px; top: 700px; width: 440px;" />
+        <div id="s3-name" class="lbl" style="left: 0; right: 0; top: 1240px; text-align: center; color: var(--text);">QUIZ FUNNEL <span class="chip" style="color: #8d8b96; margin-left: 10px;">01</span></div>
+      </section>
+
+      <!-- S4 · light blueprint: exploded stack of 5–8 questions -->
+      <section id="s4" class="scene clip" data-start="9.48" data-duration="8.63" data-track-index="1">
+        <div class="full" style="background: var(--paper);"></div>
+        <div class="full" style="background-image: radial-gradient(circle, rgba(23,23,28,0.08) 1.4px, transparent 1.8px); background-size: 34px 34px;"></div>
+        <svg id="s4-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s4-callouts" class="full"></div>
+        <div id="s4-big" style="position: absolute; left: 90px; top: 1060px; color: var(--ink); white-space: nowrap;">
+          <span id="s4-n1" style="display: inline-block; font-size: 190px; font-weight: 300; letter-spacing: -0.05em;">5</span><span id="s4-n2" style="display: inline-block; font-size: 190px; font-weight: 300; letter-spacing: -0.05em;">–8</span>
+          <span id="s4-u" class="mono" style="display: inline-block; font-size: 34px; color: #5b5a63; margin-left: 18px;">preguntas</span>
+          <div id="s4-rule" style="height: 2px; width: 560px; background: var(--ink); margin-top: 4px; transform-origin: left center;"></div>
+        </div>
+        <div class="lbl" style="left: 90px; top: 1380px; font-size: 19px; color: #5b5a63;">QUIÉN ES · QUÉ QUIERE · QUÉ LE FRENA</div>
+      </section>
+
+      <!-- S5 · questions + value cards interleaved on one diagonal -->
+      <section id="s5" class="scene clip" data-start="18.11" data-duration="11.83" data-track-index="1">
+        <svg id="s5-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s5-items" class="full"></div>
+        <div id="s5-chat" class="term" style="top: 1280px; height: 110px;"><span class="sq" style="background: #3fd27f;"></span><span id="s5-q"></span><span id="s5-c" class="caret"></span></div>
+      </section>
+
+      <!-- S6 · the field splits into personalised results -->
+      <section id="s6" class="scene clip" data-start="29.94" data-duration="4.68" data-track-index="1">
+        <div id="s6-a" class="lbl" style="left: 70px; top: 250px; color: var(--text);">A · SAAS B2B</div>
+        <div id="s6-b" class="lbl" style="left: 760px; top: 520px; color: var(--acc);">B · AGENCIA</div>
+        <div id="s6-c" class="lbl" style="left: 120px; top: 1180px; color: #a9b3d6;">C · E-COMMERCE</div>
+        <div id="s6-ej" class="lbl" style="right: 90px; top: 1390px; font-size: 19px; color: #7c7a86;">SEGMENTOS · EJEMPLO</div>
+      </section>
+
+      <!-- S7 · everything sleeps, one lead stays lit -->
+      <section id="s7" class="scene clip" data-start="34.62" data-duration="2.02" data-track-index="1">
+        <div id="s7-ring" style="position: absolute; left: 340px; top: 600px; width: 400px; height: 400px; border-radius: 50%; border: 2px solid var(--acc);"></div>
+        <img id="s7-cube" class="cube" src="assets/cube.png" style="left: 430px; top: 690px; width: 220px;" />
+      </section>
+
+      <!-- S8 · last cards: why it fits, specific offer, countdown -->
+      <section id="s8" class="scene clip" data-start="36.64" data-duration="12.51" data-track-index="1">
+        <img id="s8-cube" class="cube" src="assets/cube.png" style="left: 455px; top: 190px; width: 170px;" />
+        <div id="s8-prod" class="lbl" style="left: 0; right: 0; top: 400px; text-align: center; color: var(--text);">TU PRODUCTO</div>
+        <div id="s8-c1" class="card" style="top: 480px;">
+          <div class="h"><span>01 · POR QUÉ ENCAJA</span><span class="chip" style="color: #7c7a86;">EJEMPLO</span></div>
+          <div class="b">SaaS B2B con leads fríos: <span style="color: var(--acc);">encaja</span> con tu situación.</div>
+        </div>
+        <div id="s8-c2" class="card" style="top: 740px;">
+          <div class="h"><span>02 · OFERTA ESPECÍFICA</span><span class="chip" style="color: #7c7a86;">EJEMPLO</span></div>
+          <div class="b">Plan Growth <span style="color: var(--acc);">−30 %</span> <span style="font-weight: 400; color: var(--dim); font-size: 36px;">solo para tu perfil</span></div>
+        </div>
+        <div id="s8-c3" class="card" style="top: 1000px; height: 330px;">
+          <div class="h"><span>03 · TIEMPO LIMITADO</span><span>OFERTA ACTIVA</span></div>
+          <div id="s8-clk" class="mono" style="font-size: 120px; font-weight: 300; letter-spacing: 0.02em; margin-top: 18px;">00:14:59</div>
+          <div id="s8-btn" style="position: absolute; right: 36px; bottom: 34px; padding: 18px 34px; border-radius: 14px; background: var(--red); font-size: 36px; font-weight: 700;">Canjear →</div>
+        </div>
+        <svg id="s8-cur" class="cursor" viewBox="0 0 24 24" style="left: 0; top: 0;"><path d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.8L4 20z" fill="#fff" stroke="#111" stroke-width="1.2"/></svg>
+      </section>
+
+      <!-- S9 · lead captured -> segmenta / educa / compra -->
+      <section id="s9" class="scene clip" data-start="49.15" data-duration="7.03" data-track-index="1">
+        <div id="s9-t" class="term" style="top: 300px;"><span class="sq"></span><span class="pr">quiz $</span><span id="s9-a"></span><span id="s9-ok" style="color: #3fd27f; margin-left: 16px;">✓ lead captado</span></div>
+        <div id="s9-frame" style="position: absolute; left: 260px; top: 600px; width: 560px; height: 660px; border-radius: 40px; border: 1px solid #343545;"></div>
+        <svg id="s9-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <line id="s9-l1" x1="540" y1="880" x2="150" y2="760" stroke="#5a5b6a" stroke-width="2" />
+          <line id="s9-l2" x1="540" y1="880" x2="930" y2="720" stroke="#5a5b6a" stroke-width="2" />
+          <line id="s9-l3" x1="540" y1="880" x2="900" y2="1150" stroke="#e8382d" stroke-width="3" />
+        </svg>
+        <img id="s9-cube" class="cube" src="assets/cube.png" style="left: 400px; top: 730px; width: 280px;" />
+        <div id="s9-name" class="lbl" style="left: 0; right: 0; top: 1060px; text-align: center; color: var(--text);">lead <span class="chip" style="color: #a3a1ab;">CAPTADO</span></div>
+        <div id="s9-n1" class="node" style="left: 40px; top: 685px; width: 220px; height: 150px; border-radius: 75px;">Segmenta</div>
+        <div id="s9-n2" class="node" style="left: 800px; top: 645px; width: 220px; height: 150px; border-radius: 75px;">Educa</div>
+        <div id="s9-n3" class="node" style="left: 780px; top: 1150px; width: 260px; height: 150px; border-radius: 75px; background: var(--red); border-color: #ff7d6e;">Compra</div>
+      </section>
+
+      <!-- S10 · lockup -->
+      <section id="s10" class="scene clip" data-start="56.18" data-duration="2.72" data-track-index="1">
+        <div id="s10-logo" style="position: absolute; left: 0; right: 0; top: 860px; display: flex; justify-content: center; align-items: center; gap: 22px;">
+          <img src="assets/cube.png" style="width: 92px;" />
+          <span style="font-size: 92px; font-weight: 700; letter-spacing: -0.03em;">SaaS</span>
+          <span style="font-family: Silkscreen; font-size: 38px; background: var(--red); color: var(--text); padding: 10px 14px 6px; border-radius: 10px;">IN</span>
+          <span style="font-size: 92px; font-weight: 700; letter-spacing: -0.03em;">House</span>
+        </div>
+        <div id="s10-sub" class="lbl" style="left: 0; right: 0; top: 1020px; text-align: center; color: #8d8b96;">QUIZ FUNNELS QUE VENDEN</div>
+      </section>
+
+      <div id="caps"></div>
+
+      <div id="hud">
+        <div class="br" style="left: 36px; top: 36px; border-left-width: 2px; border-top-width: 2px;"></div>
+        <div class="br" style="right: 36px; top: 36px; border-right-width: 2px; border-top-width: 2px;"></div>
+        <div class="br" style="left: 36px; bottom: 36px; border-left-width: 2px; border-bottom-width: 2px;"></div>
+        <div class="br" style="right: 36px; bottom: 36px; border-right-width: 2px; border-bottom-width: 2px;"></div>
+        <div style="position: absolute; left: 74px; top: 58px;"><span style="display: inline-block; width: 14px; height: 14px; background: currentColor; margin-right: 12px; vertical-align: -1px;"></span>SAAS IN HOUSE</div>
+        <div style="position: absolute; right: 74px; top: 58px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); margin-right: 12px; vertical-align: 2px;"></span><span id="tc">00:00:00:00</span></div>
+        <div id="st1" class="st">VISITANTES <b id="st1n">000</b> · EJEMPLO</div>
+        <div id="st3" class="st">FUNNEL <b>01</b></div>
+        <div id="st4" class="st">PREGUNTAS <b>5–8</b></div>
+        <div id="st5" class="st">CARDS <b>CASO · DATO · CONSEJO</b></div>
+        <div id="st6" class="st">SEGMENTOS <b>3</b></div>
+        <div id="st7" class="st">ESTADO <b>UN LEAD</b></div>
+        <div id="st8" class="st">OFERTA <b>ACTIVA</b></div>
+        <div id="st9" class="st">ESTADO <b>COMPRA</b></div>
+      </div>
+    </div>
+
+    <script>
+      const VO = 0.3;
+      const W = [["¿Quieres", 0.0, 0.373], ["vender", 0.416, 0.723], ["tu", 0.8, 0.931], ["SaaS", 0.997, 1.281], ["sin", 1.369, 1.566], ["mandar", 1.621, 1.972], ["a", 2.015, 2.037], ["todo", 2.103, 2.376], ["el", 2.421, 2.475], ["mundo", 2.53, 2.87], ["a", 2.979, 3.001], ["la", 3.045, 3.11], ["misma", 3.155, 3.428], ["landing?", 3.483, 3.975], ["Haz", 4.272, 4.491], ["esto.", 4.557, 4.928], ["En", 5.225, 5.356], ["lugar", 5.389, 5.63], ["de", 5.674, 5.728], ["pedir", 5.761, 6.013], ["una", 6.068, 6.21], ["demo", 6.265, 6.517], ["directamente,", 6.593, 7.372], ["crea", 7.525, 7.831], ["un", 7.919, 8.04], ["Quiz", 8.127, 8.368], ["Funnel.", 8.434, 8.981], ["Primero", 9.332, 9.715], ["haces", 9.758, 9.967], ["entre", 10.022, 10.263], ["cinco", 10.285, 10.756], ["y", 10.832, 10.854], ["ocho", 10.92, 11.117], ["preguntas", 11.15, 11.599], ["para", 11.642, 11.796], ["saber", 11.829, 12.059], ["quién", 12.169, 12.431], ["es", 12.486, 12.552], ["esa", 12.628, 12.771], ["persona,", 12.815, 13.395], ["qué", 13.647, 13.767], ["quiere", 13.855, 14.118], ["conseguir", 14.161, 14.643], ["y", 14.94, 15.049], ["cuál", 15.158, 15.443], ["es", 15.553, 15.75], ["su", 15.838, 16.012], ["principal", 16.068, 16.572], ["problema.", 16.648, 17.327], ["Pero", 17.962, 18.171], ["no", 18.214, 18.28], ["hagas", 18.313, 18.521], ["solo", 18.542, 18.751], ["preguntas.", 18.784, 19.386], ["Entre", 19.474, 19.78], ["medias,", 19.813, 20.328], ["añade", 20.459, 20.821], ["pequeñas", 20.865, 21.248], ["cards", 21.314, 21.697], ["con", 21.828, 22.025], ["casos", 22.135, 22.541], ["reales,", 22.726, 23.362], ["datos,", 23.581, 24.206], ["resultados", 24.358, 24.972], ["o", 25.049, 25.071], ["consejos", 25.125, 25.629], ["que", 25.684, 25.76], ["le", 25.805, 25.892], ["hagan", 25.925, 26.155], ["pensar:", 26.209, 26.856], ["\"vale,", 27.042, 27.689], ["esto", 27.875, 28.138], ["tiene", 28.192, 28.4], ["sentido\".", 28.433, 29.058], ["Después,", 29.792, 30.317], ["según", 30.426, 30.701], ["sus", 30.744, 30.887], ["respuestas,", 30.942, 31.599], ["le", 31.752, 31.851], ["muestras", 31.894, 32.256], ["un", 32.409, 32.552], ["resultado", 32.628, 33.132], ["personalizado.", 33.187, 34.173], ["Y", 34.425, 34.491], ["aquí", 34.567, 34.721], ["viene", 34.754, 34.951], ["la", 34.994, 35.049], ["parte", 35.092, 35.344], ["importante.", 35.4, 36.221], ["Las", 36.44, 36.615], ["últimas", 36.692, 37.009], ["cards", 37.064, 37.404], ["ya", 37.7, 37.831], ["tienen", 37.875, 38.116], ["que", 38.171, 38.247], ["llevarlo", 38.269, 38.686], ["hacia", 38.751, 39.047], ["tu", 39.091, 39.2], ["producto:", 39.255, 39.989], ["le", 40.208, 40.307], ["explicas", 40.328, 40.777], ["por", 40.832, 40.953], ["qué", 41.008, 41.106], ["encaja", 41.16, 41.588], ["con", 41.632, 41.752], ["su", 41.796, 41.894], ["situación,", 41.939, 42.673], ["le", 43.023, 43.122], ["presentas", 43.165, 43.592], ["una", 43.669, 43.79], ["oferta", 43.833, 44.184], ["específica", 44.239, 44.863], ["y", 45.158, 45.246], ["añades", 45.323, 45.707], ["un", 45.816, 45.881], ["contador", 45.936, 46.429], ["con", 46.615, 46.791], ["tiempo", 46.857, 47.152], ["limitado", 47.196, 47.623], ["para", 47.667, 47.82], ["canjearla.", 47.853, 48.62], ["Así", 48.97, 49.222], ["no", 49.299, 49.387], ["solo", 49.43, 49.627], ["captas", 49.671, 50.022], ["el", 50.098, 50.219], ["lead.", 50.274, 50.69], ["Lo", 51.238, 51.38], ["segmentas,", 51.424, 52.136], ["lo", 52.245, 52.376], ["educas", 52.421, 52.87], ["y", 53.089, 53.198], ["lo", 53.286, 53.374], ["llevas", 53.406, 53.647], ["directamente", 53.691, 54.348], ["hacia", 54.392, 54.589], ["la", 54.633, 54.688], ["compra.", 54.731, 55.377]]; // from assets/words.json
+      const t = (i) => W[i][1] + VO; // word index -> timeline time
+      const END = 58.9;
+      const B = { s1: 0, s2: 4.45, s3: 5.4, s4: 9.48, s5: 18.11, s6: 29.94, s7: 34.62, s8: 36.64, s9: 49.15, s10: 56.18 };
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+      const smooth = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+      function rng(s) { return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
+
+      let sfxN = 0;
+      function sfx(file, at, vol = 0.5, dur = 1) {
+        const a = document.createElement("audio");
+        a.id = "sfx" + sfxN++;
+        a.src = "assets/" + file;
+        a.setAttribute("data-start", at.toFixed(2));
+        a.setAttribute("data-duration", String(dur));
+        a.setAttribute("data-track-index", String(20 + (sfxN % 6)));
+        a.setAttribute("data-volume", String(vol));
+        $("sfx").appendChild(a);
+      }
+      function typeText(el, text, at, dur) {
+        const o = { n: 0 };
+        tl.fromTo(o, { n: 0 }, { n: text.length, duration: dur, ease: "none", onUpdate: () => { el.textContent = text.slice(0, Math.round(o.n)); } }, at);
+        sfx("type.mp3", at, 0.35, Math.min(1.5, dur + 0.2));
+      }
+      function blink(id, from, to) { for (let k = from; k < to; k += 0.5) tl.set("#" + id, { opacity: 0 }, k).set("#" + id, { opacity: 1 }, k + 0.25); }
+      const rise = (sel, at, d = 0.6) => tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: d, ease: "expo.out" }, at);
+      const pop = (sel, at, d = 0.7) => tl.fromTo(sel, { opacity: 0, scale: 0.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: d, ease: "back.out(1.6)" }, at);
+
+      /* ---------- captions: clause chunks, words rise in one by one, keywords accented ---------- */
+      const KEY = new Set([3, 13, 21, 25, 26, 30, 32, 33, 58, 60, 61, 62, 63, 65, 81, 82, 88, 98, 103, 110, 111, 115, 124, 126, 128, 130, 137]);
+      (function captions() {
+        const chunks = []; let cur = [], len = 0;
+        W.forEach((w, i) => {
+          cur.push(i); len += w[0].length + 1;
+          const end = /[.?:]"?$/.test(w[0]) || (/,"?$/.test(w[0]) && len > 24) || len > 44;
+          if (end) { chunks.push(cur); cur = []; len = 0; }
+        });
+        if (cur.length) chunks.push(cur);
+        chunks.forEach((c, k) => {
+          const el = document.createElement("div");
+          el.className = "cap"; el.id = "cap" + k;
+          c.forEach((i) => {
+            const s = document.createElement("span");
+            s.id = `w${i}`; s.textContent = W[i][0];
+            if (KEY.has(i)) s.className = "k";
+            el.appendChild(s); el.appendChild(document.createTextNode(" "));
+          });
+          $("caps").appendChild(el);
+          const a = t(c[0]) - 0.05;
+          const endW = W[c[c.length - 1]][2] + VO;
+          const next = k + 1 < chunks.length ? t(chunks[k + 1][0]) - 0.08 : endW + 0.8;
+          tl.set(el, { opacity: 1 }, a).set(el, { opacity: 0 }, Math.min(next, endW + 1.2));
+          c.forEach((i) => tl.fromTo(`#w${i}`, { opacity: 0, y: 18, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "power3.out" }, t(i) - 0.04));
+        });
+      })();
+      // caption + HUD colours flip on the light blueprint scene
+      tl.set("#caps", { "--cap": "#17171c", "--key": "#c42a20" }, B.s4).set("#caps", { "--cap": "#f4f2ee", "--key": "#ff7d6e" }, B.s5);
+      tl.set("#hud", { color: "#5e5d66", "--hb": "#17171c" }, B.s4).set("#hud", { color: "#8d8b96", "--hb": "#f4f2ee" }, B.s5);
+
+      /* ---------- background drift ---------- */
+      tl.fromTo("#g1", { x: 0, y: 0 }, { x: -260, y: 220, duration: END, ease: "sine.inOut" }, 0);
+      tl.fromTo("#g2", { x: 0, y: 0 }, { x: 420, y: -380, duration: END, ease: "sine.inOut" }, 0);
+
+      /* ---------- isometric cube field (canvas, pure function of time) ---------- */
+      const ca = $("fa").getContext("2d"), cb = $("fb").getContext("2d");
+      const mix = (c, d, k) => c.map((v, i) => Math.round(v + (d[i] - v) * k));
+      function cube(ctx, x, y, s, col, a) {
+        if (a <= 0.01 || s < 1) return;
+        const w = s * 0.866;
+        const top = mix(col, [255, 255, 255], 0.22), left = col, right = col.map((v) => Math.round(v * 0.68));
+        const face = (pts, c) => {
+          ctx.beginPath(); ctx.moveTo(pts[0], pts[1]);
+          for (let k = 2; k < pts.length; k += 2) ctx.lineTo(pts[k], pts[k + 1]);
+          ctx.closePath(); ctx.fillStyle = ctx.strokeStyle = `rgb(${c})`; ctx.fill(); ctx.stroke();
+        };
+        ctx.globalAlpha = clamp(a); ctx.lineJoin = "round"; ctx.lineWidth = Math.max(1, s * 0.14);
+        face([x, y - s, x + w, y - s / 2, x, y, x - w, y - s / 2], top);
+        face([x - w, y - s / 2, x, y, x, y + s, x - w, y + s / 2], left);
+        face([x, y, x + w, y - s / 2, x + w, y + s / 2, x, y + s], right);
+      }
+      const MAROON = [124, 40, 54], WHITE = [236, 236, 240], RED = [232, 56, 45], SLATE = [104, 116, 158], GREY = [62, 64, 76];
+      // S1 stream: visitors converge on the slab
+      const STREAM = (() => { const r = rng(11), a = []; for (let i = 0; i < 120; i++) { const y0 = 640 + r() * 780; a.push({ x0: 40 + r() * 1000, y0, s: 10 + (y0 - 640) / 780 * 24 + r() * 6, d: r() * 2.7, hi: r() < 0.08 }); } return a; })();
+      // S6/S7/S10 grid
+      const GRID = (() => {
+        const r = rng(29), a = [], n = 13, s = 24, gx = 0.866 * s * 1.18, gy = 0.5 * s * 1.18;
+        for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+          if (r() < 0.22) continue;
+          const seg = i < 5 ? 0 : (j < 6 ? 1 : 2);
+          a.push({ i, j, x: 540 + (i - j) * gx * 2, y: 520 + (i + j) * gy * 2, z: Math.floor(r() * 2) * s, s, seg, d: r() * 0.6, lift: r() });
+        }
+        return a.sort((p, q) => (p.i + p.j) - (q.i + q.j));
+      })();
+      const SEGOFF = [[-150, -170], [170, -60], [-40, 150]], SEGCOL = [WHITE, RED, SLATE];
+      function drawField(T) {
+        ca.clearRect(0, 0, 1080, 1920); cb.clearRect(0, 0, 1080, 1920);
+        if (T < B.s2 + 0.1) {
+          const G = [540, 440];
+          STREAM.forEach((c) => {
+            const p = clamp((T - 0.15 - c.d) / 1.5), e = p * p * p;
+            const x = c.x0 + (G[0] - c.x0) * e, y = c.y0 + (G[1] - c.y0) * e - Math.sin(T * 2 + c.x0) * 4 * (1 - p);
+            const s = c.s * (1 - 0.75 * e), a = (1 - smooth((p - 0.8) / 0.2)) * smooth(T / 0.5);
+            cube(c.s > 26 || c.hi ? cb : ca, x, y, s, c.hi ? mix(MAROON, WHITE, 0.6) : MAROON, a * (c.hi ? 1 : 0.85));
+          });
+        } else if (T >= B.s6 && T < B.s8 + 0.4) {
+          const segP = smooth((T - t(77) + 0.2) / 0.9), hib = smooth((T - B.s7 + 0.1) / 0.6), hiA = smooth((T - t(82)) / 0.6);
+          GRID.forEach((c) => {
+            const inP = smooth((T - B.s6 - 0.05 - c.d) / 0.7);
+            const off = SEGOFF[c.seg];
+            const x = c.x + off[0] * segP, lift = (c.seg === 0 ? 30 * hiA : 0) + c.lift * 26 * segP * (1 - hib);
+            const y = c.y + off[1] * segP - c.z - (1 - inP) * 140 - lift;
+            let col = mix(MAROON, SEGCOL[c.seg], segP * (c.seg === 0 ? 1 : 0.85));
+            col = mix(col, GREY, hib);
+            const a = inP * (1 - 0.45 * hib);
+            cube(c.seg === 0 && segP > 0.5 && hib < 0.5 ? cb : ca, x, y, c.s, col, a);
+          });
+        } else if (T >= B.s10 - 0.3) {
+          const k = smooth((T - B.s10 + 0.3) / 0.8);
+          GRID.forEach((c) => cube(ca, c.x, c.y - c.z + (1 - k) * 60 + 600, c.s, MAROON, 0.55 * k));
+        }
+        ca.globalAlpha = cb.globalAlpha = 1;
+      }
+      const clock = { v: 0 };
+      const tcEl = $("tc");
+      tl.fromTo(clock, { v: 0 }, { v: END, duration: END, ease: "none", onUpdate: () => {
+        const T = clock.v; drawField(T);
+        const f = Math.floor(T * 30), p = (n) => String(n).padStart(2, "0");
+        tcEl.textContent = `00:${p(Math.floor(f / 1800))}:${p(Math.floor(f / 30) % 60)}:${p(f % 30)}`;
+      } }, 0);
+      tl.set(clock, { v: 0 }, 0);
+
+      /* ---------- HUD status (bottom-right) ---------- */
+      [["st1", B.s1, B.s2], ["st3", B.s3, B.s4], ["st4", B.s4, B.s5], ["st5", B.s5, B.s6], ["st6", B.s6, B.s7], ["st7", B.s7, B.s8], ["st8", B.s8, B.s9], ["st9", B.s9, B.s10]].forEach(([id, a, b]) => {
+        tl.fromTo("#" + id, { opacity: 0 }, { opacity: 1, duration: 0.3 }, a + 0.2).set("#" + id, { opacity: 0 }, b);
+      });
+      const vis = { v: 0 };
+      tl.fromTo(vis, { v: 0 }, { v: 214, duration: 4.0, ease: "power1.in", onUpdate: () => { $("st1n").textContent = String(Math.round(vis.v)).padStart(3, "0"); } }, 0.2);
+
+      /* ---------- S1 ---------- */
+      rise("#s1-lbl", 0.2);
+      tl.fromTo("#s1-slab", { opacity: 0, y: -30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "expo.out" }, 0.1);
+      tl.to("#s1-slab", { scale: 1.04, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" }, t(12));
+      sfx("swell.mp3", 0.0, 0.35, 1.5);
+
+      /* ---------- S2 ---------- */
+      tl.fromTo("#s2-dot", { scale: 0, rotation: -45 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(2)" }, t(14));
+      tl.to("#s2-dot", { scale: 1.4, duration: 0.3, ease: "power2.in" }, t(15) + 0.25);
+      sfx("blip.mp3", t(14), 0.4, 0.5);
+
+      /* ---------- S3 ---------- */
+      rise("#s3-t1", t(16) - 0.1, 0.5);
+      tl.fromTo("#s3-strike", { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: "power2.out" }, t(21));
+      tl.to("#s3-t1", { opacity: 0.35, duration: 0.3 }, t(22));
+      sfx("click.mp3", t(21), 0.6, 0.5);
+      rise("#s3-t2", t(23) - 0.15, 0.4);
+      typeText($("s3-b"), "crear quiz-funnel", t(23), 0.7);
+      blink("s3-c", t(23) + 0.8, B.s4);
+      pop("#s3-cube", t(25) - 0.05, 0.9);
+      tl.fromTo("#s3-cube", { y: 0 }, { y: -18, duration: 1.4, ease: "sine.inOut", yoyo: true, repeat: 1 }, t(26));
+      rise("#s3-name", t(26));
+      sfx("thump.mp3", t(25) - 0.05, 0.7, 1);
+
+      /* ---------- S4 · blueprint ---------- */
+      (function blueprint() {
+        const svg = $("s4-svg"), NS = "http://www.w3.org/2000/svg";
+        const mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+        const u = [0.866, -0.5], v = [0.866, 0.5], w = 200, h = 260, d = 22;
+        const base = [70, 560];
+        // dashed bounding box (iso)
+        const P = (x, y, a, b, c) => [x + u[0] * a + v[0] * c, y + u[1] * a + v[1] * c + b];
+        const bx = (pts) => pts.map((p) => p.join(",")).join(" ");
+        const bb = [P(...base, -20, -40, -30), P(...base, w + 20, -40, -30), P(...base, w + 20, -40, 330), P(...base, -20, -40, 330)];
+        mk("polygon", { id: "s4-box", points: bx(bb), fill: "none", stroke: "#8b8a92", "stroke-width": 1.5, "stroke-dasharray": "8 8" });
+        const bb2 = [P(...base, -20, h + 30, 330), P(...base, -20, h + 30, -30)];
+        mk("polyline", { id: "s4-box2", points: bx([bb[3], bb2[0], bb2[1], bb[0]]), fill: "none", stroke: "#8b8a92", "stroke-width": 1.5, "stroke-dasharray": "8 8" });
+        const plates = [];
+        for (let k = 4; k >= 0; k--) {
+          const off = k * 70;
+          const p0 = P(...base, 0, 0, off), p1 = P(...base, w, 0, off), p2 = P(...base, w, h, off), p3 = P(...base, 0, h, off);
+          const q1 = P(...base, w, 0, off + d), q2 = P(...base, w, h, off + d), q0 = P(...base, 0, 0, off + d);
+          const g = document.createElementNS(NS, "g"); g.id = "s4-p" + k; svg.appendChild(g);
+          const add = (pts, fill) => { const e = document.createElementNS(NS, "polygon"); e.setAttribute("points", bx(pts)); e.setAttribute("fill", fill); e.setAttribute("stroke", "#2b2b31"); e.setAttribute("stroke-width", 2); e.setAttribute("stroke-linejoin", "round"); g.appendChild(e); };
+          add([p1, q1, q2, p2], "#d9d8d3");
+          add([p0, q0, q1, p1], "#e4e3df");
+          add([p0, p1, p2, p3], "#f7f6f3");
+          plates.push({ k, g, anchor: P(...base, w * 0.92, 40 + k * 0, off + d) });
+        }
+        // callouts
+        const LAB = [["01", "¿QUIÉN ES?", 36], ["02", "¿QUÉ QUIERE CONSEGUIR?", 40], ["03", "¿CUÁL ES SU PROBLEMA?", 44], ["04–08", "CONTEXTO · URGENCIA · …", 47]];
+        LAB.forEach(([n, txt, wi], k) => {
+          const pl = plates.find((p) => p.k === 4 - k) || plates[0];
+          const ax = pl.anchor[0], ay = pl.anchor[1];
+          const lx = 600, ly = 330 + k * 125;
+          const line = mk("polyline", { id: "s4-l" + k, points: `${ax},${ay} ${ax + 40},${ly + 30} ${lx - 14},${ly + 30}`, fill: "none", stroke: "#2b2b31", "stroke-width": 1.5 });
+          const dot = mk("circle", { id: "s4-d" + k, cx: ax, cy: ay, r: 5, fill: "#2b2b31" });
+          const L = document.createElement("div");
+          L.id = "s4-c" + k; L.className = "lbl";
+          L.style.cssText = `left:${lx}px;top:${ly}px;color:#17171c;font-size:23px;`;
+          L.innerHTML = `<div style="font-size:16px;color:#5e5d66;margin-bottom:4px;">${n}</div>${txt}`;
+          $("s4-callouts").appendChild(L);
+          const len = 600;
+          line.style.strokeDasharray = len;
+          tl.fromTo(line, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, t(wi) - 0.2);
+          tl.fromTo(dot, { opacity: 0 }, { opacity: 1, duration: 0.2 }, t(wi) - 0.2);
+          rise(L, t(wi) + 0.05, 0.5);
+          sfx("blip.mp3", t(wi), 0.3, 0.5);
+        });
+        // plates slide apart from a packed stack
+        tl.fromTo("#s4-box", { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s4 + 0.2);
+        tl.fromTo("#s4-box2", { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s4 + 0.2);
+        plates.forEach((p) => {
+          const back = (p.k * 70) * v[0], backy = (p.k * 70) * v[1];
+          tl.fromTo(p.g, { x: -back, y: -backy, opacity: 0 }, { x: -back, y: -backy, opacity: 1, duration: 0.4 }, B.s4 + 0.1);
+          tl.to(p.g, { x: 0, y: 0, duration: 1.1, ease: "expo.inOut" }, t(30) - 0.3 + (4 - p.k) * 0.05);
+        });
+        sfx("whoosh.mp3", t(30) - 0.3, 0.4, 1);
+      })();
+      tl.fromTo("#s4-n1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, t(30));
+      tl.fromTo("#s4-n2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, t(32));
+      tl.fromTo("#s4-u", { opacity: 0 }, { opacity: 1, duration: 0.4 }, t(33));
+      tl.fromTo("#s4-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.out" }, t(33));
+
+      /* ---------- S5 · interleave ---------- */
+      (function interleave() {
+        const box = $("s5-items"), svg = $("s5-svg"), NS = "http://www.w3.org/2000/svg";
+        const pos = (k) => [230 + k * 72, 300 + k * 105];
+        const CARD = { 1: ["CASO REAL", 60], 3: ["DATO", 62], 5: ["RESULTADO", 63], 7: ["CONSEJO", 65] };
+        for (let k = 0; k < 9; k++) {
+          const [x, y] = pos(k), q = k % 2 === 0;
+          const img = document.createElement("img");
+          img.id = "s5-k" + k; img.className = "cube"; img.src = q ? "assets/cube.png" : "assets/cube_red.png";
+          img.style.cssText = `left:${x - 60}px;top:${y - 66}px;width:120px;`;
+          box.appendChild(img);
+          const L = document.createElement("div");
+          L.id = "s5-L" + k; L.className = "lbl";
+          if (q) {
+            L.style.cssText = `left:${x - 170}px;top:${y - 16}px;color:#8d8b96;font-size:24px;width:90px;text-align:right;`;
+            L.textContent = "P" + (k / 2 + 1);
+            box.appendChild(L);
+            tl.fromTo(img, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, B.s5 + 0.15 + k * 0.08);
+            tl.fromTo(L, { opacity: 0 }, { opacity: 1, duration: 0.3 }, B.s5 + 0.3 + k * 0.08);
+          } else {
+            const [nm, wi] = CARD[k];
+            const ln = document.createElementNS(NS, "polyline");
+            ln.id = "s5-ln" + k;
+            ln.setAttribute("points", `${x + 62},${y} ${x + 105},${y - 40} ${x + 150},${y - 40}`);
+            ln.setAttribute("fill", "none"); ln.setAttribute("stroke", "#e8382d"); ln.setAttribute("stroke-width", 2);
+            ln.style.strokeDasharray = 200;
+            svg.appendChild(ln);
+            L.style.cssText = `left:${x + 160}px;top:${y - 56}px;color:#ff7d6e;font-size:26px;`;
+            L.textContent = nm;
+            box.appendChild(L);
+            tl.fromTo(img, { opacity: 0, x: 220, y: -120, rotation: 12 }, { opacity: 1, x: 0, y: 0, rotation: 0, duration: 0.55, ease: "expo.out" }, t(wi) - 0.15);
+            tl.fromTo(ln, { strokeDashoffset: 200 }, { strokeDashoffset: 0, duration: 0.35 }, t(wi) + 0.1);
+            tl.fromTo(L, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3 }, t(wi) + 0.2);
+            sfx("thump.mp3", t(wi) - 0.1, 0.35, 1);
+          }
+        }
+        // questions alone first: they sit packed (odd slots empty) then the gaps open on "Entre medias"
+        for (let k = 0; k < 9; k += 2) {
+          const dx = -(k / 2) * 72, dy = -(k / 2) * 105;
+          tl.fromTo(["#s5-k" + k, "#s5-L" + k], { x: dx, y: dy }, { x: dx, y: dy, duration: 0.01 }, B.s5);
+          tl.to(["#s5-k" + k, "#s5-L" + k], { x: 0, y: 0, duration: 0.9, ease: "expo.inOut" }, t(54) - 0.1);
+        }
+        sfx("whoosh.mp3", t(54) - 0.1, 0.35, 1);
+      })();
+      rise("#s5-chat", t(69) - 0.2, 0.4);
+      typeText($("s5-q"), "«vale, esto tiene sentido»", t(70), 1.3);
+      blink("s5-c", t(70) + 1.4, B.s6);
+      sfx("chime.mp3", t(73) + 0.2, 0.35, 1);
+
+      /* ---------- S6 · segments ---------- */
+      sfx("swell.mp3", B.s6, 0.35, 1.5);
+      rise("#s6-a", t(81) - 0.1, 0.5); rise("#s6-b", t(81) + 0.05, 0.5); rise("#s6-c", t(81) + 0.2, 0.5); rise("#s6-ej", t(82), 0.5);
+      sfx("blip.mp3", t(81), 0.35, 0.5);
+
+      /* ---------- S7 ---------- */
+      pop("#s7-cube", B.s7 + 0.15, 0.7);
+      tl.fromTo("#s7-ring", { opacity: 0, scale: 0.5 }, { opacity: 0.9, scale: 1, duration: 0.8, ease: "expo.out" }, t(87));
+      tl.to("#s7-ring", { opacity: 0, scale: 1.3, duration: 0.6 }, t(88) + 0.5);
+      sfx("thump.mp3", B.s7 + 0.15, 0.6, 1);
+
+      /* ---------- S8 · last cards ---------- */
+      pop("#s8-cube", B.s8 + 0.1, 0.7);
+      rise("#s8-prod", t(98) - 0.1, 0.5);
+      tl.fromTo("#s8-cube", { y: 0 }, { y: -12, duration: 2, ease: "sine.inOut", yoyo: true, repeat: 5 }, B.s8 + 0.8);
+      tl.fromTo(["#s8-c1", "#s8-c2", "#s8-c3"], { opacity: 0, y: 40 }, { opacity: 0.2, y: 0, duration: 0.6, stagger: 0.12, ease: "expo.out" }, t(91) - 0.1);
+      sfx("whoosh.mp3", t(91) - 0.1, 0.3, 1);
+      const lit = (sel, at) => tl.fromTo(sel, { opacity: 0.2, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)", immediateRender: false }, at);
+      lit("#s8-c1", t(100) - 0.1); sfx("whoosh.mp3", t(100) - 0.1, 0.3, 1);
+      tl.fromTo("#s8-c1", { borderColor: "#2c2d39" }, { borderColor: "#ff7d6e", duration: 0.3 }, t(103));
+      tl.to("#s8-c1", { borderColor: "#2c2d39", opacity: 0.55, duration: 0.4 }, t(110) - 0.3);
+      lit("#s8-c2", t(110) - 0.1); sfx("whoosh.mp3", t(110) - 0.1, 0.3, 1);
+      tl.to("#s8-c2", { opacity: 0.55, duration: 0.4 }, t(115) - 0.3);
+      lit("#s8-c3", t(115) - 0.1); sfx("thump.mp3", t(115) - 0.1, 0.4, 1);
+      const clk = { v: 899 };
+      const runFor = B.s9 - t(115);
+      tl.fromTo(clk, { v: 899 }, { v: 899 - runFor, duration: runFor, ease: "none",
+        onUpdate: () => { const s = Math.ceil(clk.v); $("s8-clk").textContent = `00:${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; } }, t(115));
+      tl.fromTo("#s8-cur", { x: 1000, y: 1700, opacity: 0 }, { x: 900, y: 1270, opacity: 1, duration: 0.9, ease: "power3.inOut" }, t(120) - 0.9);
+      tl.to("#s8-btn", { scale: 0.93, duration: 0.1, yoyo: true, repeat: 1 }, t(120) + 0.05);
+      sfx("click.mp3", t(120) + 0.05, 0.7, 0.5);
+
+      /* ---------- S9 · capture -> segment / educate / buy ---------- */
+      rise("#s9-t", B.s9 + 0.1, 0.5);
+      typeText($("s9-a"), "quiz-funnel run", B.s9 + 0.3, 0.6);
+      tl.fromTo("#s9-ok", { opacity: 0 }, { opacity: 1, duration: 0.3 }, t(124));
+      sfx("blip.mp3", t(124), 0.4, 0.5);
+      tl.fromTo("#s9-frame", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.6, ease: "expo.out" }, B.s9 + 0.3);
+      pop("#s9-cube", B.s9 + 0.4, 0.8);
+      rise("#s9-name", t(126), 0.5);
+      [["#s9-l1", "#s9-n1", 128], ["#s9-l2", "#s9-n2", 130], ["#s9-l3", "#s9-n3", 137]].forEach(([l, n, wi], k) => {
+        const el = document.querySelector(l), len = 480;
+        el.style.strokeDasharray = len;
+        tl.fromTo(el, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, t(wi) - 0.25);
+        pop(n, t(wi) - 0.05, 0.6);
+        sfx(k === 2 ? "chime.mp3" : "blip.mp3", t(wi), 0.4, k === 2 ? 1 : 0.5);
+      });
+      // "lo llevas directamente" -> the cube glides toward Compra
+      tl.to("#s9-cube", { x: 70, y: 40, duration: 1.2, ease: "power2.inOut" }, t(133));
+
+      /* ---------- S10 · lockup ---------- */
+      tl.fromTo("#s10-logo", { opacity: 0, y: 20, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, B.s10 + 0.1);
+      rise("#s10-sub", B.s10 + 0.6, 0.6);
+      sfx("thump.mp3", B.s10 + 0.1, 0.5, 1);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

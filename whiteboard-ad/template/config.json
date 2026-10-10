@@ -1,0 +1,367 @@
+{
+ "final": "board_final.png",
+ "empty": "board_empty.png",
+ "hand": "hand_marker.png",
+ "duration": 36.0,
+ "geometry": {
+  "scale": 0.703125,
+  "ox": 0,
+  "oy": -8
+ },
+ "hand_scale": 0.56,
+ "arm_angle_deg": 27,
+ "sprite_rotate_deg": 12,
+ "elements": [
+  {
+   "name": "funnel",
+   "box": [
+    747,
+    628,
+    927,
+    808
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 6.0,
+   "dur": 0.8
+  },
+  {
+   "name": "bubble",
+   "box": [
+    174,
+    916,
+    349,
+    1081
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 7.1,
+   "dur": 0.55
+  },
+  {
+   "name": "cards",
+   "box": [
+    173,
+    1215,
+    350,
+    1374
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 12.2,
+   "dur": 0.65
+  },
+  {
+   "name": "target",
+   "box": [
+    185,
+    1420,
+    355,
+    1588
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 17.85,
+   "dur": 0.6
+  },
+  {
+   "name": "clock",
+   "box": [
+    184,
+    1638,
+    347,
+    1800
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 22.45,
+   "dur": 0.7
+  },
+  {
+   "name": "strike",
+   "box": [
+    149,
+    708,
+    568,
+    740
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 5.22,
+   "dur": 0.3
+  },
+  {
+   "name": "vende",
+   "box": [
+    1110,
+    1932,
+    1400,
+    2052
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 31.2,
+   "dur": 0.75
+  },
+  {
+   "name": "arr6b",
+   "box": [
+    1000,
+    1940,
+    1105,
+    2040
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 31.0,
+   "dur": 0.18
+  },
+  {
+   "name": "title",
+   "box": [
+    365,
+    261,
+    1214,
+    407
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 0.15,
+   "dur": 2.75
+  },
+  {
+   "name": "underline",
+   "box": [
+    367,
+    408,
+    1236,
+    464
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 3.0,
+   "dur": 0.45
+  },
+  {
+   "name": "demo",
+   "box": [
+    149,
+    658,
+    568,
+    796
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 4.4,
+   "dur": 0.8
+  },
+  {
+   "name": "arr1",
+   "box": [
+    585,
+    684,
+    717,
+    758
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 5.6,
+   "dur": 0.3
+  },
+  {
+   "name": "arr2",
+   "box": [
+    367,
+    955,
+    487,
+    1028
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 7.7,
+   "dur": 0.22
+  },
+  {
+   "name": "preg",
+   "box": [
+    506,
+    928,
+    1238,
+    1046
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 7.95,
+   "dur": 1.4
+  },
+  {
+   "name": "sub",
+   "box": [
+    486,
+    1038,
+    1400,
+    1166
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 9.75,
+   "dur": 1.9
+  },
+  {
+   "name": "arr3",
+   "box": [
+    367,
+    1259,
+    486,
+    1329
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 12.9,
+   "dur": 0.2
+  },
+  {
+   "name": "casos",
+   "box": [
+    492,
+    1240,
+    1194,
+    1356
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 13.15,
+   "dur": 1.6
+  },
+  {
+   "name": "arr4",
+   "box": [
+    367,
+    1471,
+    483,
+    1541
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 18.5,
+   "dur": 0.18
+  },
+  {
+   "name": "result",
+   "box": [
+    493,
+    1450,
+    1380,
+    1562
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 18.72,
+   "dur": 1.9
+  },
+  {
+   "name": "arr5",
+   "box": [
+    365,
+    1679,
+    482,
+    1751
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 23.2,
+   "dur": 0.22
+  },
+  {
+   "name": "oferta",
+   "box": [
+    488,
+    1662,
+    902,
+    1772
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 24.85,
+   "dur": 0.95
+  },
+  {
+   "name": "contador",
+   "box": [
+    906,
+    1663,
+    1353,
+    1772
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 25.95,
+   "dur": 1.1
+  },
+  {
+   "name": "segmenta",
+   "box": [
+    157,
+    1938,
+    610,
+    2050
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 29.6,
+   "dur": 0.8
+  },
+  {
+   "name": "arr6a",
+   "box": [
+    608,
+    1958,
+    713,
+    2026
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 30.42,
+   "dur": 0.15
+  },
+  {
+   "name": "educa",
+   "box": [
+    715,
+    1940,
+    1000,
+    2047
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 30.58,
+   "dur": 0.42
+  },
+  {
+   "name": "oval",
+   "box": [
+    985,
+    1868,
+    1480,
+    2118
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 31.98,
+   "dur": 0.6
+  }
+ ],
+ "reveal": {
+  "sprite": "hand_phone.png",
+  "screen": "screen.json",
+  "start": 32.95,
+  "rise": 0.55,
+  "scale": 0.92,
+  "phone_center_x": 560,
+  "phone_top": 830,
+  "countdown_s": 899,
+  "ui": {
+   "fonts": "fonts"
+  }
+ }
+}

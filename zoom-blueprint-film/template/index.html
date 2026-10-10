@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Pinyon"; src: url("assets/PinyonScript.ttf") format("truetype"); }
+      @font-face { font-family: "InstrSerifR"; src: url("assets/InstrumentSerif.ttf") format("truetype"); }
+      @font-face { font-family: "GeistSans"; src: url("assets/Geist-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "GMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      :root { --navy: #13122b; --chalk: #ece6d8; --red: #e8382d; --dim: #8f8aa8; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--navy); }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      #sv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+      /* every line keeps its width while the camera zooms (the blueprint never gets "fat") */
+      #world path, #world line, #world rect, #world circle, #strip path, #strip rect { vector-effect: non-scaling-stroke; }
+      .cap { position: absolute; left: 60px; right: 60px; top: 1636px; text-align: center; font-family: "GeistSans"; font-weight: 500;
+             font-size: 40px; letter-spacing: -0.2px; color: var(--chalk); opacity: 0; text-shadow: 0 2px 14px rgba(10, 9, 30, 0.9); }
+      #grain { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: 0.55; }
+      #vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 260px 60px rgba(5, 5, 16, 0.75); }
+      #lock { position: absolute; left: 0; right: 0; top: 1360px; display: flex; justify-content: center; align-items: center; gap: 14px; color: var(--chalk); opacity: 0; }
+      #sub { position: absolute; left: 0; right: 0; top: 1236px; text-align: center; font-family: "GeistSans"; font-weight: 400; font-size: 40px; color: var(--chalk); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="31.5" data-width="1080" data-height="1920">
+      <section id="stage" class="scene clip" data-start="0" data-duration="31.5" data-track-index="1">
+        <svg id="sv" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <defs>
+            <radialGradient id="bgG" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="#1b1a3a" /><stop offset="1" stop-color="#0e0d22" /></radialGradient>
+            <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="5" /><feColorMatrix values="0 0 0 0 0.08  0 0 0 0 0.07  0 0 0 0 0.16  0 0 0 0.55 0" /></filter>
+            <clipPath id="thumbClip"><rect x="0" y="0" width="1080" height="1920" /></clipPath>
+          </defs>
+          <rect width="1080" height="1920" fill="url(#bgG)" />
+          <g id="bgLines" opacity="0.07" fill="none" stroke="#ece6d8" stroke-width="2"></g>
+          <g id="world" data-layout-allow-overflow></g>
+          <g id="strip"></g>
+          <g id="cta" data-layout-allow-overlap></g>
+        </svg>
+        <div id="sub">y te enseño cómo montarlo</div>
+        <div id="lock">
+          <span style="font-family: Archivo; font-weight: 860; font-stretch: 118%; font-size: 64px; text-transform: uppercase">SaaS</span>
+          <span style="font-family: Silkscreen; font-size: 28px; background: #e8382d; color: #f2efe6; padding: 8px 12px 4px; border-radius: 8px; box-shadow: 4px 4px 0 #7e140d">IN</span>
+          <span style="font-family: Archivo; font-weight: 860; font-stretch: 118%; font-size: 64px; text-transform: uppercase">House</span>
+        </div>
+        <svg id="grain" viewBox="0 0 1080 1920" width="1080" height="1920" data-layout-ignore><rect width="1080" height="1920" filter="url(#noise)" /></svg>
+        <div id="vig" data-layout-ignore></div>
+      </section>
+      <div id="caps"></div>
+      <audio id="vo" src="assets/vo.mp3" data-start="0.25" data-duration="27.12" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="31.5" data-track-index="11" data-volume="0.42"></audio>
+      <div id="sfx"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const END = 31.5;
+      const VO = 0.25; // assets/vo.mp3 starts here; word times below are local whisper/ElevenLabs times of that file
+      const W = [["¿Vendes",0,0.302],["un",0.383,0.43],["SaaS",0.476,0.72],["y",0.72,0.79],["mandas",0.79,1.08],["a",1.08,1.16],["todo",1.16,1.39],["el",1.39,1.47],["mundo",1.47,1.71],["a",1.71,1.75],["la",1.75,1.87],["misma",1.87,2.23],["landing?",2.23,2.9],["Error.",3.6,4.1],["Haz",4.62,4.9],["un",4.9,5.05],["quiz",5.05,5.31],["funnel.",5.31,5.9],["Uno,",6.22,6.6],["entre",6.7,7.04],["cinco",7.04,7.41],["y",7.41,7.46],["ocho",7.46,7.62],["preguntas",7.62,8.13],["para",8.13,8.31],["saber",8.31,8.64],["quién",8.64,8.96],["es",8.96,9.12],["y",9.12,9.23],["qué",9.23,9.36],["necesita.",9.36,10.1],["Dos,",10.44,10.9],["entre",10.99,11.3],["medias,",11.3,11.8],["cards",11.87,12.17],["con",12.17,12.33],["casos",12.33,12.65],["reales.",12.65,13.3],["Tres,",13.58,14.1],["le",14.31,14.42],["enseñas",14.42,14.92],["un",14.92,15.04],["resultado",15.04,15.48],["personalizado.",15.48,16.4],["Cuatro,",16.59,17.1],["una",17.19,17.37],["oferta",17.37,17.66],["a",17.66,17.72],["medida.",17.72,18.3],["Y",18.41,18.59],["cinco,",18.59,19.1],["un",19.21,19.35],["contador",19.35,19.91],["para",19.91,20.12],["que",20.12,20.25],["la",20.25,20.39],["canjee",20.39,20.94],["ya.",20.94,21.5],["Nada",22.01,22.29],["de",22.29,22.38],["mandar",22.38,22.7],["a",22.7,22.77],["todos",22.77,23.11],["a",23.11,23.17],["la",23.17,23.28],["misma",23.28,23.58],["landing.",23.58,24.2],["Así",24.33,24.72],["segmentas,",24.72,25.51],["educas",25.51,26.25],["y",26.25,26.41],["vendes.",26.41,27.1]];
+      const t = (i) => W[i][1] + VO;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      const NS = "http://www.w3.org/2000/svg";
+      const CH = "#ece6d8", RED = "#e8382d", DIM = "#8f8aa8", REDT = "#f2564a"; // REDT: small red text (contrast >= 4.5)
+      let uid = 0;
+      let seed = 20261008;
+      const rnd = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let q = Math.imul(seed ^ (seed >>> 15), 1 | seed); q = (q + Math.imul(q ^ (q >>> 7), 61 | q)) ^ q; return ((q ^ (q >>> 14)) >>> 0) / 4294967296; };
+      const IR = { immediateRender: false };
+
+      // ---------------- svg helpers ----------------
+      function el(parent, tag, attrs = {}, text) {
+        const e = document.createElementNS(NS, tag);
+        for (const k in attrs) e.setAttribute(k, attrs[k]);
+        if (text != null) e.textContent = text;
+        parent.appendChild(e);
+        return e;
+      }
+      const LN = (w = 2.6, c = CH, o = 1) => ({ fill: "none", stroke: c, "stroke-width": w, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-opacity": o });
+      const P = (parent, d, a = LN()) => el(parent, "path", Object.assign({ d }, a));
+      const rectD = (x, y, w, h, r = 0) => r ? `M${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} H${x + r} Q${x},${y + h} ${x},${y + h - r} V${y + r} Q${x},${y} ${x + r},${y} Z` : `M${x},${y} H${x + w} V${y + h} H${x} Z`;
+      const circD = (cx, cy, r) => `M${cx - r},${cy} A${r},${r} 0 1 1 ${cx + r},${cy} A${r},${r} 0 1 1 ${cx - r},${cy} Z`;
+      // pen-like reveal; with non-scaling strokes the dash must be removed once drawn (else it truncates while zooming)
+      function draw(e, t0, dur, ease = "power1.inOut") {
+        e.setAttribute("pathLength", "1");
+        e.setAttribute("stroke-dasharray", "1 1");
+        tl.set(e, { attr: { "stroke-dashoffset": 1 } }, 0);
+        tl.to(e, { attr: { "stroke-dashoffset": 0 }, duration: dur, ease }, t0);
+        tl.set(e, { attr: { "stroke-dasharray": "none" } }, t0 + dur + 0.02);
+        return e;
+      }
+      const hide = (e) => tl.set(e, { opacity: 0 }, 0);
+      const fadeIn = (e, t0, d = 0.3) => { hide(e); tl.fromTo(e, { opacity: 0 }, Object.assign({ opacity: 1, duration: d, ease: "sine.out" }, IR), t0); return e; };
+      const fadeOut = (e, t0, d = 0.3) => tl.to(e, { opacity: 0, duration: d, ease: "sine.in" }, t0);
+      function pop(e, cx, cy, t0, d = 0.35) {
+        hide(e);
+        tl.fromTo(e, { opacity: 0, attr: { transform: `translate(${cx} ${cy}) scale(0.3) translate(${-cx} ${-cy})` } },
+          Object.assign({ opacity: 1, attr: { transform: `translate(${cx} ${cy}) scale(1) translate(${-cx} ${-cy})` }, duration: d, ease: "back.out(2.2)" }, IR), t0);
+        return e;
+      }
+      function txt(parent, x, y, s, o = {}) {
+        const { size = 30, font = "GMono", fill = CH, anchor = "middle", weight = 400, ls = 0, op = 1 } = o;
+        return el(parent, "text", { x, y, "font-family": font, "font-size": size, fill, "text-anchor": anchor, "font-weight": weight, "letter-spacing": ls, "fill-opacity": op }, s);
+      }
+      // cursive handwriting: Pinyon Script revealed by a growing clip, an orange pen dot riding the edge.
+      // widths = advance sum from fontTools (em units) x size, so the pen ends where the ink ends
+      const EM = { "la misma landing": 6.234, "quiz funnel": 4.021, preguntas: 3.385, "casos reales": 3.857, "tu resultado": 3.925, "a medida": 3.209, ahora: 1.979, segmentas: 3.514, educas: 2.239, vendes: 2.282, Comenta: 3.155 };
+      function cursive(parent, s, cx, y, size, t0, dur, o = {}) {
+        const { pen = true, fill = CH } = o;
+        const w = EM[s] * size, x0 = cx - w / 2;
+        const id = "cl" + uid++;
+        const cp = el(parent, "clipPath", { id, clipPathUnits: "userSpaceOnUse" });
+        const r = el(cp, "rect", { x: x0 - size * 0.4, y: y - size * 1.2, width: 0, height: size * 2 });
+        const g = el(parent, "g", { "clip-path": `url(#${id})` });
+        const tx = el(g, "text", { x: cx, y, "font-family": "Pinyon", "font-size": size, fill, "text-anchor": "middle" }, s);
+        tl.set(r, { attr: { width: 0 } }, 0);
+        tl.to(r, { attr: { width: w + size * 0.8 }, duration: dur, ease: "none" }, t0);
+        if (pen) {
+          const d = el(parent, "circle", { cx: x0, cy: y - size * 0.18, r: Math.max(5, size * 0.04), fill: RED });
+          hide(d);
+          tl.set(d, { opacity: 1 }, t0);
+          tl.fromTo(d, { attr: { cx: x0 } }, Object.assign({ attr: { cx: x0 + w }, duration: dur, ease: "none" }, IR), t0);
+          // little up/down of the nib while it writes
+          tl.fromTo(d, { attr: { cy: y - size * 0.18 } }, Object.assign({ attr: { cy: y - size * 0.42 }, duration: dur / 7, ease: "sine.inOut", yoyo: true, repeat: 6 }, IR), t0);
+          tl.to(d, { opacity: 0, duration: 0.2 }, t0 + dur);
+        }
+        return { g, tx, w, x0 };
+      }
+      // faint blueprint construction box around a word / object (the reference's guide lines)
+      function guide(parent, x, y, w, h, t0) {
+        const g = el(parent, "g");
+        P(g, `M${x - 40},${y} H${x + w + 40}`, LN(1.4, CH, 0.22));
+        P(g, `M${x - 40},${y + h} H${x + w + 40}`, LN(1.4, CH, 0.22));
+        P(g, `M${x},${y - 30} V${y + h + 30}`, LN(1.4, CH, 0.22));
+        P(g, `M${x + w},${y - 30} V${y + h + 30}`, LN(1.4, CH, 0.22));
+        fadeIn(g, t0, 0.5);
+        return g;
+      }
+      function gearD(cx, cy, r, n, depth = r * 0.13) {
+        let d = "";
+        for (let i = 0; i < n; i++) {
+          const a0 = (i / n) * Math.PI * 2, step = (Math.PI * 2) / n;
+          const pts = [[a0, r - depth], [a0 + step * 0.12, r], [a0 + step * 0.45, r], [a0 + step * 0.57, r - depth]];
+          pts.forEach(([a, rr], k) => { d += (i === 0 && k === 0 ? "M" : "L") + (cx + rr * Math.cos(a)).toFixed(1) + "," + (cy + rr * Math.sin(a)).toFixed(1) + " "; });
+        }
+        return d + "Z";
+      }
+      let sN = 0;
+      function sfx(file, t0, vol = 0.45, dur = 1.2) {
+        const a = document.createElement("audio");
+        a.id = "sfx" + sN++;
+        a.src = "assets/" + file;
+        a.setAttribute("data-start", t0.toFixed(2));
+        a.setAttribute("data-duration", String(dur));
+        a.setAttribute("data-track-index", String(20 + (sN % 6)));
+        a.setAttribute("data-volume", String(vol));
+        $("sfx").appendChild(a);
+      }
+      // small sans captions, one spoken phrase at a time (the reference subtitles itself)
+      function cap(i0, i1, tEnd) {
+        const d = document.createElement("div");
+        d.className = "cap"; d.id = "cap" + uid++;
+        d.textContent = W.slice(i0, i1 + 1).map((w) => w[0]).join(" ");
+        $("caps").appendChild(d);
+        tl.set(d, { opacity: 0 }, 0);
+        tl.to(d, { opacity: 1, duration: 0.12 }, t(i0) - 0.06);
+        tl.to(d, { opacity: 0, duration: 0.12 }, tEnd - 0.12);
+      }
+
+      // ---------------- background: faint huge blueprint curves ----------------
+      {
+        const b = $("bgLines");
+        P(b, "M-200,420 C200,240 640,700 1300,300", LN(2, CH, 1));
+        P(b, "M-100,1500 C300,1200 900,1900 1250,1350", LN(2, CH, 1));
+        el(b, "circle", { cx: 880, cy: 1500, r: 520, fill: "none", stroke: CH, "stroke-width": 2 });
+        el(b, "circle", { cx: 120, cy: 380, r: 380, fill: "none", stroke: CH, "stroke-width": 2 });
+        tl.fromTo(b, { attr: { transform: "translate(0 0)" } }, { attr: { transform: "translate(-60 40)" }, duration: END, ease: "none" }, 0);
+      }
+
+      // =====================================================================
+      // THE CAMERA. Six nested drawings; drawing i+1 lives inside a small
+      // frame of drawing i (focus P in parent coords, anchor C in child coords,
+      // child appears 1/k as big). One matrix per drawing, all tweened with the
+      // same ease, so the nesting stays glued while we zoom.
+      // =====================================================================
+      const world = $("world");
+      const NAMES = ["A", "B", "C", "D", "E", "F"];
+      const wrap = {}, cont = {};
+      NAMES.forEach((n) => { wrap[n] = el(world, "g", { id: "w" + n }); cont[n] = el(wrap[n], "g", { id: "c" + n }); });
+      const RING = { x: 540 + (EM["quiz funnel"] * 190) / 2 + 40, y: 1318, r: 24 };
+      const LINKS = [
+        { P: [RING.x, RING.y], C: [540, 860], k: 20 },          // A ring "quiz funnel."  -> B question tree
+        { P: [540, 1290], C: [540, 900], k: 5 },                // B card node (180x128)     -> C case card frame (900x640)
+        { P: [780, 760], C: [540, 900], k: 890 / 58 },          // C orange tag on last bar  -> D golden rectangle (890x550)
+        { P: [750, 990], C: [540, 900], k: 760 / 50 },          // D smallest square (50)    -> E gear box (760)
+        { P: [690, 1010], C: [540, 900], k: 4 },                // E big gear (r150)         -> F giant gear (r600)
+      ];
+      const M = [{ s: 1, x: 0, y: 0 }];
+      LINKS.forEach((L, i) => { const p = M[i]; M.push({ s: p.s / L.k, x: p.s * (L.P[0] - L.C[0] / L.k) + p.x, y: p.s * (L.P[1] - L.C[1] / L.k) + p.y }); });
+      const f7 = (v) => (Math.abs(v) < 1e-9 ? 0 : v).toFixed(7);
+      const camState = (i, j) => { const s = M[i].s / M[j].s; return `matrix(${f7(s)},0,0,${f7(s)},${f7((M[i].x - M[j].x) / M[j].s)},${f7((M[i].y - M[j].y) / M[j].s)})`; };
+      const sine = gsap.parseEase("sine.inOut");
+      function camMove(j, j2, t0, dur, shape = sine) {
+        const r = M[j].s / M[j2].s; // zoom ratio of the move
+        const ease = (u) => { const v = shape(u); return (Math.pow(r, v) - 1) / (r - 1); }; // constant speed in log-scale
+        NAMES.forEach((n, i) => tl.fromTo(wrap[n], { attr: { transform: camState(i, j) } }, Object.assign({ attr: { transform: camState(i, j2) }, duration: dur, ease }, IR), t0));
+      }
+      NAMES.forEach((n, i) => { tl.set(wrap[n], { attr: { transform: camState(i, 0) } }, 0); tl.set(wrap[n], { opacity: i === 0 ? 1 : 0 }, 0); });
+      // forward zoom j -> j+1: child fades in early, parent fades out late
+      function zoomIn(j, t0, dur) {
+        camMove(j, j + 1, t0, dur);
+        tl.fromTo(wrap[NAMES[j + 1]], { opacity: 0 }, Object.assign({ opacity: 1, duration: dur * 0.3 }, IR), t0);
+        tl.fromTo(wrap[NAMES[j]], { opacity: 1 }, Object.assign({ opacity: 0, duration: dur * 0.4 }, IR), t0 + dur * 0.6);
+        sfx("whoosh.mp3", t0 - 0.1, 0.32, 1.23);
+      }
+
+      // =====================================================================
+      // A · hook: everyone into the same landing -> "Error." -> quiz funnel.
+      // =====================================================================
+      {
+        const g = cont.A;
+        const dot0 = el(g, "circle", { cx: 540, cy: 300, r: 9, fill: RED });
+        pop(dot0, 540, 300, 0.05, 0.3); sfx("pop.mp3", 0.05, 0.3, 0.52);
+        fadeOut(dot0, 1.9, 0.3);
+        // the landing wireframe
+        const box = el(g, "g");
+        const frame = draw(P(box, rectD(250, 600, 580, 400, 22), LN(3)), 0.25, 0.7);
+        draw(P(box, "M252,652 H828", LN(2.4)), 0.7, 0.35);
+        [282, 306, 330].forEach((x, i) => draw(P(box, circD(x, 626, 7), LN(2)), 0.75 + i * 0.05, 0.2));
+        draw(P(box, "M330,720 H750", LN(6, CH, 0.85)), 0.9, 0.3);
+        draw(P(box, "M380,762 H700", LN(3, CH, 0.5)), 1.0, 0.25);
+        draw(P(box, "M410,792 H670", LN(3, CH, 0.5)), 1.05, 0.25);
+        draw(P(box, rectD(420, 850, 240, 74, 37), LN(3, CH)), 1.1, 0.35);
+        const btn = txt(box, 540, 897, "PEDIR DEMO", { size: 26, weight: 600, ls: 2 }); fadeIn(btn, 1.3, 0.25);
+        const lab = txt(g, 250, 584, "landing.html", { size: 22, anchor: "start", fill: DIM }); fadeIn(lab, 0.6);
+        sfx("pencil.mp3", 0.25, 0.22, 0.84);
+        // everyone, from everywhere, into the same box
+        const dots = el(g, "g");
+        for (let i = 0; i < 34; i++) {
+          const a = Math.PI * (0.95 + rnd() * 1.1) + (rnd() < 0.5 ? 0 : Math.PI * 0.05), R = 560 + rnd() * 260;
+          const sx = 540 + Math.cos(a) * R, sy = 800 + Math.sin(a) * R * 0.9;
+          const ex = 400 + rnd() * 280, ey = 690 + rnd() * 120;
+          const c = el(dots, "circle", { cx: sx, cy: sy, r: 5 + rnd() * 4, fill: CH });
+          const st = 0.6 + i * 0.07;
+          hide(c);
+          tl.set(c, { opacity: 0.9 }, st);
+          tl.fromTo(c, { attr: { cx: sx, cy: sy } }, Object.assign({ attr: { cx: ex, cy: ey }, duration: 1.0, ease: "power2.in" }, IR), st);
+          tl.to(c, { opacity: 0, duration: 0.12 }, st + 0.92);
+        }
+        // "la misma landing" in ink, with its guide lines
+        guide(g, 540 - 450, 420, 900, 70, 1.6);
+        const cw = cursive(g, "la misma landing", 540, 470, 140, t(9) + 0.05, 0.85);
+        sfx("scribble.mp3", t(9), 0.35, 1.04);
+        // Error.
+        const x1 = draw(P(g, "M300,640 L780,970", LN(7, RED)), t(13) + 0.02, 0.18, "power2.out");
+        const x2 = draw(P(g, "M780,640 L300,970", LN(7, RED)), t(13) + 0.16, 0.18, "power2.out");
+        const strike = draw(P(g, `M${cw.x0 - 10},452 C${cw.x0 + 300},438 ${cw.x0 + 600},460 ${cw.x0 + cw.w + 14},444`, LN(5, RED)), t(13) + 0.1, 0.3);
+        tl.to(box, { opacity: 0.35, duration: 0.3 }, t(13) + 0.1);
+        tl.to(cw.g, { opacity: 0.5, duration: 0.3 }, t(13) + 0.1);
+        sfx("stamp.mp3", t(13), 0.42, 0.84);
+        const err = txt(g, 830, 1040, "error 404 · ventas", { size: 22, anchor: "end", fill: REDT }); fadeIn(err, t(13) + 0.25);
+        // quiz funnel.  (the orange ring is the door to everything else)
+        guide(g, 540 - 400, 1250, 800, 90, t(14));
+        cursive(g, "quiz funnel", 540, 1330, 190, t(16) - 0.05, 0.8);
+        sfx("scribble.mp3", t(16) - 0.05, 0.35, 1.04);
+        const ring = el(g, "circle", { cx: RING.x, cy: RING.y, r: RING.r, fill: "none", stroke: RED, "stroke-width": 5 });
+        pop(ring, RING.x, RING.y, t(17) + 0.45, 0.3); sfx("pop.mp3", t(17) + 0.45, 0.32, 0.52);
+        const arrow = draw(P(g, `M540,1010 C560,1110 700,1150 ${RING.x - 30},${RING.y - 60}`, Object.assign(LN(2, CH, 0.45), { "stroke-dasharray": "none" })), t(14) + 0.2, 0.6);
+        // payoff during the pull-back: the people now go into the funnel instead
+        for (let i = 0; i < 16; i++) {
+          const c = el(dots, "circle", { cx: 540, cy: 990, r: 4 + rnd() * 3, fill: CH });
+          const st = 23.0 + i * 0.07, ox = 440 + rnd() * 200;
+          hide(c);
+          tl.set(c, { opacity: 0.9 }, st);
+          tl.fromTo(c, { attr: { cx: ox, cy: 960 } }, Object.assign({ attr: { cx: RING.x, cy: RING.y }, duration: 0.8, ease: "power2.inOut" }, IR), st);
+          tl.to(c, { opacity: 0, duration: 0.1 }, st + 0.75);
+        }
+        tl.to(ring, { attr: { "stroke-width": 9 }, duration: 0.25, yoyo: true, repeat: 3 }, 23.6);
+      }
+      zoomIn(0, t(17) + 0.55, 1.0); // 6.06 – 7.06
+
+      // =====================================================================
+      // B · Uno: 5 a 8 preguntas (a question tree, like a parsed program)
+      // =====================================================================
+      {
+        const g = cont.B;
+        const T0 = 7.0;
+        const lab = txt(g, 140, 300, "01 · PREGUNTAS", { size: 26, anchor: "start", fill: DIM, ls: 3 }); fadeIn(lab, T0);
+        cursive(g, "preguntas", 600, 400, 120, T0 + 0.15, 0.6, { pen: false });
+        sfx("scribble.mp3", T0 + 0.1, 0.25, 1.04);
+        function node(x, y, w, h, s, t0, o = {}) {
+          const n = el(g, "g");
+          P(n, rectD(x - w / 2, y - h / 2, w, h, 14), LN(2.6, o.c || CH));
+          P(n, rectD(x - w / 2 + 6, y - h / 2 + 6, w - 12, h - 12, 9), LN(1.6, o.c || CH, 0.55));
+          if (s) txt(n, x, y + 9, s, { size: o.size || 26 });
+          pop(n, x, y, t0);
+          return n;
+        }
+        const edge = (x1, y1, x2, y2, t0) => draw(P(g, `M${x1},${y1} C${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`, LN(2.2, CH, 0.75)), t0, 0.35);
+        node(540, 560, 200, 76, "QUIZ", 6.5, { size: 32 }); // already visible while we zoom in
+        const L1 = [[200, 760, "¿quién eres?", 26], [540, 760, "¿qué quieres?", 26], [880, 760, "¿tu problema?", 26]];
+        L1.forEach(([x, y, s, si], i) => { edge(540, 598, x, y - 38, 7.3 + i * 0.12); node(x, y, 280, 76, s, 7.55 + i * 0.12, { size: 24 }); });
+        const L2 = [[110, 970, "¿equipo?"], [330, 970, "¿clientes?"], [750, 970, "¿canal?"], [970, 970, "¿urgencia?"]];
+        L2.forEach(([x, y, s], i) => { const px = i < 2 ? 200 : 880; edge(px, 798, x, y - 34, t(26) - 0.2 + i * 0.1); node(x, y, 196, 68, s, t(26) + i * 0.1, { size: 21 }); });
+        sfx("pop.mp3", 7.55, 0.22, 0.52); sfx("pop.mp3", t(26), 0.22, 0.52);
+        // little answer leaves a / b / c
+        [[60, 110], [160, 110], [280, 330], [380, 330], [700, 750], [800, 750], [920, 970], [1020, 970]].forEach(([x, px], i) => {
+          edge(px, 1004, x, 1100, t(29) + i * 0.05);
+          const c = el(g, "g"); P(c, rectD(x - 24, 1100, 48, 44, 10), LN(2)); txt(c, x, 1131, "abcabcab"[i], { size: 22 }); pop(c, x, 1122, t(29) + 0.15 + i * 0.05);
+        });
+        // counter 5 · 6 · 7 · 8
+        const cnt = txt(g, 940, 300, "5–8", { size: 44, anchor: "end", weight: 600, fill: REDT }); fadeIn(cnt, t(20));
+        // the card node: next door
+        edge(540, 798, 540, 1226, t(30) - 0.1);
+        const card = node(540, 1290, 180, 128, null, t(30) + 0.1, { c: RED });
+        const cl = txt(g, 650, 1250, "card", { size: 22, anchor: "start", fill: REDT }); fadeIn(cl, t(30) + 0.2);
+      }
+      zoomIn(1, 10.1, 0.85);
+
+      // =====================================================================
+      // C · Dos: entre medias, cards con casos reales
+      // =====================================================================
+      {
+        const g = cont.C;
+        P(g, rectD(90, 580, 900, 640, 70), LN(3, RED));
+        P(g, rectD(120, 610, 840, 580, 45), LN(2, RED, 0.6));
+        const T0 = 10.95;
+        const lab = txt(g, 140, 300, "02 · CARDS", { size: 26, anchor: "start", fill: DIM, ls: 3 }); fadeIn(lab, T0);
+        cursive(g, "casos reales", 540, 470, 118, t(34), 0.7);
+        sfx("scribble.mp3", t(34), 0.3, 1.04);
+        const hd = txt(g, 170, 680, "CASO REAL", { size: 30, anchor: "start", weight: 600, ls: 3 }); fadeIn(hd, T0 + 0.1);
+        const tag = txt(g, 910, 680, "EJEMPLO", { size: 20, anchor: "end", fill: DIM, ls: 2 }); fadeIn(tag, T0 + 0.2);
+        draw(P(g, "M170,1120 H900", LN(2.4)), T0 + 0.1, 0.4);
+        draw(P(g, "M170,1120 V720", LN(1.6, CH, 0.5)), T0 + 0.1, 0.4);
+        const H = [60, 90, 130, 180, 250, 330];
+        H.forEach((h, i) => { const x = 200 + i * 116; draw(P(g, rectD(x, 1120 - h, 60, h, 4), LN(2.6, i === 5 ? CH : CH, i === 5 ? 1 : 0.8)), 11.3 + i * 0.13, 0.35); });
+        const n1 = txt(g, 230, 1040, "4", { size: 30, fill: DIM }); fadeIn(n1, 11.4);
+        const n2 = txt(g, 640, 765, "19", { size: 34, weight: 600 }); fadeIn(n2, 12.1);
+        const un = txt(g, 535, 1170, "demos / mes · 4 → 19", { size: 26, fill: DIM }); fadeIn(un, 12.2);
+        sfx("pencil.mp3", 11.3, 0.22, 0.84);
+        // side cards: data + advice
+        const c1 = el(g, "g");
+        P(c1, rectD(120, 1300, 380, 150, 18), LN(2.4)); txt(c1, 150, 1352, "DATO", { size: 22, anchor: "start", fill: REDT, ls: 2 }); txt(c1, 150, 1405, "2 min de quiz", { size: 30, anchor: "start" });
+        pop(c1, 310, 1375, t(34));
+        const c2 = el(g, "g");
+        P(c2, rectD(580, 1300, 380, 150, 18), LN(2.4)); txt(c2, 610, 1352, "CONSEJO", { size: 22, anchor: "start", fill: REDT, ls: 2 }); txt(c2, 610, 1405, "habla de su dolor", { size: 28, anchor: "start" });
+        pop(c2, 770, 1375, t(34) + 0.15);
+        sfx("paper.mp3", t(34), 0.3, 0.84);
+        // orange tag on top of the best bar: next door (58 x 36 = the golden rectangle, scaled down)
+        const door = el(g, "g");
+        P(door, rectD(751, 742, 58, 36), LN(2.6, RED));
+        pop(door, 780, 760, 12.9);
+      }
+      zoomIn(2, 13.15, 0.85);
+
+      // =====================================================================
+      // D · Tres: resultado personalizado (golden spiral narrowing to one square)
+      // =====================================================================
+      {
+        const g = cont.D;
+        P(g, rectD(95, 625, 890, 550), LN(2.6, RED)); // = the tag we zoomed into
+        const T0 = 14.0;
+        const lab = txt(g, 140, 300, "03 · RESULTADO", { size: 26, anchor: "start", fill: DIM, ls: 3 }); fadeIn(lab, T0);
+        const sq = [[645, 625, 645, 1175], [645, 965, 985, 965], [775, 965, 775, 1175], [645, 1045, 775, 1045], [725, 965, 725, 1045], [725, 1015, 775, 1015]];
+        sq.forEach(([a, b, c, d], i) => draw(P(g, `M${a},${b} L${c},${d}`, LN(2.2)), T0 + 0.05 + i * 0.16, 0.2));
+        const arc = P(g, "M95,1175 A550,550 0 0 1 645,625 A340,340 0 0 1 985,965 A210,210 0 0 1 775,1175 A130,130 0 0 1 645,1045 A80,80 0 0 1 725,965 A50,50 0 0 1 775,1015", LN(2.4, CH, 0.85));
+        draw(arc, T0 + 0.2, 1.3, "power1.in");
+        sfx("pencil.mp3", T0 + 0.1, 0.22, 0.84);
+        const L = [[370, 905, "SaaS B2B", 40], [815, 800, "10–50 clientes", 26], [880, 1075, "demos", 22], [710, 1115, "churn", 18]];
+        L.forEach(([x, y, s, si], i) => { const e = txt(g, x, y, s, { size: si, fill: i ? DIM : CH }); fadeIn(e, T0 + 0.3 + i * 0.25); });
+        const door = el(g, "g");
+        P(door, rectD(725, 965, 50, 50), LN(3, RED));
+        pop(door, 750, 990, t(42));
+        draw(P(g, "M750,1018 V1230", LN(1.8, RED, 0.8)), t(42) + 0.1, 0.25);
+        const res = txt(g, 750, 1272, "TU RESULTADO · PERFIL B", { size: 28, weight: 600, fill: REDT, ls: 1 }); fadeIn(res, t(42) + 0.25);
+        cursive(g, "tu resultado", 540, 480, 118, t(42) - 0.15, 0.7);
+        sfx("scribble.mp3", t(42) - 0.15, 0.3, 1.04);
+      }
+      zoomIn(3, 16.2, 0.8);
+
+      // =====================================================================
+      // E · Cuatro: una oferta a medida (a little machine assembles it)
+      // =====================================================================
+      const G3END = 54; // degrees the big gear turns; F's giant gear starts at this angle
+      {
+        const g = cont.E;
+        P(g, rectD(160, 520, 760, 760), LN(3, RED)); // = the square we zoomed into
+        const T0 = 17.0;
+        const lab = txt(g, 140, 300, "04 · OFERTA", { size: 26, anchor: "start", fill: DIM, ls: 3 }); fadeIn(lab, T0);
+        draw(P(g, rectD(210, 1180, 660, 26, 4), LN(2.4)), T0 - 0.4, 0.4);
+        const gears = [[330, 1010, 110, 15, 1], [495, 870, 72, 10, -1.5], [690, 1010, 150, 22, 0]];
+        gears.forEach(([x, y, r, n, sp], i) => {
+          P(g, `M${x},${y} V1180`, LN(2, CH, 0.6));
+          const gg = el(g, "g");
+          P(gg, gearD(x, y, r, n), LN(2.4));
+          P(gg, circD(x, y, r * 0.55), LN(1.6, CH, 0.7));
+          P(gg, circD(x, y, 9), LN(2));
+          P(gg, `M${x},${y} L${x + r * 0.5},${y - r * 0.2}`, LN(1.4, CH, 0.6));
+          const ang = i === 2 ? G3END : (G3END * 22 / n) * (i === 1 ? -1 : 1);
+          tl.set(gg, { attr: { transform: `rotate(0 ${x} ${y})` } }, 0);
+          tl.to(gg, { attr: { transform: `rotate(${ang} ${x} ${y})` }, duration: 1.15, ease: "power1.inOut" }, T0);
+        });
+        // the tailored offer hanging from the small gear
+        const tagG = el(g, "g");
+        P(tagG, "M495,870 L520,640", LN(1.6, CH, 0.7));
+        P(tagG, "M470,560 H760 L800,600 L760,640 H470 Z", LN(2.6, RED));
+        P(tagG, circD(762, 600, 8), LN(2, RED));
+        txt(tagG, 490, 594, "OFERTA PERFIL B", { size: 22, anchor: "start", fill: CH, ls: 1 });
+        txt(tagG, 490, 628, "−30% · EJEMPLO", { size: 22, anchor: "start", fill: REDT });
+        pop(tagG, 615, 600, t(46) - 0.1);
+        sfx("paper.mp3", t(46) - 0.1, 0.3, 0.84);
+        cursive(g, "a medida", 540, 455, 118, t(46) - 0.05, 0.5);
+        sfx("scribble.mp3", t(46) - 0.05, 0.28, 1.04);
+      }
+      zoomIn(4, 18.25, 0.75);
+
+      // =====================================================================
+      // F · Y cinco: un contador (inside the big gear, a countdown dial)
+      // =====================================================================
+      {
+        const g = cont.F;
+        const gg = el(g, "g", { transform: `rotate(${G3END} 540 900)` });
+        P(gg, gearD(540, 900, 600, 22), LN(2.6));
+        P(gg, circD(540, 900, 330), LN(2.2, CH, 0.85));
+        P(gg, circD(540, 900, 36), LN(2.4));
+        const T0 = 19.0;
+        const lab = txt(g, 140, 300, "05 · CONTADOR", { size: 26, anchor: "start", fill: DIM, ls: 3 }); fadeIn(lab, T0);
+        const ticks = el(g, "g");
+        for (let i = 0; i < 60; i++) { const a = (i / 60) * Math.PI * 2, r0 = i % 5 ? 300 : 286; P(ticks, `M${540 + r0 * Math.cos(a)},${900 + r0 * Math.sin(a)} L${540 + 316 * Math.cos(a)},${900 + 316 * Math.sin(a)}`, LN(i % 5 ? 1.4 : 2.4, CH, i % 5 ? 0.5 : 0.9)); }
+        fadeIn(ticks, T0, 0.4);
+        const hand = el(g, "g");
+        // rim pointer only, so it never crosses the digits or the button
+        P(hand, "M540,598 L540,650", LN(4, RED));
+        el(hand, "circle", { cx: 540, cy: 586, r: 9, fill: RED });
+        fadeIn(hand, T0 + 0.1);
+        tl.fromTo(hand, { attr: { transform: "rotate(0 540 900)" } }, { attr: { transform: "rotate(330 540 900)" }, duration: 3.0, ease: "none" }, T0);
+        const digits = ["15:00", "14:59", "14:58"].map((s, i) => { const e = txt(g, 540, 930, s, { size: 120, weight: 500, ls: -2 }); hide(e); return e; });
+        tl.set(digits[0], { opacity: 1 }, t(52) - 0.1);
+        tl.set(digits[0], { opacity: 0 }, t(52) + 0.9); tl.set(digits[1], { opacity: 1 }, t(52) + 0.9);
+        tl.set(digits[1], { opacity: 0 }, t(52) + 1.9); tl.set(digits[2], { opacity: 1 }, t(52) + 1.9);
+        const of = txt(g, 540, 790, "OFERTA · EJEMPLO", { size: 24, fill: DIM, ls: 2 }); fadeIn(of, t(52) - 0.1);
+        const b = el(g, "g");
+        P(b, rectD(390, 1020, 300, 76, 38), LN(3, RED));
+        txt(b, 540, 1068, "CANJEAR", { size: 28, weight: 600, ls: 3, fill: REDT });
+        pop(b, 540, 1058, t(56));
+        sfx("tick.mp3", t(52) - 0.1, 0.3, 3.03);
+        sfx("pop.mp3", t(56), 0.3, 0.52);
+      }
+
+      // =====================================================================
+      // Pull-back: F -> E -> D -> C -> B -> A in one breath (the reference's
+      // "this film? I drew it"), every drawing still nested in the next.
+      // =====================================================================
+      {
+        const T0 = 21.85, logs = LINKS.map((L) => Math.log(L.k)), tot = logs.reduce((a, b) => a + b, 0), TOT = 1.45;
+        let tt = T0;
+        for (let j = 5; j >= 1; j--) {
+          const d = (TOT * logs[j - 1]) / tot;
+          const shape = j === 5 ? gsap.parseEase("power2.in") : j === 1 ? gsap.parseEase("power2.out") : gsap.parseEase("none");
+          camMove(j, j - 1, tt, d, shape);
+          tl.fromTo(wrap[NAMES[j - 1]], { opacity: 0 }, Object.assign({ opacity: 1, duration: d * 0.6 }, IR), tt);
+          tt += d;
+        }
+        sfx("whoosh.mp3", T0 - 0.05, 0.4, 1.23);
+        sfx("whoosh.mp3", T0 + 0.7, 0.3, 1.23);
+      }
+
+      // =====================================================================
+      // Film strip: segmentas · educas · vendes (each frame = a live <use> of a drawing)
+      // =====================================================================
+      const FW = 176, FH = 313, GAP = 14, X0 = (1080 - (5 * FW + 4 * GAP)) / 2, FY = 840;
+      {
+        const s = $("strip");
+        const T0 = 24.3;
+        // the hook drawing itself flies into frame 1
+        const sc = FW / 1080;
+        tl.fromTo(wrap.A, { attr: { transform: camState(0, 0) } }, Object.assign({ attr: { transform: `matrix(${sc},0,0,${sc},${X0},${FY})` }, duration: 0.75, ease: "power3.inOut" }, IR), T0);
+        ["B", "C", "D", "E", "F"].forEach((n) => tl.set(wrap[n], { opacity: 0 }, T0));
+        const band = el(s, "g");
+        P(band, `M${X0 - 60},${FY - 46} H${X0 + 5 * FW + 4 * GAP + 60}`, LN(2.4));
+        P(band, `M${X0 - 60},${FY + FH + 46} H${X0 + 5 * FW + 4 * GAP + 60}`, LN(2.4));
+        for (let i = 0; i < 16; i++) {
+          const x = X0 - 40 + i * 64;
+          P(band, rectD(x, FY - 34, 26, 18, 4), LN(1.6, CH, 0.7));
+          P(band, rectD(x, FY + FH + 16, 26, 18, 4), LN(1.6, CH, 0.7));
+        }
+        fadeIn(band, T0 + 0.2, 0.4);
+        ["A", "B", "C", "D", "E"].forEach((n, i) => {
+          const x = X0 + i * (FW + GAP);
+          const fr = el(s, "g");
+          P(fr, rectD(x, FY, FW, FH, 6), LN(2.4, i === 0 ? RED : CH));
+          fadeIn(fr, T0 + 0.3 + i * 0.08, 0.3);
+          if (i === 0) return;
+          const th = el(s, "g", { transform: `matrix(${sc},0,0,${sc},${x},${FY})` });
+          const u = el(th, "use", { href: "#c" + n, "clip-path": "url(#thumbClip)" });
+          fadeIn(th, T0 + 0.45 + i * 0.12, 0.35);
+        });
+        sfx("paper.mp3", T0 + 0.2, 0.3, 0.84);
+        const words = el(s, "g");
+        cursive(words, "segmentas", 540, 470, 120, t(68), 0.6);
+        cursive(words, "educas", 540, 590, 120, t(69), 0.5);
+        cursive(words, "vendes", 540, 710, 120, t(71), 0.5);
+        const dot = el(words, "circle", { cx: 540 + (EM.vendes * 120) / 2 + 22, cy: 702, r: 9, fill: RED });
+        pop(dot, +dot.getAttribute("cx"), 702, t(71) + 0.55);
+        sfx("scribble.mp3", t(68), 0.28, 1.04); sfx("scribble.mp3", t(69), 0.25, 1.04); sfx("scribble.mp3", t(71), 0.25, 1.04);
+        fadeOut(words, 27.3, 0.35);
+      }
+
+      // =====================================================================
+      // CTA: Comenta QUIZ  (on-screen only; the voice ends on "vendes")
+      // =====================================================================
+      {
+        const c = $("cta");
+        cursive(c, "Comenta", 540, 400, 140, 27.5, 0.6);
+        sfx("scribble.mp3", 27.5, 0.3, 1.04);
+        const q = el(c, "g");
+        txt(q, 520, 690, "QUIZ", { size: 250, font: "InstrSerifR", ls: 4 });
+        el(q, "circle", { cx: 772, cy: 676, r: 14, fill: RED });
+        pop(q, 540, 610, 28.15, 0.5);
+        sfx("ding.mp3", 28.15, 0.4, 1.23);
+        tl.fromTo($("sub"), { opacity: 0, y: 12 }, Object.assign({ opacity: 1, y: 0, duration: 0.4 }, IR), 28.6);
+        tl.set($("sub"), { opacity: 0 }, 0);
+        tl.fromTo($("lock"), { opacity: 0, scale: 0.85 }, Object.assign({ opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, IR), 28.9);
+        tl.set($("lock"), { opacity: 0 }, 0);
+        sfx("pop.mp3", 28.9, 0.28, 0.52);
+      }
+
+      // ---------------- captions (exact words of the VO) ----------------
+      cap(0, 8, t(9)); cap(9, 12, t(13)); cap(13, 13, t(14)); cap(14, 17, t(18)); cap(18, 23, t(24)); cap(24, 30, t(31));
+      cap(31, 33, t(34)); cap(34, 37, t(38)); cap(38, 43, t(44)); cap(44, 48, t(49)); cap(49, 52, t(53)); cap(53, 57, t(58));
+      cap(58, 62, t(63)); cap(63, 66, t(67)); cap(67, 71, 27.45);
+
+      tl.set({}, {}, END);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+On-screen text (music only, no narration). Base script condensed into 10 beats at 128 BPM (bar = 1.875 s).
+S0 0.00  ¿Vendes tu SaaS / con la misma / landing?
+S1 3.75  [emblem] Haz esto.
+S2 5.63  01 QUIZ FUNNEL — en lugar de pedir · UNA · DEMO (struck) → crea un · Quiz · FUNNEL
+S3 9.38  02 PREGUNTAS — 5–8 preguntas · ¿A qué te dedicas? · ¿Qué quieres conseguir? · ¿Qué te frena hoy? (3/8)
+S4 12.50 03 PRUEBA — Pero no solo preguntas. · Caso real [ejemplo]: Pasó de 4 a 19 demos al mes con un quiz. · “vale, esto tiene sentido”
+S5 15.00 04 RESULTADO — según sus respuestas · Tu resultado: Plan Growth · 92% [ejemplo] · Resultado personalizado.
+S6 18.75 05 LA PARTE IMPORTANTE — Y aquí viene la parte importante. · POR QUÉ · ENCAJA · OFERTA · A MEDIDA · CONTADOR · TIEMPO · LIMITADO · CANJEAR
+S7 22.50 06 OFERTA — −30% oferta para tu caso [ejemplo] · la oferta acaba en 14:59 · Canjear oferta →
+S8 26.25 07 VENTA — Así no solo captas el lead. · Segmentas+ sabes quién es · Educas+ con casos y datos · Vendes+ directo a la compra
+S9 30.00 08 SAAS IN HOUSE — SaaS IN House · Del lead a la compra. · Comenta «QUIZ» · saasinhouse.com

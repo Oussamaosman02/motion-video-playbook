@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      @font-face { font-family: "GeistMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      :root {
+        --bg: #f3f3f1; --line: rgba(22,22,24,0.06); --ink: #161618; --card: #1b1b1d; --g1: #e2e2df; --g2: #cfcfcc; --g3: #a9a9a5; --g4: #5d5d59;
+        --red: #e8382d; --red-deep: #7e140d; --red-txt: #c42a20; --cream: #f2efe6;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: "Archivo", sans-serif; color: var(--ink); }
+      #bg { position: absolute; inset: 0;
+        background-image: linear-gradient(to right, var(--line) 2px, transparent 2px), linear-gradient(to bottom, var(--line) 2px, transparent 2px);
+        background-size: 135px 135px; background-position: -1px -1px; }
+      #bgglow { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 48%, rgba(255,255,255,0.75), transparent 75%); }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+      .abs { position: absolute; }
+      .mono { font-family: "GeistMono", monospace; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+      .sq { position: absolute; }
+      .card { position: absolute; background: #fff; border: 2px solid #e4e4e1; border-radius: 20px; box-shadow: 0 24px 60px rgba(20,20,22,0.10), 0 4px 12px rgba(20,20,22,0.06); }
+      .dark { position: absolute; background: var(--card); border-radius: 22px; box-shadow: 0 30px 70px rgba(10,10,12,0.28); color: var(--cream); }
+      .chip { display: inline-block; padding: 12px 24px; border-radius: 999px; background: #2e2e31; color: var(--cream); font-size: 28px; font-weight: 600; margin-right: 12px; }
+      .bar { position: absolute; background: var(--g1); border-radius: 8px; }
+      .t { position: absolute; white-space: nowrap; }
+      .w { display: inline-block; margin-right: 0.24em; }
+      .disp { font-weight: 860; font-stretch: 118%; text-transform: uppercase; line-height: 1; letter-spacing: -0.015em; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.08em; }
+      svg { overflow: visible; }
+      #cap { position: absolute; left: 0; right: 0; top: 1560px; height: 110px; }
+      .capline { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-size: 52px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; visibility: hidden; }
+      .capline .w { color: #b9b9b5; }
+      #hud { position: absolute; left: 70px; right: 70px; top: 112px; height: 40px; }
+      .hudlbl { position: absolute; left: 0; top: 0; font-size: 26px; color: var(--ink); opacity: 0; white-space: nowrap; }
+      #hudwipe { position: absolute; left: 0; top: -4px; width: 330px; height: 40px; background: var(--red); transform: scaleX(0); transform-origin: left center; }
+      #mos { position: absolute; inset: 0; pointer-events: none; }
+      .tile { position: absolute; width: 135px; height: 135px; transform: scale(0); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="59" data-width="1080" data-height="1920">
+      <!-- audio: reused VO (Guillermo, ui-launch-film) + reused bed (benchmark-film, spliced) + library SFX + 2 ElevenLabs SFX (pixels, build) -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.4" data-duration="53.92" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="59" data-track-index="11" data-volume="0.2"></audio>
+      <!--SFX-->
+      <audio id="sx0" src="assets/build.mp3" data-start="0.100" data-duration="1.0" data-track-index="20" data-volume="0.35"></audio>
+      <audio id="sx1" src="assets/blip.mp3" data-start="1.000" data-duration="0.52" data-track-index="21" data-volume="0.3"></audio>
+      <audio id="sx2" src="assets/whoosh.mp3" data-start="2.450" data-duration="1.23" data-track-index="22" data-volume="0.35"></audio>
+      <audio id="sx3" src="assets/build.mp3" data-start="3.440" data-duration="1.0" data-track-index="23" data-volume="0.45"></audio>
+      <audio id="sx4" src="assets/pixels.mp3" data-start="4.320" data-duration="1.2" data-track-index="24" data-volume="0.5"></audio>
+      <audio id="sx5" src="assets/impact.mp3" data-start="4.680" data-duration="2.04" data-track-index="25" data-volume="0.35"></audio>
+      <audio id="sx6" src="assets/pixels.mp3" data-start="5.370" data-duration="1.2" data-track-index="26" data-volume="0.4"></audio>
+      <audio id="sx7" src="assets/pop.mp3" data-start="6.280" data-duration="0.52" data-track-index="27" data-volume="0.35"></audio>
+      <audio id="sx8" src="assets/tick.mp3" data-start="7.450" data-duration="0.52" data-track-index="28" data-volume="0.5"></audio>
+      <audio id="sx9" src="assets/glitch.mp3" data-start="7.850" data-duration="0.63" data-track-index="29" data-volume="0.3"></audio>
+      <audio id="sx10" src="assets/pixels.mp3" data-start="8.480" data-duration="1.2" data-track-index="30" data-volume="0.55"></audio>
+      <audio id="sx11" src="assets/build.mp3" data-start="8.780" data-duration="1.0" data-track-index="31" data-volume="0.4"></audio>
+      <audio id="sx12" src="assets/tick.mp3" data-start="8.900" data-duration="0.52" data-track-index="32" data-volume="0.3"></audio>
+      <audio id="sx13" src="assets/tick.mp3" data-start="9.020" data-duration="0.52" data-track-index="33" data-volume="0.3"></audio>
+      <audio id="sx14" src="assets/pop.mp3" data-start="9.080" data-duration="0.52" data-track-index="34" data-volume="0.35"></audio>
+      <audio id="sx15" src="assets/pop.mp3" data-start="9.760" data-duration="0.52" data-track-index="35" data-volume="0.35"></audio>
+      <audio id="sx16" src="assets/tick.mp3" data-start="10.620" data-duration="0.52" data-track-index="36" data-volume="0.35"></audio>
+      <audio id="sx17" src="assets/blip.mp3" data-start="11.580" data-duration="0.52" data-track-index="37" data-volume="0.35"></audio>
+      <audio id="sx18" src="assets/blip.mp3" data-start="11.980" data-duration="0.52" data-track-index="38" data-volume="0.35"></audio>
+      <audio id="sx19" src="assets/whoosh.mp3" data-start="12.290" data-duration="1.23" data-track-index="39" data-volume="0.3"></audio>
+      <audio id="sx20" src="assets/pop.mp3" data-start="14.600" data-duration="0.52" data-track-index="40" data-volume="0.3"></audio>
+      <audio id="sx21" src="assets/whoosh.mp3" data-start="14.630" data-duration="1.23" data-track-index="41" data-volume="0.3"></audio>
+      <audio id="sx22" src="assets/pop.mp3" data-start="15.790" data-duration="0.52" data-track-index="42" data-volume="0.3"></audio>
+      <audio id="sx23" src="assets/whoosh.mp3" data-start="15.710" data-duration="1.23" data-track-index="43" data-volume="0.3"></audio>
+      <audio id="sx24" src="assets/pop.mp3" data-start="17.390" data-duration="0.52" data-track-index="44" data-volume="0.4"></audio>
+      <audio id="sx25" src="assets/pixels.mp3" data-start="18.140" data-duration="1.2" data-track-index="45" data-volume="0.4"></audio>
+      <audio id="sx26" src="assets/glitch.mp3" data-start="18.690" data-duration="0.63" data-track-index="46" data-volume="0.25"></audio>
+      <audio id="sx27" src="assets/build.mp3" data-start="19.340" data-duration="1.0" data-track-index="47" data-volume="0.45"></audio>
+      <audio id="sx28" src="assets/whoosh.mp3" data-start="20.530" data-duration="1.23" data-track-index="48" data-volume="0.3"></audio>
+      <audio id="sx29" src="assets/tick.mp3" data-start="21.190" data-duration="0.52" data-track-index="49" data-volume="0.3"></audio>
+      <audio id="sx30" src="assets/pop.mp3" data-start="22.870" data-duration="0.52" data-track-index="50" data-volume="0.32"></audio>
+      <audio id="sx31" src="assets/pop.mp3" data-start="24.260" data-duration="0.52" data-track-index="51" data-volume="0.32"></audio>
+      <audio id="sx32" src="assets/pop.mp3" data-start="24.710" data-duration="0.52" data-track-index="52" data-volume="0.32"></audio>
+      <audio id="sx33" src="assets/pop.mp3" data-start="25.550" data-duration="0.52" data-track-index="53" data-volume="0.32"></audio>
+      <audio id="sx34" src="assets/whoosh.mp3" data-start="27.290" data-duration="1.23" data-track-index="54" data-volume="0.3"></audio>
+      <audio id="sx35" src="assets/chime.mp3" data-start="28.920" data-duration="1.23" data-track-index="55" data-volume="0.35"></audio>
+      <audio id="sx36" src="assets/tick.mp3" data-start="30.510" data-duration="0.52" data-track-index="56" data-volume="0.35"></audio>
+      <audio id="sx37" src="assets/tick.mp3" data-start="31.010" data-duration="0.52" data-track-index="57" data-volume="0.35"></audio>
+      <audio id="sx38" src="assets/tick.mp3" data-start="31.110" data-duration="0.52" data-track-index="58" data-volume="0.35"></audio>
+      <audio id="sx39" src="assets/blip.mp3" data-start="32.110" data-duration="0.52" data-track-index="59" data-volume="0.3"></audio>
+      <audio id="sx40" src="assets/build.mp3" data-start="32.700" data-duration="1.0" data-track-index="60" data-volume="0.45"></audio>
+      <audio id="sx41" src="assets/impact.mp3" data-start="33.310" data-duration="2.04" data-track-index="61" data-volume="0.3"></audio>
+      <audio id="sx42" src="assets/pixels.mp3" data-start="34.030" data-duration="1.2" data-track-index="62" data-volume="0.45"></audio>
+      <audio id="sx43" src="assets/whoosh.mp3" data-start="34.430" data-duration="1.23" data-track-index="63" data-volume="0.3"></audio>
+      <audio id="sx44" src="assets/impact.mp3" data-start="35.280" data-duration="2.04" data-track-index="64" data-volume="0.4"></audio>
+      <audio id="sx45" src="assets/whoosh.mp3" data-start="36.090" data-duration="1.23" data-track-index="65" data-volume="0.3"></audio>
+      <audio id="sx46" src="assets/tick.mp3" data-start="36.220" data-duration="0.52" data-track-index="66" data-volume="0.3"></audio>
+      <audio id="sx47" src="assets/tick.mp3" data-start="36.760" data-duration="0.52" data-track-index="67" data-volume="0.3"></audio>
+      <audio id="sx48" src="assets/whoosh.mp3" data-start="38.780" data-duration="1.23" data-track-index="68" data-volume="0.4"></audio>
+      <audio id="sx49" src="assets/pop.mp3" data-start="39.720" data-duration="0.52" data-track-index="69" data-volume="0.3"></audio>
+      <audio id="sx50" src="assets/pop.mp3" data-start="40.730" data-duration="0.52" data-track-index="70" data-volume="0.3"></audio>
+      <audio id="sx51" src="assets/pop.mp3" data-start="41.460" data-duration="0.52" data-track-index="71" data-volume="0.3"></audio>
+      <audio id="sx52" src="assets/whoosh.mp3" data-start="42.420" data-duration="1.23" data-track-index="72" data-volume="0.3"></audio>
+      <audio id="sx53" src="assets/ding.mp3" data-start="43.900" data-duration="1.04" data-track-index="73" data-volume="0.35"></audio>
+      <audio id="sx54" src="assets/blip.mp3" data-start="45.020" data-duration="0.52" data-track-index="74" data-volume="0.35"></audio>
+      <audio id="sx55" src="assets/tick.mp3" data-start="45.320" data-duration="0.52" data-track-index="75" data-volume="0.45"></audio>
+      <audio id="sx56" src="assets/tick.mp3" data-start="46.320" data-duration="0.52" data-track-index="76" data-volume="0.45"></audio>
+      <audio id="sx57" src="assets/tick.mp3" data-start="47.320" data-duration="0.52" data-track-index="77" data-volume="0.45"></audio>
+      <audio id="sx58" src="assets/glitch.mp3" data-start="45.790" data-duration="0.63" data-track-index="78" data-volume="0.2"></audio>
+      <audio id="sx59" src="assets/pop.mp3" data-start="47.090" data-duration="0.52" data-track-index="79" data-volume="0.35"></audio>
+      <audio id="sx60" src="assets/tick.mp3" data-start="47.670" data-duration="0.52" data-track-index="80" data-volume="0.5"></audio>
+      <audio id="sx61" src="assets/pop.mp3" data-start="48.570" data-duration="0.52" data-track-index="81" data-volume="0.35"></audio>
+      <audio id="sx62" src="assets/blip.mp3" data-start="49.270" data-duration="0.52" data-track-index="82" data-volume="0.3"></audio>
+      <audio id="sx63" src="assets/pop.mp3" data-start="49.790" data-duration="0.52" data-track-index="83" data-volume="0.35"></audio>
+      <audio id="sx64" src="assets/pop.mp3" data-start="50.750" data-duration="0.52" data-track-index="84" data-volume="0.35"></audio>
+      <audio id="sx65" src="assets/pixels.mp3" data-start="51.750" data-duration="1.2" data-track-index="85" data-volume="0.5"></audio>
+      <audio id="sx66" src="assets/ding.mp3" data-start="53.600" data-duration="1.04" data-track-index="86" data-volume="0.4"></audio>
+      <audio id="sx67" src="assets/pixels.mp3" data-start="54.000" data-duration="1.2" data-track-index="87" data-volume="0.45"></audio>
+      <audio id="sx68" src="assets/build.mp3" data-start="54.750" data-duration="1.0" data-track-index="88" data-volume="0.45"></audio>
+      <audio id="sx69" src="assets/chime.mp3" data-start="56.500" data-duration="1.23" data-track-index="89" data-volume="0.35"></audio>
+      <!--/SFX-->
+
+      <div id="bg" data-layout-ignore></div>
+      <div id="bgglow" data-layout-ignore></div>
+      <svg id="cross" class="abs" viewBox="0 0 1080 1920" width="1080" height="1920" style="left: 0; top: 0;" data-layout-ignore></svg>
+
+      <!-- S1 · scattered pixels → visitors → everyone into ONE landing -->
+      <section id="s1" class="scene">
+        <div id="s1-tag" class="t mono" style="left: 250px; top: 462px; font-size: 24px; color: var(--g4); opacity: 0;">/landing &nbsp;·&nbsp; visitas <span id="s1-count" style="color: var(--ink);">0</span></div>
+        <div id="s1-card" class="card" style="left: 250px; top: 520px; width: 580px; height: 820px; opacity: 0;">
+          <div class="abs" style="left: 28px; top: 26px; width: 14px; height: 14px; border-radius: 7px; background: var(--g2);"></div>
+          <div class="abs" style="left: 50px; top: 26px; width: 14px; height: 14px; border-radius: 7px; background: var(--g2);"></div>
+          <div class="abs" style="left: 72px; top: 26px; width: 14px; height: 14px; border-radius: 7px; background: var(--g2);"></div>
+          <div class="abs mono" style="left: 180px; top: 16px; width: 220px; height: 36px; border-radius: 18px; background: #f0f0ee; font-size: 18px; line-height: 36px; text-align: center; color: var(--g4); text-transform: none;">tusaas.com</div>
+          <div class="bar" style="left: 32px; top: 80px; width: 516px; height: 270px; background: #ececea;"></div>
+          <div class="bar" style="left: 32px; top: 380px; width: 420px; height: 34px; background: var(--g2);"></div>
+          <div class="bar" style="left: 32px; top: 430px; width: 330px; height: 34px; background: var(--g2);"></div>
+          <div class="bar" style="left: 32px; top: 500px; width: 500px; height: 18px;"></div>
+          <div class="bar" style="left: 32px; top: 532px; width: 460px; height: 18px;"></div>
+          <div class="bar" style="left: 32px; top: 564px; width: 380px; height: 18px;"></div>
+          <div id="s1-btn" class="abs" style="left: 32px; top: 640px; width: 280px; height: 80px; border-radius: 12px; background: var(--red); color: var(--cream); font-size: 30px; font-weight: 700; line-height: 80px; text-align: center; opacity: 0;">Pedir demo</div>
+        </div>
+        <div id="s1-px" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s1-same" class="t mono" style="left: 610px; top: 500px; font-size: 24px; padding: 10px 16px 8px; background: var(--red); color: var(--cream); border-radius: 6px; opacity: 0;">la misma landing</div>
+      </section>
+
+      <!-- S2 · dark mosaic, "Haz esto." -->
+      <section id="s2" class="scene" style="background: #121214;">
+        <div id="s2-tiles" class="abs" style="left: 0; top: 0;"></div>
+        <div class="t" style="left: 0; right: 0; top: 860px; text-align: center; font-size: 170px; font-weight: 800; letter-spacing: -0.04em; color: var(--cream);">
+          <span id="s2-w1" class="w" style="opacity: 0;">Haz</span><span id="s2-w2" class="w" style="opacity: 0;">esto<span style="color: var(--red);">.</span></span>
+        </div>
+      </section>
+
+      <!-- S3 · "Pedir una demo" button → shatters into pixels → stepped quiz funnel -->
+      <section id="s3" class="scene">
+        <div id="s3-old" class="t mono" style="left: 0; right: 0; top: 690px; text-align: center; font-size: 26px; color: var(--g4); opacity: 0;">el cta de siempre</div>
+        <div id="s3-btn" class="abs" style="left: 270px; top: 760px; width: 540px; height: 140px; border-radius: 16px; background: var(--red); color: var(--cream); font-size: 54px; font-weight: 700; line-height: 140px; text-align: center; opacity: 0;">Pedir una demo</div>
+        <svg class="abs" viewBox="0 0 1080 1920" width="1080" height="1920" style="left: 0; top: 0;"><path id="s3-strike" pathLength="1" d="M 240 832 L 840 826" stroke="var(--red)" stroke-width="10" stroke-linecap="round" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" /></svg>
+        <div id="s3-conv" class="t mono" style="left: 0; right: 0; top: 940px; text-align: center; font-size: 28px; color: var(--red-txt); opacity: 0;">conversión: 1,2 %</div>
+        <div id="s3-px" class="abs" style="left: 0; top: 0;"></div>
+        <svg id="s3-leads" class="abs" viewBox="0 0 1080 1920" width="1080" height="1920" style="left: 0; top: 0;"></svg>
+        <div id="s3-lbls" class="abs" style="left: 0; top: 0;"></div>
+        <div class="t disp" style="left: 0; right: 0; top: 1210px; text-align: center; font-size: 104px;">
+          <span id="s3-q" class="w" style="opacity: 0;">Quiz</span><span id="s3-f" class="w" style="opacity: 0; color: var(--red);">Funnel</span>
+        </div>
+        <svg id="s3-cur" class="abs" viewBox="0 0 40 52" width="62" height="80" style="left: 900px; top: 1300px; opacity: 0;"><path d="M2 2 L2 42 L12 32 L19 48 L26 45 L19 30 L33 30 Z" fill="#161618" stroke="#fff" stroke-width="3" stroke-linejoin="round" /></svg>
+      </section>
+
+      <!-- S4 · 5–8 counter + stacked dark question cards -->
+      <section id="s4" class="scene">
+        <div id="s4-lbl" class="t mono" style="left: 140px; top: 380px; font-size: 26px; color: var(--g4); opacity: 0;">preguntas</div>
+        <div class="t" style="left: 132px; top: 420px; font-size: 190px; font-weight: 800; letter-spacing: -0.05em; line-height: 1;">
+          <span id="s4-n1" style="display: inline-block; opacity: 0;">5</span><span id="s4-n2" style="display: inline-block; opacity: 0; color: var(--red);">–8</span>
+        </div>
+        <div id="s4-bar" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s4-stack" data-layout-ignore class="abs" style="left: 0; top: 0;"></div>
+      </section>
+
+      <!-- S5 · 3x3 "?" tiles, "pero no hagas solo preguntas" -->
+      <section id="s5" class="scene">
+        <div id="s5-grid" class="abs" style="left: 0; top: 0;"></div>
+      </section>
+
+      <!-- S6 · question spine + inserted cards + "Vale, esto tiene sentido." -->
+      <section id="s6" class="scene">
+        <div id="s6-spine" class="abs" style="left: 168px; top: 420px; width: 4px; height: 970px; background: var(--g2); transform-origin: top center; transform: scaleY(0);"></div>
+        <div id="s6-cards" data-layout-ignore class="abs" style="left: 0; top: 0;"></div>
+        <div id="s6-nodes" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s6-dot" class="abs" style="left: 158px; top: 438px; width: 24px; height: 24px; background: var(--red); opacity: 0;"></div>
+        <div id="s6-th" class="abs" style="left: 0; top: 0; opacity: 0;">
+          <div class="sq" style="left: 210px; top: 1150px; width: 30px; height: 30px; background: var(--card);"></div>
+          <div class="sq" style="left: 170px; top: 1205px; width: 20px; height: 20px; background: var(--card);"></div>
+          <div class="sq" style="left: 140px; top: 1245px; width: 12px; height: 12px; background: var(--card);"></div>
+          <div class="dark" style="left: 140px; top: 760px; width: 800px; height: 360px;">
+            <div class="abs mono" style="left: 48px; top: 44px; font-size: 24px; color: #8b8b88;">lo que piensa tu lead</div>
+            <div class="abs" style="left: 48px; top: 100px; width: 560px; font-size: 64px; font-weight: 750; line-height: 1.12; letter-spacing: -0.02em;">
+              <span id="s6-v1" class="w" style="opacity: 0;">“Vale,</span><span id="s6-v2" class="w" style="opacity: 0;">esto</span><span id="s6-v3" class="w" style="opacity: 0;">tiene</span><span id="s6-v4" class="w" style="opacity: 0;">sentido.”</span>
+            </div>
+            <div id="s6-check" class="abs" style="left: 620px; top: 120px; width: 140px; height: 140px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S7 · answers → orthogonal lines → skeleton → personalised result card -->
+      <section id="s7" class="scene">
+        <div id="s7-lbl" class="t mono" style="left: 0; right: 0; top: 380px; text-align: center; font-size: 24px; color: var(--g4); opacity: 0;">tus respuestas</div>
+        <div id="s7-chips" class="abs" style="left: 0; top: 0;"></div>
+        <svg class="abs" viewBox="0 0 1080 1920" width="1080" height="1920" style="left: 0; top: 0;">
+          <path id="s7-l1" pathLength="1" d="M 236 520 V 610 H 540 V 718" stroke="var(--g3)" stroke-width="4" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s7-l2" pathLength="1" d="M 520 520 V 610 H 540 V 718" stroke="var(--g3)" stroke-width="4" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s7-l3" pathLength="1" d="M 824 520 V 610 H 540 V 718" stroke="var(--g3)" stroke-width="4" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+        </svg>
+        <div id="s7-dot" class="abs" style="left: 528px; top: 598px; width: 24px; height: 24px; background: var(--red); opacity: 0;"></div>
+        <div id="s7-card" class="card" style="left: 150px; top: 720px; width: 780px; height: 560px; opacity: 0;">
+          <div id="s7-skel" class="abs" style="left: 0; top: 0; width: 100%; height: 100%;">
+            <div class="bar" style="left: 40px; top: 40px; width: 180px; height: 22px;"></div>
+            <div class="bar" style="left: 40px; top: 90px; width: 150px; height: 150px; border-radius: 10px;"></div>
+            <div class="bar" style="left: 220px; top: 100px; width: 420px; height: 44px;"></div>
+            <div class="bar" style="left: 220px; top: 170px; width: 500px; height: 24px;"></div>
+            <div class="bar" style="left: 220px; top: 206px; width: 380px; height: 24px;"></div>
+            <div class="bar" style="left: 40px; top: 300px; width: 260px; height: 20px;"></div>
+            <div class="bar" style="left: 40px; top: 340px; width: 640px; height: 36px;"></div>
+            <div class="bar" style="left: 40px; top: 440px; width: 560px; height: 64px; border-radius: 32px;"></div>
+          </div>
+          <div id="s7-real" class="abs" style="left: 0; top: 0; width: 100%; height: 100%; opacity: 0;">
+            <div class="abs mono" style="left: 40px; top: 38px; font-size: 24px; color: var(--red-txt);">tu resultado</div>
+            <div id="s7-ava" class="abs" style="left: 40px; top: 90px; width: 150px; height: 150px; background: #f6f6f4; border-radius: 10px;"></div>
+            <div class="abs" style="left: 220px; top: 92px; font-size: 50px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap;">Founder en tracción</div>
+            <div class="abs" style="left: 220px; top: 162px; width: 520px; font-size: 32px; line-height: 1.25; color: #4d4d4a;">Tu freno: el tráfico llega, pero no pide demo.</div>
+            <div class="abs mono" style="left: 40px; top: 296px; font-size: 22px; color: var(--g4);">encaje con tu caso</div>
+            <div id="s7-bar" class="abs" style="left: 40px; top: 338px;"></div>
+            <div id="s7-pct" class="abs" style="left: 600px; top: 286px; font-size: 76px; font-weight: 800; letter-spacing: -0.03em;">87%</div>
+            <div class="abs" style="left: 40px; top: 440px; padding: 0 30px; height: 64px; border-radius: 32px; background: var(--card); color: var(--cream); font-size: 30px; font-weight: 600; line-height: 64px; white-space: nowrap;">Siguiente paso: tu plan a medida</div>
+          </div>
+        </div>
+        <div id="s7-stamp" class="t mono" style="left: 640px; top: 688px; font-size: 26px; padding: 12px 18px 10px; background: var(--red); color: var(--cream); border-radius: 6px; transform: rotate(-4deg); opacity: 0;">personalizado</div>
+      </section>
+
+      <!-- S8 · isometric pixel cube + "la parte importante." -->
+      <section id="s8" class="scene">
+        <div id="s8-orb" class="abs" style="left: 0; top: 0;"></div>
+        <svg id="s8-cube" class="abs" viewBox="-160 -170 320 340" width="320" height="340" style="left: 380px; top: 560px; opacity: 0;">
+          <polygon points="0,-150 130,-75 0,0 -130,-75" fill="#f08a82" />
+          <polygon points="-130,-75 0,0 0,150 -130,75" fill="#e8382d" />
+          <polygon points="130,-75 0,0 0,150 130,75" fill="#b3241b" />
+        </svg>
+        <div id="s8-a" class="t mono" style="left: 0; right: 0; top: 1010px; text-align: center; font-size: 30px; color: var(--g4); opacity: 0;">y aquí viene</div>
+        <div id="s8-b" class="t disp" style="left: 0; right: 0; top: 1070px; text-align: center; font-size: 120px; opacity: 0;">la parte</div>
+        <div id="s8-c" class="t disp" style="left: 0; right: 0; top: 1200px; text-align: center; font-size: 120px; color: var(--red); opacity: 0;">importante.</div>
+      </section>
+
+      <!-- S9a · grid of quiz cards panning up, last row lights, zoom into one -->
+      <section id="s9" class="scene">
+        <div id="s9-grid" class="abs" style="left: 0; top: 0; width: 1080px; height: 2000px;"></div>
+        <div id="s9-white" class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px; background: var(--bg); opacity: 0;"></div>
+      </section>
+
+      <!-- S9b · "por qué encaja" product card + specific offer -->
+      <section id="s9b" class="scene">
+        <div id="s9-prod" class="card" style="left: 130px; top: 440px; width: 820px; height: 560px; opacity: 0;">
+          <div class="abs mono" style="left: 44px; top: 40px; font-size: 24px; color: var(--red-txt);">por qué encaja contigo</div>
+          <div class="abs" style="left: 44px; top: 86px; font-size: 56px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap;">Tu producto · Plan Pro</div>
+          <div class="abs" style="left: 44px; top: 180px; width: 732px; height: 2px; background: #ececea;"></div>
+          <div id="s9-r0" class="abs" style="left: 44px; top: 222px; font-size: 38px; font-weight: 600; white-space: nowrap; opacity: 0;"><span class="ck"></span>Ataca tu freno: pocas demos</div>
+          <div id="s9-r1" class="abs" style="left: 44px; top: 322px; font-size: 38px; font-weight: 600; white-space: nowrap; opacity: 0;"><span class="ck"></span>Hecho para founders como tú</div>
+          <div id="s9-r2" class="abs" style="left: 44px; top: 422px; font-size: 38px; font-weight: 600; white-space: nowrap; opacity: 0;"><span class="ck"></span>Listo para tu situación de hoy</div>
+        </div>
+        <div id="s9-offer" class="dark" style="left: 190px; top: 1020px; width: 700px; height: 420px; opacity: 0;">
+          <div class="abs mono" style="left: 44px; top: 40px; font-size: 24px; padding: 8px 14px 6px; background: var(--red); color: var(--cream); border-radius: 6px;">oferta específica</div>
+          <div class="abs" style="left: 44px; top: 112px; font-size: 46px; font-weight: 600; color: #9a9a96;">149 €/mes</div>
+          <svg class="abs" viewBox="0 0 240 60" width="240" height="60" style="left: 36px; top: 112px;"><path id="s9-strike" pathLength="1" d="M 4 34 L 236 28" stroke="var(--red)" stroke-width="7" stroke-linecap="round" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" /></svg>
+          <div id="s9-price" class="abs" style="left: 40px; top: 170px; font-size: 150px; font-weight: 850; letter-spacing: -0.05em; line-height: 1; opacity: 0;">99 €<span style="font-size: 44px; font-weight: 600; letter-spacing: 0; margin-left: 12px; color: #9b9b98;">/mes</span></div>
+          <div class="abs mono" style="left: 44px; top: 352px; font-size: 22px; color: #a3a3a0;">solo para perfiles como el tuyo</div>
+        </div>
+      </section>
+
+      <!-- S10 · giant countdown + draining pixel bar + "Canjear" -->
+      <section id="s10" class="scene">
+        <div id="s10-lbl" class="t mono" style="left: 0; right: 0; top: 600px; text-align: center; font-size: 30px; color: var(--g4); opacity: 0;">la oferta caduca en</div>
+        <div id="s10-time" class="t" style="left: 0; right: 0; top: 660px; text-align: center; font-family: 'GeistMono', monospace; font-size: 188px; font-weight: 600; letter-spacing: -0.04em; opacity: 0;">15:00.00</div>
+        <div id="s10-bar" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s10-btn" class="abs" style="left: 290px; top: 1120px; width: 500px; height: 124px; border-radius: 16px; background: var(--red); color: var(--cream); font-size: 50px; font-weight: 700; line-height: 124px; text-align: center; opacity: 0;">Canjear oferta</div>
+        <svg id="s10-cur" class="abs" viewBox="0 0 40 52" width="62" height="80" style="left: 920px; top: 1500px; opacity: 0;"><path d="M2 2 L2 42 L12 32 L19 48 L26 45 L19 30 L33 30 Z" fill="#161618" stroke="#fff" stroke-width="3" stroke-linejoin="round" /></svg>
+      </section>
+
+      <!-- S11 · captas / segmentas / educas nodes → red pixel staircase → COMPRA -->
+      <section id="s11" class="scene">
+        <svg class="abs" viewBox="0 0 1080 1920" width="1080" height="1920" style="left: 0; top: 0;">
+          <path id="s11-c1" pathLength="1" d="M 540 645 V 715" stroke="var(--g3)" stroke-width="4" stroke-dasharray="8 8" fill="none" style="opacity: 0;" />
+          <path id="s11-c2" pathLength="1" d="M 540 885 V 955" stroke="var(--g3)" stroke-width="4" stroke-dasharray="8 8" fill="none" style="opacity: 0;" />
+        </svg>
+        <div id="s11-nodes" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s11-lead" class="t mono" style="left: 650px; top: 470px; font-size: 24px; padding: 8px 14px 6px; background: var(--red); color: var(--cream); border-radius: 6px; opacity: 0;">+1 lead</div>
+        <div id="s11-fan" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s11-buy" class="abs" style="left: 250px; top: 1372px; width: 580px; height: 140px; border-radius: 18px; background: var(--card); color: var(--cream); box-shadow: 0 24px 50px rgba(10,10,12,0.3); opacity: 0;"><div class="disp" style="position: absolute; left: 0; right: 0; top: 26px; text-align: center; font-size: 90px;">compra<span style="color: var(--red);">.</span></div></div>
+      </section>
+
+      <!-- S12 · "Comenta" + pixel-built QUIZ + lockup -->
+      <section id="s12" class="scene">
+        <div id="s12-a" class="t" style="left: 0; right: 0; top: 560px; text-align: center; font-size: 104px; font-weight: 800; letter-spacing: -0.03em; opacity: 0;">Comenta</div>
+        <div id="s12-px" class="abs" style="left: 0; top: 0;"></div>
+        <div id="s12-b" class="t" style="left: 0; right: 0; top: 1080px; text-align: center; font-size: 46px; font-weight: 600; color: #4d4d4a; opacity: 0;">y te enseño cómo montarlo</div>
+        <div id="s12-lock" class="abs" style="left: 0; right: 0; top: 1640px; display: flex; justify-content: center; align-items: center; gap: 14px; opacity: 0;">
+          <div class="disp" style="font-size: 52px;">SaaS</div>
+          <div class="px" style="font-size: 30px; background: var(--red); color: var(--cream); padding: 8px 12px 4px; border-radius: 8px; box-shadow: 4px 4px 0 var(--red-deep);">IN</div>
+          <div class="disp" style="font-size: 52px;">House</div>
+        </div>
+      </section>
+
+      <div id="hud" data-layout-ignore>
+        <div id="hudlbls"></div>
+        <div id="hudwipe"></div>
+        <div class="mono" style="position: absolute; right: 0; top: 0; font-size: 26px; color: var(--g4);">saas in house</div>
+      </div>
+      <div id="capbg" class="abs" style="left: 0; top: 1500px; width: 1080px; height: 230px; background: linear-gradient(to bottom, rgba(243,243,241,0), #f3f3f1 30%, #f3f3f1 70%, rgba(243,243,241,0)); opacity: 0;" data-layout-ignore></div>
+      <div id="cap" data-layout-ignore></div>
+      <div id="mos" data-layout-ignore></div>
+    </div>
+
+    <script>
+      const VO = 0.4; // voiceover offset; word times are relative to assets/vo.mp3 (local whisper, -l es)
+      const W = /*WORDS*/[["¿Quieres",0.07,0.62],["vender",0.64,1.06],["tu",1.06,1.2],["SA",1.2,1.34],["sin",1.34,1.55],["mandar",1.55,1.98],["a",1.98,2.05],["todo",2.05,2.33],["el",2.33,2.47],["mundo",2.47,2.83],["a",2.83,2.9],["la",2.9,3.03],["misma",3.04,3.4],["landing?",3.4,4.2],["Haz",4.28,4.5],["esto.",4.5,5.2],["En",5.27,5.35],["lugar",5.35,5.73],["de",5.73,5.88],["pedir",5.88,6.26],["una",6.26,6.49],["demo,",6.49,6.95],["directamente,",6.95,8.08],["crea",8.08,8.48],["un",8.48,8.68],["quiz",8.68,8.72],["funnel.",9.36,9.85],["Primero",10.12,10.51],["haces",10.51,10.83],["entre",10.89,11.18],["cinco",11.18,11.52],["y",11.52,11.58],["ocho",11.58,11.84],["preguntas",11.84,12.45],["para",12.45,12.72],["saber",12.72,13.05],["quién",13.05,13.46],["es",13.46,13.55],["esa",13.55,14.2],["persona,",14.2,14.48],["qué",14.48,14.6],["quiere",14.6,14.69],["conseguir",14.85,15.49],["y",15.49,15.56],["cuál",15.56,15.95],["es",15.95,16.08],["su",16.1,16.25],["principal",16.25,16.94],["problema,",16.99,17.74],["pero",17.74,18.05],["no",18.05,18.2],["haga",18.2,18.29],["solo",18.29,18.94],["preguntas.",18.94,19.84],["Entre",19.92,20.23],["medias",20.23,20.63],["añade",20.69,21.14],["pequeñas",21.15,21.85],["cards",21.85,22.23],["con",22.24,22.46],["casos",22.47,22.85],["reales,",22.85,23.35],["datos,",23.86,24.01],["resultados",24.01,24.49],["o",24.55,24.87],["consejos",25.15,25.48],["que",25.49,25.86],["le",25.86,25.96],["hagan",26.03,26.31],["pensar.",26.31,26.96],["Vale,",27.04,27.54],["esto",27.54,27.93],["tiene",27.93,28.42],["sentido.",28.42,29.44],["Después,",29.51,30.11],["según",30.11,30.51],["sus",30.51,30.71],["respuestas,",30.71,31.51],["le",31.51,31.6],["muestras",31.65,32.17],["un",32.17,32.3],["resultado",32.3,32.91],["personalizado.",32.91,33.88],["Yaquí",33.93,34.21],["viene",34.21,34.48],["la",34.48,34.6],["parte",34.6,34.88],["importante.",34.88,35.62],["Las",35.69,35.82],["últimas",35.82,36.35],["cards",36.36,36.7],["ya",36.7,36.82],["tienen",36.83,37.22],["que",37.22,37.43],["llevarlo",37.43,37.96],["hacia",37.96,38.3],["tu",38.3,38.43],["producto.",38.43,39.13],["Le",39.31,39.37],["explicas",39.37,39.91],["por",39.91,40.1],["qué",40.11,40.38],["encaja",40.38,40.78],["con",40.78,40.98],["su",40.98,41.11],["situación,",41.11,42],["le",42,42.12],["presentas",42.12,42.68],["una",42.68,42.75],["oferta",42.99,43.24],["específica",43.4,43.9],["y",43.9,44.18],["añades",44.18,44.48],["un",44.55,44.62],["contador",44.62,45.18],["con",45.18,45.39],["tiempo",45.39,45.81],["limitado",45.81,46.36],["para",46.45,46.64],["canjearla.",46.69,47.51],["Así",47.6,47.82],["no",47.82,47.95],["solo",47.97,48.27],["captas",48.27,48.72],["el",48.72,48.87],["lead,",48.87,49.32],["lo",49.32,49.4],["segmentas,",49.49,50.3],["lo",50.3,50.45],["educas",50.45,50.9],["y",50.9,50.97],["lo",50.97,51.03],["llevas",51.35,51.58],["directamente",51.68,52.17],["hacia",52.83,53],["la",53,53.12],["compra.",53.2,53.6]]/*/WORDS*/;
+      const FIX = { 3: "SaaS", 51: "hagas", 55: "medias,", 83: "Y aquí" }; // whisper mis-hearings, fixed by ear
+      const t = (i) => W[i][1] + VO;
+      const END = 59;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (id) => document.getElementById(id);
+      const RED = "#e8382d", INK = "#161618";
+      function mk(parent, css, cls, html) {
+        const d = document.createElement("div");
+        if (cls) d.className = cls;
+        Object.assign(d.style, css);
+        if (html !== undefined) d.innerHTML = html;
+        (typeof parent === "string" ? $(parent) : parent).appendChild(d);
+        return d;
+      }
+      const sq = (parent, x, y, s, c, extra = {}) => mk(parent, Object.assign({ left: x + "px", top: y + "px", width: s + "px", height: s + "px", background: c }, extra), "sq");
+      // pixel glyph from a string map; returns the square elements
+      function glyph(parent, map, x, y, cell, colors, gap = 2) {
+        const out = [];
+        map.forEach((row, r) => [...row].forEach((ch, c) => { if (colors[ch]) out.push(sq(parent, x + c * cell, y + r * cell, cell - gap, colors[ch])); }));
+        return out;
+      }
+      const draw = (id, at, dur, ease = "power2.inOut") => tl.to("#" + id, { strokeDashoffset: 0, duration: dur, ease }, at);
+      const popIn = (el, at, dur = 0.35, from = 0.6) => tl.fromTo(el, { opacity: 0, scale: from }, { opacity: 1, scale: 1, duration: dur, ease: "back.out(2.2)" }, at);
+      const fadeUp = (el, at, dur = 0.4, dy = 30) => tl.fromTo(el, { opacity: 0, y: dy }, { opacity: 1, y: 0, duration: dur, ease: "power3.out" }, at);
+
+      /* ---------- scene windows (hard cuts under mosaic wipes / zooms) ---------- */
+      const SC = [["s1", 0, t(14)], ["s2", t(14), t(16)], ["s3", t(16), t(27)], ["s4", t(27), t(49)], ["s5", t(49), t(54)],
+                  ["s6", t(54), t(74)], ["s7", t(74), t(83)], ["s8", t(83), t(88)], ["s9", t(88), 39.6], ["s9b", 39.6, t(112)],
+                  ["s10", t(112), t(120)], ["s11", t(120), 54.3], ["s12", 54.3, END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b); });
+
+      /* ---------- background crosshairs at grid intersections ---------- */
+      (function () {
+        const s = $("cross"); let h = "";
+        for (let r = 1; r < 15; r++) for (let c = 1; c < 8; c++) {
+          if ((r + c) % 3) continue;
+          const x = c * 135, y = r * 135;
+          h += `<path d="M ${x - 9} ${y} H ${x + 9} M ${x} ${y - 9} V ${y + 9}" stroke="rgba(22,22,24,0.22)" stroke-width="2" />`;
+        }
+        s.innerHTML = h;
+      })();
+
+      /* ---------- HUD chapter label: red block wipes across, text swaps underneath ---------- */
+      const CH = [[0, "[01] una landing"], [t(16), "[02] quiz funnel"], [t(27), "[03] preguntas"], [t(54), "[04] cards"], [t(74), "[05] resultado"],
+                  [t(83), "[06] lo importante"], [t(88), "[07] producto"], [t(112), "[08] contador"], [t(120), "[09] compra"], [54.3, "[10] comenta"]];
+      CH.forEach(([at, txt], i) => {
+        const d = mk("hudlbls", {}, "hudlbl mono", txt); d.id = "hud" + i;
+        const sw = Math.max(0, at - 0.12);
+        if (i > 0) {
+          tl.to("#hudwipe", { scaleX: 1, transformOrigin: "left center", duration: 0.12, ease: "power2.in" }, sw);
+          tl.set("#hud" + (i - 1), { opacity: 0 }, at);
+          tl.to("#hudwipe", { scaleX: 0, transformOrigin: "right center", duration: 0.16, ease: "power2.out" }, at);
+        }
+        tl.set(d, { opacity: 1 }, at + (i ? 0 : 0.2));
+      });
+      tl.set("#hud", { opacity: 0 }, t(14));
+      tl.to("#capbg", { opacity: 1, duration: 0.2 }, t(88)); tl.to("#capbg", { opacity: 0, duration: 0.2 }, 39.6); tl.set("#hud", { opacity: 1 }, t(16));
+
+      /* ---------- mosaic wipe: 8x15 tiles of 135px flip in diagonally, the scene cuts underneath, they flip out ---------- */
+      const TILES = [];
+      for (let r = 0; r < 15; r++) for (let c = 0; c < 8; c++) {
+        const d = mk("mos", { left: c * 135 + "px", top: r * 135 + "px" }, "tile");
+        TILES.push({ d, r, c, k: rnd() });
+      }
+      function mosaic(cut, palette, inDur = 0.3, outDur = 0.36) {
+        TILES.forEach(({ d, r, c, k }, i) => {
+          const order = (c + r * 0.55) / (7 + 14 * 0.55);
+          const col = palette[Math.floor(rnd() * palette.length)];
+          tl.set(d, { backgroundColor: col }, cut - inDur - 0.05);
+          tl.to(d, { scale: 1.01, duration: 0.12, ease: "power2.out" }, cut - inDur + order * (inDur - 0.12) + k * 0.03 - 0.03);
+          tl.to(d, { scale: 0, duration: 0.14, ease: "power2.in" }, cut + order * (outDur - 0.14) + k * 0.04);
+        });
+      }
+      mosaic(t(14), ["#161618", "#161618", "#2a2a2d", "#3a3a3d", "#e8382d"]);
+      mosaic(t(16), ["#f3f3f1", "#e2e2df", "#cfcfcc", "#f3f3f1", "#e8382d"], 0.28, 0.34);
+      mosaic(t(83), ["#e8382d", "#f3f3f1", "#cfcfcc", "#e2e2df"]);
+      mosaic(54.3, ["#e8382d", "#e8382d", "#161618", "#f3f3f1", "#cfcfcc"]);
+
+      /* ---------- captions: chunks of <=4 words, spoken word red, then ink ---------- */
+      (function () {
+        const chunks = []; let cur = [];
+        W.forEach((w, i) => { cur.push(i); if (/[,.?!]$/.test(FIX[i] || w[0]) || cur.length >= 4) { chunks.push(cur); cur = []; } });
+        if (cur.length) chunks.push(cur);
+        chunks.forEach((ch, k) => {
+          const line = mk("cap", {}, "capline");
+          ch.forEach((i) => {
+            const s = document.createElement("span"); s.className = "w"; s.textContent = FIX[i] || W[i][0]; line.appendChild(s);
+            const nxt = i + 1 < W.length ? t(i + 1) : t(i) + 0.6;
+            tl.set(s, { color: RED }, t(i)); tl.set(s, { color: INK }, Math.min(nxt, W[i][2] + VO + 0.25));
+          });
+          const a = t(ch[0]) - 0.06;
+          const last = ch[ch.length - 1];
+          const nextStart = k + 1 < chunks.length ? t(chunks[k + 1][0]) - 0.06 : END;
+          const b = Math.min(nextStart, W[last][2] + VO + 0.7);
+          tl.set(line, { visibility: "visible" }, a); tl.set(line, { visibility: "hidden" }, b);
+        });
+        [[t(14), t(16)], [t(83), t(88)], [54.3, END]].forEach(([a, b]) => { tl.set("#cap", { opacity: 0 }, a); tl.set("#cap", { opacity: 1 }, b); });
+      })();
+
+      /* ================= S1 ================= */
+      const C1 = { x: 540, y: 760 };
+      const red1 = sq("s1-px", C1.x - 55, 470, 110, RED, { opacity: 0 });
+      popIn(red1, 0.08, 0.4, 0.2);
+      const ring = [];
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8, R = 190;
+        const s = i === 2 ? 64 : 54;
+        const e = sq("s1-px", C1.x + Math.cos(a) * R - s / 2, C1.y + 40 + Math.sin(a) * R - s / 2, s, i === 2 ? "#3a3a3d" : "#d6d6d3", { opacity: 0 });
+        popIn(e, 0.2 + i * 0.05, 0.3, 0.2); ring.push(e);
+        const dt = sq("s1-px", C1.x + Math.cos(a + 0.39) * (R + 40) - 7, C1.y + 40 + Math.sin(a + 0.39) * (R + 40) - 7, 14, "#cfcfcc", { opacity: 0 });
+        popIn(dt, 0.3 + i * 0.05, 0.25, 0.2); ring.push(dt);
+      }
+      // visitors: the ring scatters out and more grey squares arrive from everywhere
+      const vis = [...ring];
+      for (let i = 0; i < 26; i++) {
+        let x, y;
+        do { x = 60 + rnd() * 920; y = 300 + rnd() * 1180; } while (x > 200 && x < 860 && y > 470 && y < 1360);
+        const s = 22 + Math.floor(rnd() * 4) * 8;
+        const e = sq("s1-px", x, y, s, ["#d6d6d3", "#c4c4c0", "#b0b0ac", "#3a3a3d"][Math.floor(rnd() * 4)], { opacity: 0 });
+        popIn(e, 1.0 + rnd() * 0.9, 0.3, 0.2); vis.push(e);
+      }
+      ring.forEach((e, i) => {
+        const a = rnd() * Math.PI * 2;
+        tl.to(e, { x: Math.cos(a) * (360 + rnd() * 120), y: Math.sin(a) * (420 + rnd() * 200), duration: 0.6, ease: "power3.out" }, 0.95);
+      });
+      // the red square becomes the card's CTA
+      tl.fromTo("#s1-card", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0.95);
+      tl.to(red1, { x: 282 - 485, y: 1160 - 470, width: 280, height: 80, borderRadius: 12, duration: 0.55, ease: "power3.inOut" }, 0.95);
+      tl.set("#s1-btn", { opacity: 1 }, 1.5); tl.set(red1, { opacity: 0 }, 1.5);
+      fadeUp("#s1-tag", 1.2, 0.35, 12);
+      // "todo el mundo a la misma landing": everyone streams into the card
+      vis.forEach((e, i) => {
+        const at = t(7) + i * 0.018;
+        tl.to(e, { x: 380 + rnd() * 320 - parseFloat(e.style.left), y: 540 + rnd() * 60 - parseFloat(e.style.top), scale: 0.4, duration: 0.55, ease: "power2.in" }, at);
+        tl.to(e, { opacity: 0, duration: 0.12 }, at + 0.5);
+      });
+      tl.to("#s1-card", { scale: 1.025, duration: 0.12, yoyo: true, repeat: 3, ease: "sine.inOut" }, t(7) + 0.6);
+      for (let k = 0; k <= 16; k++) tl.set("#s1-count", { textContent: String(Math.round(1284 * Math.pow(k / 16, 1.4))).replace(/\B(?=(\d{3})+(?!\d))/g, ".") }, t(7) + k * (1.2 / 16));
+      popIn("#s1-same", t(12), 0.35, 1.6);
+      tl.to("#s1-card", { scale: 1.06, duration: 0.6, ease: "power2.in" }, t(13) + 0.2);
+
+      /* ================= S2 ================= */
+      for (let r = 0; r < 15; r++) for (let c = 0; c < 8; c++) {
+        if (rnd() < 0.55) continue;
+        const e = sq("s2-tiles", c * 135 + 4, r * 135 + 4, 127, ["#1d1d20", "#26262a", "#303034"][Math.floor(rnd() * 3)], { opacity: 0.0 });
+        const a = t(14) + rnd() * 0.8;
+        tl.to(e, { opacity: 1, duration: 0.05 }, a); tl.to(e, { opacity: 0.2, duration: 0.05 }, a + 0.15 + rnd() * 0.3);
+      }
+      popIn("#s2-w1", t(14) + 0.02, 0.3, 0.8); popIn("#s2-w2", t(15), 0.3, 0.8);
+
+      /* ================= S3 ================= */
+      fadeUp("#s3-old", t(16) + 0.15, 0.35, 10);
+      popIn("#s3-btn", t(19), 0.4, 0.7);
+      tl.fromTo("#s3-cur", { opacity: 0, x: 0, y: 0 }, { opacity: 1, x: -250, y: -440, duration: 0.8, ease: "power3.out" }, t(20));
+      tl.to("#s3-btn", { scale: 0.95, duration: 0.08, yoyo: true, repeat: 1 }, t(22) + 0.1);
+      tl.to("#s3-btn", { backgroundColor: "#cfcfcc", color: "#8a8a86", duration: 0.3 }, t(22) + 0.45);
+      draw("s3-strike", t(22) + 0.5, 0.3);
+      fadeUp("#s3-conv", t(22) + 0.55, 0.3, 10);
+      tl.to("#s3-cur", { opacity: 0, duration: 0.2 }, t(22) + 0.7);
+      tl.to(["#s3-btn", "#s3-strike", "#s3-conv", "#s3-old"], { opacity: 0, duration: 0.12 }, t(23));
+      // funnel of pixels, stage widths 9/7/5/3, two rows each
+      const FW = [9, 7, 5, 3], FC = ["#d4d4d1", "#b4b4b0", "#3a3a3d", RED], CELL = 64, FX = 430, FY = 600;
+      let n = 0;
+      FW.forEach((w, s) => {
+        for (let row = 0; row < 2; row++) for (let c = 0; c < w; c++) {
+          const tx = FX - (w * CELL) / 2 + c * CELL, ty = FY + (s * 2 + row) * CELL;
+          const e = sq("s3-px", tx, ty, CELL - 8, FC[s], { opacity: 0 });
+          const sx = 290 + rnd() * 480 - tx, sy = 770 + rnd() * 110 - ty;
+          const at = t(23) + 0.02 + n * 0.012 + rnd() * 0.08;
+          tl.fromTo(e, { opacity: 1, x: sx, y: sy, scale: 0.5, rotation: (rnd() - 0.5) * 120 }, { x: 0, y: 0, scale: 1, rotation: 0, duration: 0.6, ease: "power3.inOut", immediateRender: false }, at);
+          tl.set(e, { opacity: 0 }, 0); n++;
+        }
+        const ly = FY + s * 2 * CELL + CELL - 4;
+        const lbl = mk("s3-lbls", { left: "770px", top: ly - 16 + "px", fontSize: "28px", color: s === 3 ? "#c42a20" : INK, opacity: 0 }, "t mono", ["preguntas", "cards", "resultado", "oferta"][s]);
+        fadeUp(lbl, t(25) - 0.3 + s * 0.12, 0.3, 0);
+        tl.fromTo(lbl, { x: -14 }, { x: 0, duration: 0.3, ease: "power3.out", immediateRender: false }, t(25) - 0.3 + s * 0.12);
+        $("s3-leads").insertAdjacentHTML("beforeend", `<path id="s3-ld${s}" pathLength="1" d="M ${FX + (w * CELL) / 2 + 6} ${ly} H 752" stroke="#a9a9a5" stroke-width="3" stroke-dasharray="1" stroke-dashoffset="1" fill="none" />`);
+        draw("s3-ld" + s, t(25) - 0.35 + s * 0.12, 0.3);
+      });
+      popIn("#s3-q", t(25), 0.35, 0.8); popIn("#s3-f", t(26), 0.35, 0.8);
+
+      /* ================= S4 ================= */
+      fadeUp("#s4-lbl", t(27), 0.3, 8);
+      const BAR4 = [];
+      for (let i = 0; i < 8; i++) {
+        const e = sq("s4-bar", 520 + i * 58, 560, 46, "transparent", { border: "3px solid #cfcfcc", opacity: 0 });
+        popIn(e, t(27) + 0.1 + i * 0.04, 0.25, 0.4); BAR4.push(e);
+      }
+      popIn("#s4-n1", t(30), 0.3, 0.6); popIn("#s4-n2", t(32), 0.3, 0.6);
+      BAR4.forEach((e, i) => {
+        if (i < 5) tl.to(e, { backgroundColor: RED, borderColor: RED, duration: 0.12 }, t(30) + i * 0.05);
+        else tl.to(e, { borderColor: RED, duration: 0.12 }, t(32) + (i - 5) * 0.06);
+      });
+      const QS = [["01", "¿Quién eres?", ["Founder", "Marketing", "Ventas"], 0], ["02", "¿Qué quieres conseguir?", ["Más demos", "Más MRR", "Menos churn"], 0],
+                  ["03", "¿Cuál es tu principal problema?", ["Tráfico frío", "Pocas demos", "Ciclo largo"], 1]];
+      const QT = [t(33) - 0.6, t(40) - 0.25, t(44) - 0.25], QSEL = [t(39), t(43) - 0.1, t(48)];
+      const cards4 = [];
+      QS.forEach(([num, q, chips, sel], k) => {
+        const c = mk("s4-stack", { left: "140px", top: "820px", width: "800px", height: "400px", opacity: 0, transformOrigin: "50% 0%" }, "dark");
+        mk(c, { left: "44px", top: "40px", fontSize: "24px", color: "#8b8b88" }, "abs mono", `pregunta ${num} / 08`);
+        mk(c, { left: "44px", top: "92px", width: "712px", fontSize: "60px", fontWeight: "750", lineHeight: "1.1", letterSpacing: "-0.02em" }, "abs qx", q);
+        const row = mk(c, { left: "44px", top: "300px", whiteSpace: "nowrap" }, "abs qx");
+        const chipEls = chips.map((ch) => { const s = document.createElement("span"); s.className = "chip"; s.textContent = ch; row.appendChild(s); return s; });
+        tl.fromTo(c, { opacity: 0, y: 420 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, QT[k]);
+        cards4.forEach((pc, j) => {
+          const lvl = k - j;
+          tl.to(pc, { y: -100 * lvl, scale: 1 - 0.07 * lvl, backgroundColor: ["#1b1b1d", "#2c2c2f", "#404044"][lvl], duration: 0.5, ease: "power3.out" }, QT[k]);
+          if (lvl === 1) tl.to(pc.querySelectorAll(".qx"), { opacity: 0, duration: 0.25 }, QT[k]);
+        });
+        cards4.push(c);
+        tl.to(chipEls[sel], { backgroundColor: RED, duration: 0.15 }, QSEL[k]);
+        tl.fromTo(chipEls[sel], { scale: 1 }, { scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, immediateRender: false }, QSEL[k]);
+      });
+
+      /* ================= S5 ================= */
+      const G5 = [];
+      for (let i = 0; i < 9; i++) {
+        const r = Math.floor(i / 3), c = i % 3;
+        const e = mk("s5-grid", { left: 189 + c * 246 + "px", top: 640 + r * 246 + "px", width: "210px", height: "210px", background: "#e2e2df", borderRadius: "16px", color: "#9a9a96", fontFamily: "GeistMono, monospace", fontSize: "110px", fontWeight: "500", lineHeight: "210px", textAlign: "center", opacity: 0 }, "abs", "?");
+        popIn(e, t(49) + 0.02 + i * 0.035, 0.3, 0.5); G5.push(e);
+      }
+      G5.forEach((e, i) => tl.to(e, { rotation: i % 2 ? 5 : -5, duration: 0.07, yoyo: true, repeat: 3, ease: "sine.inOut" }, t(52) + i * 0.015));
+      G5.forEach((e, i) => { if (i !== 4) tl.to(e, { opacity: 0.45, duration: 0.25 }, t(53)); });
+      tl.to(G5[4], { scaleX: 0, duration: 0.12, ease: "power2.in" }, t(53));
+      tl.set(G5[4], { backgroundColor: RED, color: "#f2efe6", textContent: "+" }, t(53) + 0.12);
+      tl.to(G5[4], { scaleX: 1, scale: 1.12, duration: 0.2, ease: "back.out(2)" }, t(53) + 0.12);
+
+      /* ================= S6 ================= */
+      const S6 = t(54);
+      tl.to("#s6-spine", { scaleY: 1, duration: 0.5, ease: "power3.out" }, S6);
+      const NY0 = [560, 680, 800, 920, 1040], NY = [450, 677, 905, 1132, 1360];
+      const nodes6 = NY0.map((y, i) => {
+        const e = mk("s6-nodes", { left: "146px", top: y - 24 + "px", width: "48px", height: "48px", background: "#bdbdb9", color: "#fff", fontFamily: "GeistMono, monospace", fontSize: "18px", fontWeight: "600", lineHeight: "48px", textAlign: "center", opacity: 0 }, "abs", "P" + (i + 1));
+        popIn(e, S6 + 0.05 + i * 0.05, 0.25, 0.4);
+        tl.to(e, { y: NY[i] - y, duration: 0.6, ease: "power3.inOut" }, t(55) - 0.1);
+        return e;
+      });
+      const CARDS6 = [["caso real", "Clínica dental: +38 % de citas en 30 días", t(60)], ["dato", "7 de cada 10 visitas se van sin pedir demo", t(62)],
+                      ["resultado", "×2,4 demos con el mismo tráfico", t(63) + 0.3], ["consejo", "Pregunta por el problema antes que por el precio", t(65)]];
+      const cards6 = CARDS6.map(([tag, txt, at], i) => {
+        const cy = (NY[i] + NY[i + 1]) / 2;
+        const ghost = mk("s6-cards", { left: "270px", top: cy - 90 + "px", width: "740px", height: "180px", border: "3px dashed #cfcfcc", borderRadius: "16px", opacity: 0 }, "abs");
+        fadeUp(ghost, t(56) + 0.1 + i * 0.1, 0.3, 10);
+        const ln = mk("s6-cards", { left: "170px", top: cy - 2 + "px", width: "100px", height: "4px", background: RED, transformOrigin: "left center", transform: "scaleX(0)" }, "abs");
+        tl.to(ln, { scaleX: 1, duration: 0.2, ease: "power2.out" }, at - 0.1);
+        const c = mk("s6-cards", { left: "270px", top: cy - 90 + "px", width: "740px", height: "180px", opacity: 0, overflow: "hidden" }, "card");
+        mk(c, { left: "0", top: "0", width: "10px", height: "100%", background: RED }, "abs");
+        mk(c, { left: "40px", top: "26px", fontSize: "22px", color: "#c42a20" }, "abs mono", tag);
+        mk(c, { left: "40px", top: "64px", width: "660px", fontSize: "36px", fontWeight: "700", lineHeight: "1.15", letterSpacing: "-0.01em" }, "abs", txt);
+        tl.fromTo(c, { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, at);
+        tl.to(ghost, { opacity: 0, duration: 0.2 }, at + 0.2);
+        return [c, ln, ghost];
+      });
+      // the lead travels down the spine: each passed question lights red
+      tl.set("#s6-dot", { opacity: 1 }, t(60) - 0.3);
+      for (let i = 0; i < 5; i++) {
+        tl.to("#s6-dot", { y: NY[i] - NY[0], duration: 0.7, ease: "power2.inOut" }, t(60) - 0.3 + i * 0.85 - 0.7 * (i > 0));
+        tl.to(nodes6[i], { backgroundColor: RED, duration: 0.15 }, t(60) - 0.3 + i * 0.85);
+      }
+      tl.to(["#s6-cards", "#s6-nodes", "#s6-spine", "#s6-dot"], { opacity: 0.25, duration: 0.4 }, t(69) + 0.2);
+      tl.fromTo("#s6-th", { opacity: 0, y: 40, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, t(70) - 0.15);
+      [[1, 70], [2, 71], [3, 72], [4, 73]].forEach(([k, i]) => tl.fromTo("#s6-v" + k, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.25 }, t(i)));
+      const ck = glyph("s6-check", ["......X", ".....XX", "X...XX.", "XX.XX..", ".XXX...", "..X...."], 0, 10, 20, { X: RED });
+      ck.forEach((e, i) => popIn(e, t(73) + 0.1 + i * 0.025, 0.2, 0));
+
+      /* ================= S7 ================= */
+      fadeUp("#s7-lbl", t(74) + 0.05, 0.3, 8);
+      [["Founder", 111, 250], ["Más demos", 385, 270], ["Pocas demos", 679, 290]].forEach(([txt, x, w], i) => {
+        const e = mk("s7-chips", { left: x + "px", top: "440px", width: w + "px", height: "80px", border: "4px solid " + RED, borderRadius: "40px", background: "#fff", fontSize: "32px", fontWeight: "700", lineHeight: "72px", textAlign: "center" }, "abs", txt);
+        popIn(e, [t(75), t(76) + 0.1, t(77)][i], 0.3, 0.6);
+      });
+      draw("s7-l1", t(77) + 0.25, 0.45); draw("s7-l2", t(77) + 0.3, 0.45); draw("s7-l3", t(77) + 0.35, 0.45);
+      tl.fromTo("#s7-dot", { opacity: 0, y: 0 }, { opacity: 1, y: 102, duration: 0.35, ease: "power2.in" }, t(78) + 0.2);
+      tl.to("#s7-dot", { opacity: 0, duration: 0.1 }, t(78) + 0.55);
+      tl.fromTo("#s7-card", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, t(79) - 0.1);
+      tl.to("#s7-skel", { opacity: 0, duration: 0.25 }, t(81));
+      tl.to("#s7-real", { opacity: 1, duration: 0.25 }, t(81));
+      glyph("s7-ava", ["..XXXX..", ".XXXXXX.", ".SSSSSS.", ".SESSES.", ".SSSSSS.", "..SMMS..", ".RRRRRR.", "RRRRRRRR"], 11, 11, 16,
+            { X: INK, S: "#efc4b1", E: INK, M: "#b3241b", R: RED }, 0);
+      for (let i = 0; i < 12; i++) {
+        const e = sq("s7-bar", i * 44, 0, 36, "#e2e2df");
+        if (i < 10) tl.to(e, { backgroundColor: i < 10 ? RED : "#e2e2df", duration: 0.08 }, t(81) + 0.25 + i * 0.05);
+      }
+      for (let k = 0; k <= 10; k++) tl.set("#s7-pct", { textContent: Math.round(87 * k / 10) + "%" }, t(81) + 0.25 + k * 0.05);
+      tl.fromTo("#s7-stamp", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power3.in" }, t(82));
+
+      /* ================= S8 ================= */
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2, R = 300 + (i % 2) * 70, s = i % 3 === 0 ? 40 : 24;
+        const e = sq("s8-orb", 540 + Math.cos(a) * R - s / 2, 730 + Math.sin(a) * R * 0.55 - s / 2, s, i % 4 === 0 ? RED : "#cfcfcc", { opacity: 0 });
+        popIn(e, t(83) + 0.2 + i * 0.03, 0.3, 0);
+        tl.to(e, { x: Math.cos(a + 0.6) * R - Math.cos(a) * R, y: (Math.sin(a + 0.6) - Math.sin(a)) * R * 0.55, duration: 1.6, ease: "none" }, t(83) + 0.2);
+      }
+      tl.fromTo("#s8-cube", { opacity: 0, scale: 0.2, rotation: -30 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(1.8)" }, t(83) + 0.1);
+      tl.to("#s8-cube", { y: -16, duration: 0.8, yoyo: true, repeat: 1, ease: "sine.inOut" }, t(83) + 0.7);
+      fadeUp("#s8-a", t(83) + 0.15, 0.3, 10);
+      popIn("#s8-b", t(86), 0.3, 0.85); popIn("#s8-c", t(87), 0.35, 1.25);
+
+      /* ================= S9a ================= */
+      const G9 = [];
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 3; c++) {
+        const e = mk("s9-grid", { left: 75 + c * 320 + "px", top: 300 + r * 240 + "px", width: "290px", height: "210px", borderRadius: "14px", overflow: "hidden" }, "card");
+        mk(e, { left: "18px", top: "18px", width: "90px", height: "14px", background: "#e2e2df" }, "bar");
+        const hasRed = r >= 4 || rnd() < 0.25;
+        mk(e, { left: "18px", top: "48px", width: 150 + rnd() * 100 + "px", height: "22px", background: "#cfcfcc" }, "bar");
+        mk(e, { left: "18px", top: "84px", width: "254px", height: "64px", background: r >= 4 ? "#e2e2df" : (hasRed ? "#e8382d" : "#3a3a3d"), borderRadius: "8px" }, "bar").id = "s9-blk" + (r * 3 + c);
+        mk(e, { left: "18px", top: "164px", width: "120px", height: "26px", background: "#e2e2df", borderRadius: "13px" }, "bar");
+        G9.push(e);
+      }
+      tl.fromTo("#s9-grid", { y: 60 }, { y: -120, duration: 3.4, ease: "power1.inOut" }, t(88) - 0.05);
+      G9.forEach((e, i) => fadeUp(e, t(88) + (i % 3) * 0.04 + Math.floor(i / 3) * 0.05, 0.35, 40));
+      for (let i = 12; i < 18; i++) {
+        tl.to(G9[i], { borderColor: RED, duration: 0.15 }, t(89) + (i - 12) * 0.06);
+        tl.to("#s9-blk" + i, { backgroundColor: RED, duration: 0.15 }, t(90) + (i - 12) * 0.06);
+      }
+      tl.to("#s9-grid", { scale: 3.4, transformOrigin: "540px 1365px", duration: 0.8, ease: "power3.in" }, t(97) - 0.05);
+      tl.to("#s9-white", { opacity: 1, duration: 0.2 }, 39.4);
+
+      /* ================= S9b ================= */
+      tl.fromTo("#s9-prod", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" }, 39.6);
+      document.querySelectorAll("#s9b .ck").forEach((h, k) => {
+        Object.assign(h.style, { display: "inline-block", position: "relative", width: "46px", height: "36px", marginRight: "22px", verticalAlign: "-4px" });
+        glyph(h, ["....X", "...XX", "X.XX.", "XXX..", ".X..."], 0, 0, 8, { X: RED }, 0);
+      });
+      [[0, 99], [1, 102], [2, 105]].forEach(([k, i]) => tl.fromTo("#s9-r" + k, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, t(i) - 0.05));
+      tl.to("#s9-prod", { y: -50, opacity: 0.55, duration: 0.45, ease: "power3.out" }, t(107) - 0.1);
+      tl.fromTo("#s9-offer", { opacity: 0, y: 320 }, { opacity: 1, y: -50, duration: 0.5, ease: "power3.out" }, t(107) - 0.1);
+      draw("s9-strike", t(110), 0.25);
+      tl.fromTo("#s9-price", { opacity: 0, scale: 0.6, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, t(110) + 0.1);
+
+      /* ================= S10 ================= */
+      fadeUp("#s10-lbl", t(112) + 0.05, 0.3, 8);
+      popIn("#s10-time", t(112) + 0.15, 0.35, 0.85);
+      const T0 = t(114) + 0.3, REM = 900;
+      for (let k = 0; T0 + k / 24 < t(120); k++) {
+        const left = REM - k / 24, mm = Math.floor(left / 60), ss = Math.floor(left % 60), cs = Math.floor((left * 100) % 100);
+        tl.set("#s10-time", { textContent: `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}.${String(cs).padStart(2, "0")}` }, T0 + k / 24);
+      }
+      const B10 = [];
+      for (let i = 0; i < 20; i++) { const e = sq("s10-bar", 105 + i * 44, 950, 38, "#e2e2df"); B10.push(e); tl.to(e, { backgroundColor: RED, duration: 0.06 }, t(114) + 0.05 + i * 0.025); }
+      for (let i = 0; i < 9; i++) tl.to(B10[19 - i], { backgroundColor: "#cfcfcc", duration: 0.06 }, t(116) + i * 0.1);
+      popIn("#s10-btn", t(119), 0.35, 0.7);
+      tl.fromTo("#s10-cur", { opacity: 0, x: 0, y: 0 }, { opacity: 1, x: -300, y: -300, duration: 0.45, ease: "power3.out" }, t(119) + 0.1);
+      tl.to("#s10-btn", { scale: 0.95, duration: 0.07, yoyo: true, repeat: 1 }, t(119) + 0.58);
+
+      /* ================= S11 ================= */
+      const N11 = [["captas", 560, ["..XXX..", "..XXX..", "..XXX..", ".......", ".XXXXX.", "XXXXXXX", "XXXXXXX"], { X: INK }, t(123)],
+                   ["segmentas", 800, ["...XX...", "...XX...", "...XX.XX", "XX.XX.XX", "XX.XX.XX", "XX.XX.XX"], { X: INK }, t(127)],
+                   ["educas", 1040, ["..XXX..", ".XXXXX.", ".XXXXX.", ".XXXXX.", "..XXX..", "..RRR..", "..RRR.."], { X: RED, R: INK }, t(129)]];
+      N11.forEach(([lbl, cy, map, cols, at], i) => {
+        const g = mk("s11-nodes", { left: "455px", top: cy - 85 + "px", width: "170px", height: "170px", borderRadius: "85px", background: "#fff", boxShadow: "0 0 0 14px rgba(255,255,255,0.6), 0 18px 40px rgba(20,20,22,0.12)", opacity: 0 }, "abs");
+        const wpx = map[0].length * 13, hpx = map.length * 13;
+        const gs = glyph(g, map, 85 - wpx / 2, 85 - hpx / 2, 13, cols, 1);
+        popIn(g, t(120) + 0.05 + i * 0.1, 0.35, 0.5);
+        gs.forEach((e, j) => popIn(e, at - 0.1 + j * 0.008, 0.2, 0));
+        const l = mk("s11-nodes", { left: "670px", top: cy - 18 + "px", fontSize: "32px", color: INK, opacity: 0 }, "t mono", lbl);
+        const nm = mk("s11-nodes", { left: "330px", top: cy - 16 + "px", fontSize: "28px", color: "#a9a9a5", opacity: 0 }, "t mono", "0" + (i + 1));
+        tl.fromTo([l, nm], { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3 }, at);
+        if (i > 0) tl.to("#s11-c" + i, { opacity: 1, duration: 0.2 }, at - 0.2);
+      });
+      popIn("#s11-lead", t(125) - 0.05, 0.3, 1.5);
+      // red pixel staircase fan, widening toward the bottom
+      for (let r = 0; r < 12; r++) {
+        const w = 60 + Math.round((r * 900) / 11 / 30) * 30;
+        const e = mk("s11-fan", { left: 540 - w / 2 + "px", top: 1140 + r * 30 + "px", width: w + "px", height: "26px", background: RED, transform: "scaleX(0)" }, "abs");
+        tl.to(e, { scaleX: 1, duration: 0.35, ease: "power3.out" }, t(132) + r * 0.05);
+        if (r % 2) {
+          const g1 = sq("s11-fan", 540 - w / 2 - 34, 1140 + r * 30, 26, "#cfcfcc", { opacity: 0 });
+          const g2 = sq("s11-fan", 540 + w / 2 + 8, 1140 + r * 30, 26, "#e2e2df", { opacity: 0 });
+          tl.to([g1, g2], { opacity: 1, duration: 0.05 }, t(132) + r * 0.05 + 0.3);
+          tl.to([g1, g2], { opacity: 0, duration: 0.05 }, t(132) + r * 0.05 + 0.6 + rnd() * 0.4);
+        }
+      }
+      popIn("#s11-buy", t(136) - 0.05, 0.35, 1.3);
+
+      /* ================= S12 ================= */
+      popIn("#s12-a", 54.6, 0.35, 0.85);
+      const QZ = { Q: [".XXX.", "X...X", "X...X", "X...X", "X.X.X", "X..X.", ".XX.X"], U: ["X...X", "X...X", "X...X", "X...X", "X...X", "X...X", ".XXX."],
+                   I: ["XXXXX", "..X..", "..X..", "..X..", "..X..", "..X..", "XXXXX"], Z: ["XXXXX", "....X", "...X.", "..X..", ".X...", "X....", "XXXXX"] };
+      let qi = 0;
+      ["Q", "U", "I", "Z"].forEach((L, li) => {
+        glyph("s12-px", QZ[L], 80 + li * 240, 730, 40, { X: RED }, 4).forEach((e) => {
+          const at = 54.75 + qi * 0.008 + rnd() * 0.25; qi++;
+          tl.fromTo(e, { opacity: 0, x: (rnd() - 0.5) * 900, y: (rnd() - 0.5) * 1400, rotation: (rnd() - 0.5) * 180 }, { opacity: 1, x: 0, y: 0, rotation: 0, duration: 0.6, ease: "power3.out" }, at);
+        });
+      });
+      fadeUp("#s12-b", 55.9, 0.4, 16);
+      fadeUp("#s12-lock", 56.5, 0.5, 20);
+      document.querySelectorAll("#s12-px .sq").forEach((e) => tl.to(e, { scale: 0.55, duration: 0.18, yoyo: true, repeat: 1, ease: "sine.inOut" }, 57.4 + ((parseFloat(e.style.left) - 80) / 920) * 0.6));
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

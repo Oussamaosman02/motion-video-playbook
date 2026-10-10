@@ -1,0 +1,23 @@
+# Agent instructions
+
+This folder is a reproducible recipe for low-cost vertical explainer videos in five formats: A cartoon duo (`cartoon-duo/`), B chalkboard (`chalkboard/`), C brand motion film (`brand-film/`), D trace / data film (`trace-film/`), E illustrated data explainer (`illustrated-data/`).
+Read `PLAYBOOK.md` (all formats) or the chosen format's own `<format>/PLAYBOOK.md` fully before doing anything.
+Start from a copy of that format's `template/`; shared scripts are in `tools/`.
+
+Since 2026-10-07 there are 14 more formats (19 in total), from the x-batch (`../x-batch/INDEX.md` lists the example videos):
+- F, UI launch & teaser family: F1 UI launch film with voice (`ui-launch-film/`), F2 UI launch reel (`ui-launch-reel/`), F3 UI demo film (`ui-demo-film/`), F4 notch teaser (`notch-teaser/`), F5 glow signal film (`glow-signal-film/`), F6 airy launch film (`airy-launch/`). `PLAYBOOK.md` Part F has a "when to use which" table.
+- G, art-directed launch films: G1 serif launch film (`serif-launch-film/`), G2 frosted-glass film (`frosted-glass-film/`), G3 device mockup film (`device-mockup-film/`), G4 colour-block promo (`color-block-promo/`).
+- H benchmark / announcement film with voice (`benchmark-film/`), I founder talking-head with depth type, a generated presenter (`founder-depth-type/`), J whiteboard ad with voice (`whiteboard-ad/`), K pencil loop (`pencil-loop/`).
+Formats F2–F6, G and K are music only (the script is on-screen text).
+Some formats also have helpers in `<format>/tools/`. Canonical copies of the duplicated helpers are in `tools/`: `el_audio.sh` (ElevenLabs music/SFX/POST, sequential, 429 backoff; the key is shared, so never call it in parallel), `gen_image_ar.py` (Gemini with a 9:16 default) and `embed_words.py` (words.json → index.html).
+
+Batch 2 (2026-10-07) added 13 more formats (32 in total; `../x-batch/INDEX.md` rows 15–27 list the example videos):
+- Part F variants (documented inside Part F): F1a UI launch film, scatter (`ui-launch-film-scatter/`, voice), F1b scatter + mosaic look (`ui-launch-film-scatter-mosaic/`, voice), F6a airy launch, chapters (`airy-launch-chapters/`), F7 mascot cast film (`mascot-cast-film/`).
+- New Parts: L motion showreel (`motion-showreel/`), M paper-desk film (`paper-desk-film/`), N terminal teaser (`terminal-teaser/`), O search-bar film (`search-bar-film/`), P hero-object film with voice (`hero-object-film/`), Q halftone mascot film with voice (`halftone-mascot-film/`), R CRT desktop film (`crt-desktop-film/`), S brand-identity film (`brand-identity-film/`), T mind-trip film (`mind-trip-film/`).
+- Voiced: F1a, F1b, P, Q. All the others are music only, with the script as on-screen text. N and T use zero images. `PLAYBOOK.md` has a "when to use which (all 32 formats)" table before Part L.
+New canonical audio helpers in `tools/` (local ffmpeg, no API): `music_rms.py` (find drops and breaks), `fit_music.sh` (trim or splice a bed to length), `sfx_normalize.sh` (boost near-silent SFX) and `audio_check.sh` (final mp4, silent-ending check).
+If ElevenLabs has no credits (401 insufficient_credits), make no ElevenLabs calls. Follow "Running without ElevenLabs credits" at the end of `PLAYBOOK.md`: reuse the music/VO/SFX library (`../x-batch/AUDIO-REUSE.md`), local `npx hyperframes transcribe` for word times, and local `npx hyperframes tts` (Kokoro) only as a last resort.
+
+SFX must not *feel* AI (client rule, 2026-10-08). Being AI-generated is fine; sounding AI-made is not, and one AI-feeling sound makes the whole video feel AI. Feels AI = thin (no body under 200 Hz) + hissy (8 kHz+ air) + held at full level + long tail + smooth/no grain; risers, swooshes, shimmers and swarms are the worst offenders, plus machine-regular loops (typing, chalk). Feels clean = short, dry sounds with some low-end body (pops, ticks, clicks, keys, thumps, stamps, impacts). Check every SFX with `tools/sfx_feel_check.sh <file>` (≥0.5 = do not use) and prefer `../sfx-forensics/approved_sounds.txt`. No SFX on cuts or card/caption entrances, no stacked riser+impact+boom; at most one musical accent per title and a handful of SFX per video. Full findings: `../sfx-forensics/README.md`.
+
+Long-form 16:9 edits (2026-10-08): `PLAYBOOK.md` Part LF has the technique catalogue, music/SFX recipes and default changes measured from 6 YouTube references (Ali Abdaal, Lock Stock Finance, Iman Gadzhi ×2, The Science of Scaling, Ryan Trahan). Full teardowns are in `../long-video-refs/<id>/ANALYSIS.md`; each one's section J has 1080p hex/px/font values and CSS/GSAP tokens (Part LF6 indexes them). Use it with `../LONG_VIDEO_MEMO.md`. Download YouTube sources with `tools/yt_download.sh <url> <out.mp4> [1080]` (savenow.to API, key read from realdubber's `.env`), not yt-dlp.

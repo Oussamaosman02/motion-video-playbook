@@ -1,0 +1,12 @@
+# On-screen script (no voiceover: this format is music + UI SFX; the base script lives as headlines)
+S1  0.0  ¿Quieres vender tu SaaS sin mandar a todo el mundo a la [misma landing]?
+S2  3.6  Haz [esto].
+S3  5.0  VS: Pedir una demo (directamente · a todo el mundo)  vs  Crea un [Quiz Funnel] (primero preguntas · luego vendes) → GANADOR
+S4  9.0  Primero, [5–8 preguntas].  (quién es · qué quiere · qué le duele)
+S5 14.2  Pero no hagas solo [preguntas].
+S6 15.8  Entre medias, [cards que convencen].  (casos reales · datos · resultados · consejos) → “Vale, esto tiene sentido.”
+S7 21.4  Resultado [personalizado].  (según sus respuestas)
+S8 25.6  Y ahora, la parte [importante].
+S9 27.2  Las últimas cards [venden].  01 por qué encaja · 02 oferta específica · 03 contador
+S10 33.0 Así no solo [captas el lead].  table Capta/Segmenta/Educa/Vende → GANADOR + confetti → Lo segmentas, lo educas y lo llevas a la compra.
+S11 38.0 Tu SaaS, vendido con un [Quiz Funnel].  SaaS IN House · $ comenta QUIZ — te enseño a montarlo

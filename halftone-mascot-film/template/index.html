@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Geist"; src: url("assets/Geist-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "GeistMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "InstrumentSerif"; src: url("assets/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        /* halftone mascot film: paper white, ink, ONE brand accent (SaaS in House red) */
+        --paper: #ffffff; --ink: #0b0b10; --muted: #75727c; --line: #e6e2d8; --grid: #f3f2ee;
+        --ac: #e8382d; --cream: #f2efe6; --gold: #f5c51b;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Geist", sans-serif; }
+      .abs { position: absolute; }
+      .full { position: absolute; inset: 0; }
+      #bg { position: absolute; inset: 0; background: var(--paper); }
+      .gridbg { position: absolute; inset: 0; opacity: 0; background-color: #f7f6f3;
+        background-image: linear-gradient(var(--grid) 2px, transparent 2px), linear-gradient(90deg, var(--grid) 2px, transparent 2px);
+        background-size: 135px 135px; }
+      .scene { position: absolute; inset: 0; opacity: 0; }
+      /* headline: words of the voiceover, one by one; accent words in italic serif */
+      .hl { position: absolute; left: 76px; right: 70px; font-family: "Geist", sans-serif; font-weight: 600; font-size: 84px; line-height: 1.12; letter-spacing: -0.035em; }
+      .hl .w { display: inline-block; opacity: 0; margin-right: 0.22em; }
+      .hl .a { font-family: "InstrumentSerif", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; color: var(--ac); font-size: 1.1em; line-height: 1; }
+      .on-dark .hl, .hl.light { color: var(--cream); }
+      .on-red .hl { color: #fff; }
+      .on-red .hl .a { color: var(--cream); }
+      .hl.grey .w { color: #6d6b74; }
+      .hl.grey .a { color: var(--ac); }
+      /* HUD */
+      .hud { position: absolute; top: 46px; font-family: "GeistMono", monospace; font-size: 22px; letter-spacing: 0.02em; color: #6f6d76; }
+      /* mascot: 4 stacked halftone poses */
+      .mw { position: absolute; }
+      .mw img { position: absolute; left: 0; top: 0; width: 100%; image-rendering: pixelated; opacity: 0; }
+      .mw img.m-idle { opacity: 1; }
+      /* cards / tiles */
+      .tile { position: absolute; background: #fff; border: 1.5px solid var(--line); border-radius: 22px; box-shadow: 0 18px 40px rgba(20,20,30,0.07); padding: 30px 32px; overflow: hidden; opacity: 0; }
+      .lab { font-family: "GeistMono", monospace; font-size: 22px; color: #6f6d76; letter-spacing: 0.01em; }
+      .lab .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--ac); margin-right: 8px; vertical-align: 1px; }
+      .chip { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #f1efe9; color: var(--muted); font-family: "GeistMono", monospace; font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase; }
+      .big { font-family: "Geist", sans-serif; font-weight: 650; letter-spacing: -0.04em; }
+      .ser { font-family: "InstrumentSerif", serif; font-style: italic; font-weight: 400; }
+      .htimg { image-rendering: pixelated; position: absolute; }
+      .stamp { position: absolute; display: flex; align-items: center; justify-content: center; opacity: 0; }
+      .stamp .ring { position: absolute; inset: 0; border: 6px solid var(--ac); border-radius: 50%; }
+      .stamp .txt { position: relative; font-family: "InstrumentSerif", serif; font-style: italic; color: var(--ac); background: #fff; border: 5px solid var(--ac); border-radius: 22px; padding: 6px 30px 12px; white-space: nowrap; }
+      /* phone */
+      .phone { position: absolute; width: 450px; height: 920px; background: #0b0b10; border-radius: 70px; padding: 16px; box-shadow: 0 40px 80px rgba(20,20,30,0.18); }
+      .screen { position: relative; width: 100%; height: 100%; background: #fff; border-radius: 56px; overflow: hidden; }
+      .notch { position: absolute; top: 14px; left: 50%; width: 130px; height: 36px; margin-left: -65px; background: #0b0b10; border-radius: 20px; z-index: 3; }
+      .qhead { height: 230px; background: var(--ac); color: #fff; padding: 78px 34px 0; }
+      .qbar { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.3); margin-top: 20px; overflow: hidden; }
+      .qbar i { display: block; height: 100%; width: 100%; background: #fff; transform-origin: left center; transform: scaleX(0.125); }
+      .qset { position: absolute; left: 30px; right: 30px; top: 270px; opacity: 0; }
+      .qq { font-size: 40px; font-weight: 650; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 26px; }
+      .opt { position: relative; height: 84px; border: 2px solid var(--line); border-radius: 18px; margin-bottom: 16px; display: flex; align-items: center; padding: 0 24px; font-size: 27px; font-weight: 550; color: #3a3940; overflow: hidden; }
+      .opt .f { position: absolute; inset: 0; background: var(--ink); transform-origin: left center; transform: scaleX(0); }
+      .opt span { position: relative; }
+      .steps { position: absolute; left: 76px; top: 720px; font-family: "GeistMono", monospace; font-size: 30px; line-height: 2.1; color: #6f6d76; }
+      .steps div { opacity: 0.35; }
+      /* black band (whip) */
+      #band { position: absolute; left: 0; right: 0; top: 820px; height: 300px; background: var(--ink); overflow: hidden; transform-origin: center; transform: scaleY(0); }
+      #band .t { position: absolute; left: 0; right: 0; top: 76px; text-align: center; color: #fff; font-size: 78px; font-weight: 600; letter-spacing: -0.04em; white-space: nowrap; }
+      #band .t .ser { color: var(--ac); font-size: 1.12em; }
+      /* checks */
+      .ck { display: flex; align-items: center; gap: 16px; font-size: 30px; font-weight: 550; padding: 13px 0; border-top: 1.5px solid #f0eee8; opacity: 0.25; }
+      .ck b { width: 38px; height: 38px; border-radius: 10px; background: var(--ac); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
+      .btn { position: absolute; display: flex; align-items: center; justify-content: center; border-radius: 22px; background: var(--ac); color: #fff; font-size: 44px; font-weight: 650; letter-spacing: -0.02em; }
+      /* wordmark (saasinhouse.com Nav) */
+      .logo { display: flex; align-items: center; gap: 18px; font-family: "Archivo", sans-serif; font-weight: 860; font-stretch: 112%; font-size: 112px; letter-spacing: -0.02em; color: var(--ink); }
+      .logo .in { font-family: "Silkscreen", monospace; font-size: 66px; background: var(--ac); color: var(--cream); padding: 8px 18px 12px; border-radius: 10px; letter-spacing: 0.06em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="53.3" data-width="1080" data-height="1920">
+      <!-- audio: VO (offset 0.6s), music bed, SFX injected by build.py from sfx.json -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.6" data-duration="47.96" data-track-index="1" data-volume="1"></audio>
+      <audio id="mus" src="assets/music_cut.mp3" data-start="0" data-duration="53.3" data-track-index="2" data-volume="0.3"></audio>
+      <!--SFX-->
+      <audio id="sfx0" src="assets/pop.mp3" data-start="0.08" data-duration="0.52" data-track-index="10" data-volume="0.5"></audio>
+      <audio id="sfx1" src="assets/whoosh.mp3" data-start="4.37" data-duration="1.04" data-track-index="11" data-volume="0.5"></audio>
+      <audio id="sfx2" src="assets/pop.mp3" data-start="5.93" data-duration="0.52" data-track-index="12" data-volume="0.45"></audio>
+      <audio id="sfx3" src="assets/click.mp3" data-start="6.56" data-duration="0.52" data-track-index="13" data-volume="0.6"></audio>
+      <audio id="sfx4" src="assets/pop.mp3" data-start="7.89" data-duration="0.52" data-track-index="14" data-volume="0.55"></audio>
+      <audio id="sfx5" src="assets/whoosh.mp3" data-start="8.71" data-duration="1.04" data-track-index="15" data-volume="0.5"></audio>
+      <audio id="sfx6" src="assets/tick.mp3" data-start="12.07" data-duration="1.52" data-track-index="16" data-volume="0.5"></audio>
+      <audio id="sfx7" src="assets/tick.mp3" data-start="13.31" data-duration="1.52" data-track-index="17" data-volume="0.5"></audio>
+      <audio id="sfx8" src="assets/tick.mp3" data-start="14.93" data-duration="1.52" data-track-index="18" data-volume="0.5"></audio>
+      <audio id="sfx9" src="assets/whoosh.mp3" data-start="15.51" data-duration="1.04" data-track-index="19" data-volume="0.6"></audio>
+      <audio id="sfx10" src="assets/pop.mp3" data-start="17.85" data-duration="0.52" data-track-index="20" data-volume="0.4"></audio>
+      <audio id="sfx11" src="assets/pop.mp3" data-start="19.36" data-duration="0.52" data-track-index="21" data-volume="0.45"></audio>
+      <audio id="sfx12" src="assets/pop.mp3" data-start="20.19" data-duration="0.52" data-track-index="22" data-volume="0.45"></audio>
+      <audio id="sfx13" src="assets/pop.mp3" data-start="20.67" data-duration="0.52" data-track-index="23" data-volume="0.45"></audio>
+      <audio id="sfx14" src="assets/pop.mp3" data-start="21.61" data-duration="0.52" data-track-index="24" data-volume="0.45"></audio>
+      <audio id="sfx15" src="assets/stamp.mp3" data-start="23.45" data-duration="2.04" data-track-index="25" data-volume="0.55"></audio>
+      <audio id="sfx16" src="assets/whoosh.mp3" data-start="25.46" data-duration="1.04" data-track-index="26" data-volume="0.5"></audio>
+      <audio id="sfx17" src="assets/pop.mp3" data-start="28.12" data-duration="0.52" data-track-index="27" data-volume="0.5"></audio>
+      <audio id="sfx18" src="assets/ding.mp3" data-start="29.00" data-duration="1.04" data-track-index="28" data-volume="0.4"></audio>
+      <audio id="sfx19" src="assets/whoosh.mp3" data-start="30.11" data-duration="1.04" data-track-index="29" data-volume="0.5"></audio>
+      <audio id="sfx20" src="assets/whoosh.mp3" data-start="31.98" data-duration="1.04" data-track-index="30" data-volume="0.5"></audio>
+      <audio id="sfx21" src="assets/pop.mp3" data-start="33.15" data-duration="0.52" data-track-index="31" data-volume="0.4"></audio>
+      <audio id="sfx22" src="assets/pop.mp3" data-start="36.02" data-duration="0.52" data-track-index="32" data-volume="0.45"></audio>
+      <audio id="sfx23" src="assets/tick.mp3" data-start="36.32" data-duration="1.52" data-track-index="33" data-volume="0.45"></audio>
+      <audio id="sfx24" src="assets/tick.mp3" data-start="36.84" data-duration="1.52" data-track-index="34" data-volume="0.45"></audio>
+      <audio id="sfx25" src="assets/tick.mp3" data-start="36.95" data-duration="1.52" data-track-index="35" data-volume="0.45"></audio>
+      <audio id="sfx26" src="assets/pop.mp3" data-start="37.97" data-duration="0.52" data-track-index="36" data-volume="0.45"></audio>
+      <audio id="sfx27" src="assets/pop.mp3" data-start="40.22" data-duration="0.52" data-track-index="37" data-volume="0.45"></audio>
+      <audio id="sfx28" src="assets/pop.mp3" data-start="41.66" data-duration="0.52" data-track-index="38" data-volume="0.45"></audio>
+      <audio id="sfx29" src="assets/click.mp3" data-start="42.00" data-duration="0.52" data-track-index="39" data-volume="0.7"></audio>
+      <audio id="sfx30" src="assets/stamp.mp3" data-start="42.50" data-duration="2.04" data-track-index="40" data-volume="0.55"></audio>
+      <audio id="sfx31" src="assets/whoosh.mp3" data-start="42.71" data-duration="1.04" data-track-index="41" data-volume="0.5"></audio>
+      <audio id="sfx32" src="assets/whoosh.mp3" data-start="48.49" data-duration="1.04" data-track-index="42" data-volume="0.5"></audio>
+      <audio id="sfx33" src="assets/ding.mp3" data-start="49.09" data-duration="1.04" data-track-index="43" data-volume="0.45"></audio>
+      <!--/SFX-->
+
+      <div id="bg"></div>
+      <div class="gridbg" id="grid"></div>
+
+      <!-- global mascot (moves between scenes) -->
+      <div class="mw" id="m"><div id="m-b" class="full"><div id="m-x" class="full">
+        <img class="m-idle" src="assets/m_idle.png" alt="" /><img class="m-talk" src="assets/m_talk.png" alt="" /><img class="m-wink" src="assets/m_wink.png" alt="" /><img class="m-laugh" src="assets/m_laugh.png" alt="" />
+      </div></div></div>
+
+      <!-- S1 hook (white) -->
+      <div class="scene" id="s1">
+        <div class="hl" id="h1" style="top: 190px; right: 120px;"></div>
+        <div class="abs mono" id="psst" style="left: 250px; top: 1010px; padding: 10px 26px; border: 2px solid var(--ink); border-radius: 30px; font-family: GeistMono, monospace; font-size: 30px; background: #fff; opacity: 0;">psst</div>
+      </div>
+
+      <!-- S2 red full-bleed: Haz esto / Pedir demo -> Quiz Funnel -->
+      <div class="scene on-red" id="s2">
+        <div class="hl" id="h2a" style="top: 190px; font-size: 150px;"></div>
+        <div class="hl" id="h2b" style="top: 190px;"></div>
+        <div class="tile" id="c-demo" style="left: 470px; top: 620px; width: 270px; height: 360px;">
+          <div class="lab">// antes</div>
+          <div class="big" style="font-size: 50px; margin-top: 150px; line-height: 1;">Pedir<br />demo</div>
+          <div class="abs" id="demo-x" style="left: 20px; right: 20px; top: 222px; height: 8px; background: var(--ac); transform-origin: left center; transform: scaleX(0) rotate(-8deg);"></div>
+        </div>
+        <div class="tile" id="c-quiz" style="left: 760px; top: 620px; width: 280px; height: 360px;">
+          <div class="lab">// ahora</div>
+          <img class="htimg" src="assets/ob1.png" alt="" style="left: 70px; top: 70px; width: 140px;" />
+          <div class="big" style="position: absolute; left: 32px; bottom: 32px; font-size: 46px; line-height: 1;">Quiz<br />Funnel</div>
+        </div>
+      </div>
+
+      <!-- S3 white + phone quiz -->
+      <div class="scene" id="s3">
+        <div class="hl" id="h3a" style="top: 190px;"></div>
+        <div class="hl" id="h3b" style="top: 190px; font-size: 70px;"></div>
+        <div class="steps" id="steps"><div id="st1">01 quién es</div><div id="st2">02 qué quiere</div><div id="st3">03 su problema</div><div id="st4" style="color: var(--ac);">… hasta 8</div></div>
+        <div class="phone" id="phone" style="left: 560px; top: 700px;">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="qhead">
+              <div style="font-family: GeistMono, monospace; font-size: 22px; opacity: 0.85;">// quiz · saas in house</div>
+              <div style="display: flex; justify-content: space-between; margin-top: 18px; font-size: 30px; font-weight: 650;"><span>Diagnóstico</span><span id="qn" style="font-family: GeistMono, monospace;">1/8</span></div>
+              <div class="qbar"><i id="qbar"></i></div>
+            </div>
+            <div class="qset" id="q1"><div class="qq">¿Quién eres?</div><div class="opt" id="q1a"><i class="f"></i><span>Founder SaaS B2B</span></div><div class="opt"><span>Marketing</span></div><div class="opt"><span>Ventas</span></div></div>
+            <div class="qset" id="q2"><div class="qq">¿Qué quieres conseguir?</div><div class="opt" id="q2a"><i class="f"></i><span>Más demos</span></div><div class="opt"><span>Más MRR</span></div><div class="opt"><span>Menos churn</span></div></div>
+            <div class="qset" id="q3"><div class="qq">¿Tu principal problema?</div><div class="opt"><span>Poco tráfico</span></div><div class="opt" id="q3a"><i class="f"></i><span>Demos que no cierran</span></div><div class="opt"><span>No sé segmentar</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S5 bento: cards between questions -->
+      <div class="scene" id="s5">
+        <div class="hl" id="h5" style="top: 170px; font-size: 76px;"></div>
+        <div class="tile" id="t-case" style="left: 50px; top: 470px; width: 480px; height: 400px;">
+          <div class="lab">// caso real</div>
+          <div class="big" style="font-size: 92px; margin-top: 56px; line-height: 1;">4 → 19</div>
+          <div style="font-size: 30px; color: #3a3940; margin-top: 14px;">demos/mes tras el quiz</div>
+          <div class="chip" style="position: absolute; left: 32px; bottom: 30px;">ejemplo</div>
+        </div>
+        <div class="tile" id="t-air" style="left: 550px; top: 470px; width: 480px; height: 400px; padding: 0;">
+          <div class="lab" style="position: absolute; left: 32px; top: 30px; z-index: 2;"><span class="dot" id="air-dot"></span>// on air</div>
+          <div class="mw" style="left: 40px; top: 40px; width: 400px; height: 640px;"><img class="m-idle" src="assets/m_idle.png" alt="" /><img class="m-talk" src="assets/m_talk.png" alt="" /><img class="m-wink" src="assets/m_wink.png" alt="" /><img class="m-laugh" src="assets/m_laugh.png" alt="" /></div>
+        </div>
+        <div class="tile" id="t-data" style="left: 50px; top: 890px; width: 480px; height: 400px;">
+          <div class="lab">// dato</div>
+          <div class="big" style="font-size: 92px; margin-top: 56px; line-height: 1;">7 <span class="ser" style="font-size: 70px; color: var(--ac);">de</span> 10</div>
+          <div style="font-size: 30px; color: #3a3940; margin-top: 14px; line-height: 1.2;">prefieren un diagnóstico<br />antes que una demo</div>
+          <div class="chip" style="position: absolute; left: 32px; bottom: 30px;">ejemplo</div>
+        </div>
+        <div class="tile" id="t-res" style="left: 550px; top: 890px; width: 480px; height: 400px;">
+          <div class="lab">// resultado</div>
+          <img class="htimg" src="assets/ob2.png" alt="" style="left: 250px; top: 110px; width: 200px;" />
+          <div class="big" style="position: absolute; left: 32px; top: 120px; font-size: 44px; line-height: 1.05;">Perfil<br /><span class="ser" style="color: var(--ac); font-size: 58px;">Growth</span></div>
+          <div class="chip" style="position: absolute; left: 32px; bottom: 30px;">ejemplo</div>
+        </div>
+        <div class="tile" id="t-tip" style="left: 50px; top: 1310px; width: 980px; height: 230px;">
+          <div class="lab">// consejo</div>
+          <div style="font-size: 44px; font-weight: 600; letter-spacing: -0.03em; margin-top: 30px; line-height: 1.1;">Pregunta por el <span class="ser" style="color: var(--ac); font-size: 54px;">problema</span> antes que por el presupuesto.</div>
+        </div>
+        <div class="stamp" id="stamp1" style="left: 90px; top: 1560px; width: 900px; height: 230px;">
+          <div class="txt" style="font-size: 84px;">«vale, esto tiene sentido.»</div>
+        </div>
+      </div>
+
+      <!-- S6 personalised result -->
+      <div class="scene" id="s6">
+        <div class="hl" id="h6" style="top: 190px; font-size: 80px;"></div>
+        <div class="abs" id="ans" style="left: 76px; top: 640px; display: flex; gap: 14px;">
+          <div class="chip" id="a1" style="font-size: 22px; background: var(--ink); color: #fff; opacity: 0;">founder b2b</div>
+          <div class="chip" id="a2" style="font-size: 22px; background: var(--ink); color: #fff; opacity: 0;">más demos</div>
+          <div class="chip" id="a3" style="font-size: 22px; background: var(--ink); color: #fff; opacity: 0;">no cierran</div>
+        </div>
+        <div class="tile" id="res" style="left: 60px; top: 720px; width: 960px; height: 560px;">
+          <div class="lab">// tu resultado</div>
+          <div class="big" style="font-size: 64px; margin-top: 40px; line-height: 1.02; width: 560px;">Founder B2B que necesita <span class="ser" style="color: var(--ac); font-size: 78px;">demos que cierren</span></div>
+          <div style="font-size: 30px; color: #3a3940; margin-top: 30px; width: 560px; line-height: 1.3;">Tu siguiente paso: diagnóstico de 15 min con tu caso.</div>
+          <svg class="abs" style="left: 640px; top: 120px;" width="280" height="280" viewBox="0 0 280 280">
+            <circle cx="140" cy="140" r="118" fill="none" stroke="#f0eee8" stroke-width="22" />
+            <circle id="ring" cx="140" cy="140" r="118" fill="none" stroke="#e8382d" stroke-width="22" stroke-linecap="round" stroke-dasharray="741.4" stroke-dashoffset="741.4" transform="rotate(-90 140 140)" />
+          </svg>
+          <div class="abs big" style="left: 640px; top: 210px; width: 280px; text-align: center; font-size: 76px;"><span id="pct">0</span><span style="font-size: 44px;">%</span></div>
+          <div class="abs lab" style="left: 640px; top: 300px; width: 280px; text-align: center;">encaje</div>
+          <div class="chip" style="position: absolute; left: 32px; bottom: 30px;">ejemplo</div>
+        </div>
+      </div>
+
+      <!-- S7 black: the important part -->
+      <div class="scene on-dark" id="s7">
+        <div class="hl" id="h7" style="top: 240px; font-size: 128px; right: 160px;"></div>
+      </div>
+
+      <!-- S8 bento: product cards (fit, offer, countdown, CTA) -->
+      <div class="scene" id="s8">
+        <div class="hl" id="h8" style="top: 170px; font-size: 74px;"></div>
+        <div class="tile" id="t-fit" style="left: 50px; top: 530px; width: 600px; height: 400px;">
+          <div class="lab">// por qué encaja</div>
+          <div style="margin-top: 26px;">
+            <div class="ck" id="ck1"><b>✓</b>Founder SaaS B2B</div>
+            <div class="ck" id="ck2"><b>✓</b>Quiere más demos</div>
+            <div class="ck" id="ck3"><b>✓</b>Demos que no cierran</div>
+          </div>
+        </div>
+        <div class="tile" id="t-air2" style="left: 670px; top: 530px; width: 360px; height: 400px; padding: 0;">
+          <div class="lab" style="position: absolute; left: 28px; top: 30px; z-index: 2;"><span class="dot" id="air-dot2"></span>// on air</div>
+          <div class="mw" style="left: 10px; top: 60px; width: 340px; height: 544px;"><img class="m-idle" src="assets/m_idle.png" alt="" /><img class="m-talk" src="assets/m_talk.png" alt="" /><img class="m-wink" src="assets/m_wink.png" alt="" /><img class="m-laugh" src="assets/m_laugh.png" alt="" /></div>
+        </div>
+        <div class="tile" id="t-offer" style="left: 50px; top: 950px; width: 490px; height: 420px;">
+          <div class="lab">// oferta</div>
+          <img class="htimg" src="assets/ob3.png" alt="" style="left: 300px; top: 70px; width: 170px;" />
+          <div class="big" style="font-size: 46px; margin-top: 40px;">Plan Growth</div>
+          <div style="margin-top: 20px; font-size: 40px; color: #6f6d76; position: relative; display: inline-block;">99€<i id="strike" style="position: absolute; left: -6px; right: -6px; top: 50%; height: 5px; background: var(--ac); transform-origin: left center; transform: scaleX(0);"></i></div>
+          <div class="big" id="newp" style="font-size: 96px; line-height: 1; margin-top: 6px; opacity: 0;">69€<span style="font-size: 38px; color: var(--muted);">/mes</span></div>
+          <div class="chip" style="position: absolute; left: 32px; bottom: 30px; background: var(--ac); color: #fff;">−30% · ejemplo</div>
+        </div>
+        <div class="tile" id="t-timer" style="left: 560px; top: 950px; width: 470px; height: 420px;">
+          <div class="lab">// tiempo limitado</div>
+          <img class="htimg" src="assets/ob4.png" alt="" style="left: 300px; top: 40px; width: 140px;" />
+          <div class="big" id="cd" style="font-family: GeistMono, monospace; font-weight: 600; font-size: 104px; margin-top: 150px; letter-spacing: -0.04em;">15:00</div>
+          <div class="abs" style="left: 32px; right: 32px; bottom: 36px; height: 10px; background: #f0eee8; border-radius: 6px; overflow: hidden;"><i id="cdbar" style="display: block; height: 100%; background: var(--ac); transform-origin: left center;"></i></div>
+        </div>
+        <div class="btn" id="cta" style="left: 50px; top: 1400px; width: 980px; height: 140px; opacity: 0;"><span id="cta-t">Canjear oferta →</span></div>
+        <div class="stamp" id="stamp2" style="left: 290px; top: 1580px; width: 500px; height: 200px;">
+          <div class="txt" style="font-size: 104px;">¡Hecho!</div>
+        </div>
+      </div>
+
+      <!-- S9 black: segment, educate, sell -->
+      <div class="scene on-dark" id="s9">
+        <div class="hl" id="h9a" style="top: 220px; font-size: 104px; right: 120px;"></div>
+        <div class="hl grey" id="h9b" style="top: 500px; font-size: 92px; right: 160px;"></div>
+      </div>
+
+      <!-- S10 end card -->
+      <div class="scene" id="s10">
+        <div class="mw" id="m-end" style="left: 330px; top: 520px; width: 420px; height: 672px;"><img class="m-idle" src="assets/m_idle.png" alt="" /><img class="m-talk" src="assets/m_talk.png" alt="" /><img class="m-wink" src="assets/m_wink.png" alt="" /><img class="m-laugh" src="assets/m_laugh.png" alt="" /></div>
+        <div class="abs" style="left: 0; right: 0; top: 770px; height: 520px; background: linear-gradient(rgba(255,255,255,0), #fff 30%);"></div>
+        <div class="abs" id="end-logo" style="left: 0; right: 0; top: 880px; display: flex; justify-content: center;"><div class="logo">SaaS <span class="in">IN</span> House</div></div>
+        <div class="abs" id="end-tag" style="left: 0; right: 0; top: 1060px; text-align: center; font-size: 46px; color: #3a3940; letter-spacing: -0.02em;">Comenta «QUIZ» y te enseño <span class="ser" style="font-size: 58px; color: var(--ink);">cómo montarlo.</span></div>
+        <div class="abs" id="end-cta" style="left: 0; right: 0; top: 1190px; display: flex; justify-content: center; align-items: center; gap: 26px;">
+          <div style="background: var(--ac); color: #fff; font-size: 36px; font-weight: 650; padding: 18px 40px; border-radius: 999px;">Comenta QUIZ</div>
+          <div style="font-family: GeistMono, monospace; font-size: 30px; color: #3a3940;">saasinhouse.com</div>
+        </div>
+        <div class="abs lab" id="end-foot" style="left: 0; right: 0; top: 1700px; text-align: center;">quiz funnel · segmenta · educa · vende</div>
+      </div>
+
+      <!-- black whip band (over S3) -->
+      <div id="band"><div class="t" id="band-t">Pero no hagas solo <span class="ser">preguntas.</span></div></div>
+
+      <!-- HUD -->
+      <div class="hud" id="hud-l" style="left: 50px;">// 01 — gancho</div>
+      <div class="hud" id="hud-r" style="right: 50px;">SAAS IN HOUSE&nbsp;&nbsp;<span id="tc">00:00:00:00</span></div>
+    </div>
+
+    <script>
+      const W = [["¿Quieres", 0.0, 0.313], ["vender", 0.348, 0.604], ["tu", 0.662, 0.743], ["SaaS", 0.801, 1.068], ["sin", 1.173, 1.324], ["mandar", 1.358, 1.625], ["a", 1.672, 1.695], ["todo", 1.73, 1.892], ["el", 1.916, 1.962], ["mundo", 2.02, 2.276], ["a", 2.322, 2.345], ["la", 2.368, 2.426], ["misma", 2.473, 2.728], ["landing?", 2.786, 3.286], ["Haz", 3.924, 4.098], ["esto.", 4.156, 4.528], ["En", 4.783, 4.911], ["lugar", 4.946, 5.166], ["de", 5.224, 5.283], ["pedir", 5.329, 5.526], ["una", 5.561, 5.677], ["demo", 5.724, 5.909], ["directamente,", 5.956, 6.618], ["crea", 6.664, 6.989], ["un", 7.094, 7.233], ["Quiz", 7.338, 7.523], ["Funnel.", 7.581, 8.034], ["Primero", 8.255, 8.603], ["haces", 8.649, 8.858], ["entre", 8.916, 9.16], ["cinco", 9.207, 9.543], ["y", 9.601, 9.636], ["ocho", 9.694, 9.845], ["preguntas", 9.88, 10.414], ["para", 10.553, 10.728], ["saber", 10.762, 11.018], ["quién", 11.099, 11.308], ["es", 11.355, 11.413], ["esa", 11.471, 11.61], ["persona,", 11.656, 12.167], ["qué", 12.307, 12.411], ["quiere", 12.48, 12.666], ["conseguir", 12.713, 13.177], ["y", 13.247, 13.293], ["cuál", 13.374, 13.572], ["es", 13.618, 13.665], ["su", 13.688, 13.781], ["principal", 13.827, 14.268], ["problema.", 14.326, 14.895], ["Pero", 15.058, 15.232], ["no", 15.278, 15.36], ["hagas", 15.383, 15.58], ["solo", 15.604, 15.801], ["preguntas.", 15.836, 16.416], ["Entre", 16.556, 16.811], ["medias,", 16.857, 17.217], ["añade", 17.252, 17.566], ["pequeñas", 17.612, 17.972], ["cards", 18.03, 18.332], ["con", 18.518, 18.68], ["casos", 18.761, 19.005], ["reales,", 19.075, 19.505], ["datos,", 19.586, 20.015], ["resultados", 20.073, 20.689], ["o", 20.874, 20.956], ["consejos", 21.014, 21.467], ["que", 21.513, 21.594], ["le", 21.641, 21.699], ["hagan", 21.722, 21.908], ["pensar:", 21.954, 22.488], ["\"vale,", 22.651, 23.173], ["esto", 23.336, 23.58], ["tiene", 23.638, 23.823], ["sentido\".", 23.858, 24.462], ["Después,", 25.008, 25.449], ["según", 25.53, 25.809], ["sus", 25.855, 25.971], ["respuestas,", 26.029, 26.703], ["le", 26.819, 26.923], ["muestras", 26.981, 27.376], ["un", 27.515, 27.632], ["resultado", 27.69, 28.154], ["personalizado.", 28.2, 29.118], ["Y", 29.663, 29.745], ["aquí", 29.803, 29.942], ["viene", 29.977, 30.151], ["la", 30.186, 30.255], ["parte", 30.302, 30.534], ["importante.", 30.557, 31.242], ["Las", 31.533, 31.672], ["últimas", 31.742, 32.067], ["cards", 32.125, 32.392], ["ya", 32.554, 32.682], ["tienen", 32.728, 32.937], ["que", 32.984, 33.053], ["llevarlo", 33.088, 33.471], ["hacia", 33.518, 33.738], ["tu", 33.785, 33.855], ["producto:", 33.889, 34.528], ["le", 34.783, 34.865], ["explicas", 34.899, 35.364], ["por", 35.422, 35.561], ["qué", 35.619, 35.701], ["encaja", 35.724, 36.014], ["con", 36.06, 36.188], ["su", 36.235, 36.304], ["situación,", 36.351, 37.024], ["le", 37.245, 37.326], ["presentas", 37.372, 37.79], ["una", 37.848, 37.964], ["oferta", 37.988, 38.289], ["específica", 38.312, 38.893], ["y", 39.114, 39.183], ["añades", 39.253, 39.543], ["un", 39.624, 39.682], ["contador", 39.729, 40.135], ["con", 40.205, 40.333], ["tiempo", 40.379, 40.658], ["limitado", 40.681, 41.099], ["para", 41.157, 41.343], ["canjearla.", 41.401, 42.155], ["Así", 42.26, 42.631], ["no", 42.747, 42.864], ["solo", 42.91, 43.096], ["captas", 43.131, 43.421], ["el", 43.479, 43.537], ["lead.", 43.595, 43.932], ["Lo", 44.117, 44.234], ["segmentas,", 44.28, 44.837], ["lo", 44.942, 45.046], ["educas", 45.081, 45.499], ["y", 45.685, 45.743], ["lo", 45.812, 45.882], ["llevas", 45.917, 46.172], ["directamente", 46.23, 46.857], ["hacia", 46.915, 47.136], ["la", 47.171, 47.241], ["compra.", 47.287, 47.925]]; // from assets/words.json
+      const OFF = 0.6; // VO starts at 0.6s (after the "psst")
+      const END = 53.3;
+      const w = (i) => W[i][1] + OFF; // word start
+      const we = (i) => W[i][2] + OFF; // word end
+      const tl = gsap.timeline({ paused: true });
+      const DISPLAY = { 30: "5", 32: "8" }; // caption-only spellings (audio says "cinco", "ocho")
+
+      /* ---------- headline: spoken words appear one by one ---------- */
+      function headline(id, from, to, accents) {
+        const el = document.getElementById(id);
+        for (let i = from; i <= to; i++) {
+          const s = document.createElement("span");
+          s.className = "w" + (accents.includes(i) ? " a" : "");
+          s.textContent = (DISPLAY[i] || W[i][0]).replace(/["“”]/g, "");
+          el.appendChild(s);
+          tl.fromTo(s, { opacity: 0, y: 26, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.26, ease: "power3.out" }, w(i) - 0.04);
+        }
+      }
+      const pop = (sel, t, d = 0.4) => tl.fromTo(sel, { opacity: 0, scale: 0.86, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: d, ease: "back.out(1.8)" }, t);
+      const out = (sel, t, d = 0.2) => tl.to(sel, { opacity: 0, duration: d }, t);
+      const stamp = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 1.8, rotation: -14 }, { opacity: 1, scale: 1, rotation: -6, duration: 0.32, ease: "power4.in" }, t);
+
+      /* ---------- scenes: hard cuts on the word ---------- */
+      const SC = [ // [scene id, start, background, hud label, hud colour]
+        ["s1", 0, "#ffffff", "// 01 — gancho", "#6f6d76"],
+        ["s2", 0, "#e8382d", "// 02 — haz esto", "rgba(255,255,255,0.75)"],
+        ["s3", 0, "#ffffff", "// 03 — preguntas", "#6f6d76"],
+        ["s5", 0, "grid", "// 04 — cards", "#6f6d76"],
+        ["s6", 0, "#ffffff", "// 05 — resultado", "#6f6d76"],
+        ["s7", 0, "#0b0b10", "// 06 — lo importante", "#8f8d96"],
+        ["s8", 0, "grid", "// 07 — oferta", "#6f6d76"],
+        ["s9", 0, "#0b0b10", "// 08 — flujo", "#8f8d96"],
+        ["s10", 0, "#ffffff", "// 09 — saas in house", "#6f6d76"],
+      ];
+      const STARTS = { s1: 0, s2: w(14) - 0.1, s3: w(27) - 0.1, s5: w(54) - 0.1, s6: w(74) - 0.1, s7: w(83) - 0.1, s8: w(89) - 0.1, s9: w(121) - 0.1, s10: we(137) + 0.35 };
+      SC.forEach(([id, , bg, lab, col], k) => {
+        const t = STARTS[id];
+        if (k > 0) tl.set("#" + SC[k - 1][0], { opacity: 0 }, t);
+        tl.set("#" + id, { opacity: 1 }, t);
+        tl.set("#bg", { backgroundColor: bg === "grid" ? "#f7f6f3" : bg }, t);
+        tl.set("#grid", { opacity: bg === "grid" ? 1 : 0 }, t);
+        tl.set("#hud-l", { textContent: lab, color: col }, t);
+        tl.set("#hud-r", { color: col }, t);
+        if (k > 0) tl.fromTo("#" + id, { y: 24 }, { y: 0, duration: 0.35, ease: "power3.out" }, t);
+      });
+      // timecode HUD (seek-safe: computed from a proxy)
+      const tc = { v: 0 };
+      tl.to(tc, { v: END, duration: END, ease: "none", onUpdate: () => {
+        const f = Math.floor(tc.v * 30), s = Math.floor(f / 30) % 60, m = Math.floor(f / 1800);
+        document.getElementById("tc").textContent = "00:" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0") + ":" + String(f % 30).padStart(2, "0");
+      } }, 0);
+
+      /* ---------- global mascot: position per scene ---------- */
+      const MPOS = [ // [time, left, top, width]
+        [0, 300, 700, 860],
+        [STARTS.s2, -110, 1060, 700],
+        [STARTS.s3, -70, 1330, 560],
+        [STARTS.s6, 560, 1330, 560],
+        [STARTS.s7, 300, 820, 860],
+        [STARTS.s9, 420, 1060, 700],
+      ];
+      MPOS.forEach(([t, x, y, wd]) => {
+        tl.set("#m", { left: x, top: y, width: wd, height: wd * 1.6, opacity: 1 }, t);
+        if (t > 0) tl.fromTo("#m-x", { y: 80 }, { y: 0, duration: 0.45, ease: "back.out(1.6)" }, t);
+      });
+      tl.set("#m", { opacity: 0 }, STARTS.s5);
+      tl.set("#m", { opacity: 0 }, STARTS.s8);
+      tl.set("#m", { opacity: 0 }, STARTS.s10);
+      // idle breathing + sway (finite repeats)
+      tl.to("#m-b", { scaleY: 1.012, transformOrigin: "50% 100%", duration: 1.6, yoyo: true, repeat: 33, ease: "sine.inOut" }, 0);
+      tl.to("#m-x", { rotation: 1.2, transformOrigin: "50% 100%", duration: 2.3, yoyo: true, repeat: 22, ease: "sine.inOut" }, 0);
+
+      /* ---------- mascot poses: mouth flap on every word + reactions ---------- */
+      function pose(name, t) { tl.set(".mw img", { opacity: 0 }, t); tl.set(".mw img.m-" + name, { opacity: 1 }, t); }
+      const REACT = [ // [pose, from, to]: no flapping inside these windows
+        ["wink", 0.05, 0.55], ["wink", we(15) + 0.02, w(16) - 0.05], ["laugh", w(70), we(73) + 0.6],
+        ["wink", we(88) + 0.02, w(89) - 0.15], ["laugh", w(120), we(120) + 0.7], ["wink", we(137) + 0.05, END],
+      ];
+      const inReact = (t) => REACT.some(([, a, b]) => t >= a - 0.05 && t <= b + 0.05);
+      for (let i = 0; i < W.length; i++) {
+        if (inReact(w(i))) continue;
+        pose("talk", w(i));
+        const dur = we(i) - w(i);
+        if (dur > 0.34) { pose("idle", w(i) + dur * 0.5); pose("talk", w(i) + dur * 0.5 + 0.08); }
+        if (!inReact(we(i))) pose("idle", we(i) - 0.03);
+      }
+      REACT.forEach(([p, a, b]) => { pose(p, a); if (b < END - 0.1) pose("idle", b); });
+      tl.set(".mw img.m-idle", { opacity: 1 }, w(0) - 0.02); // hand back to the flap after the psst wink
+
+      /* ---------- S1 hook ---------- */
+      tl.fromTo("#psst", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(3)" }, 0.08);
+      out("#psst", 0.75);
+      headline("h1", 0, 13, [12, 13]);
+      tl.fromTo("#m-x", { y: 120 }, { y: 0, duration: 0.5, ease: "back.out(1.4)" }, 0);
+
+      /* ---------- S2 red ---------- */
+      headline("h2a", 14, 15, [15]);
+      out("#h2a", w(16) - 0.12, 0.12);
+      headline("h2b", 16, 26, [25, 26]);
+      pop("#c-demo", w(19));
+      tl.to("#demo-x", { scaleX: 1, rotation: -8, duration: 0.3, ease: "power2.out" }, w(22));
+      tl.to("#c-demo", { opacity: 0.45, duration: 0.3 }, w(22) + 0.3);
+      pop("#c-quiz", w(25) - 0.05, 0.5);
+      tl.fromTo("#c-quiz", { rotation: 8 }, { rotation: -3, duration: 0.5, ease: "back.out(2)" }, w(25) - 0.05);
+
+      /* ---------- S3 phone quiz ---------- */
+      headline("h3a", 27, 33, [30, 31, 32]);
+      out("#h3a", w(34) - 0.12, 0.12);
+      headline("h3b", 34, 48, [36, 41, 42, 48]);
+      tl.fromTo("#phone", { y: 700 }, { y: 0, duration: 0.6, ease: "power3.out" }, w(27));
+      tl.set("#q1", { opacity: 1 }, w(27) + 0.3);
+      tl.fromTo("#steps", { opacity: 0 }, { opacity: 1, duration: 0.3 }, w(30));
+      const step = (n, t) => tl.to("#st" + n, { opacity: 1, color: n === 4 ? "#e8382d" : "#0b0b10", duration: 0.2 }, t);
+      step(4, w(32));
+      const sel = (id, t) => tl.to(id + " .f", { scaleX: 1, duration: 0.25, ease: "power2.out" }, t).set(id + " span", { color: "#fff" }, t + 0.12);
+      const nextQ = (a, b, n, t) => { tl.to(a, { opacity: 0, x: -60, duration: 0.18 }, t).fromTo(b, { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.25 }, t + 0.15).set("#qn", { textContent: n + "/8" }, t + 0.15).to("#qbar", { scaleX: n / 8, duration: 0.3 }, t + 0.15); };
+      step(1, w(36)); sel("#q1a", w(38));
+      nextQ("#q1", "#q2", 2, w(40) - 0.1); step(2, w(40)); sel("#q2a", w(42));
+      nextQ("#q2", "#q3", 3, w(44) - 0.1); step(3, w(44)); sel("#q3a", w(48));
+
+      /* ---------- S4 black whip band over S3 ---------- */
+      tl.to("#band", { scaleY: 1, duration: 0.22, ease: "power3.out" }, w(49) - 0.1);
+      tl.fromTo("#band-t", { x: 900, filter: "blur(14px)" }, { x: 0, filter: "blur(0px)", duration: 0.45, ease: "power3.out" }, w(49) - 0.05);
+      tl.to("#band-t", { x: -1200, filter: "blur(14px)", duration: 0.25, ease: "power2.in" }, STARTS.s5 - 0.2);
+      tl.to("#band", { scaleY: 0, duration: 0.2, ease: "power2.in" }, STARTS.s5 - 0.05);
+
+      /* ---------- S5 bento ---------- */
+      headline("h5", 54, 58, [58]);
+      pop("#t-air", w(56));
+      pop("#t-case", w(60)); pop("#t-data", w(62)); pop("#t-res", w(63)); pop("#t-tip", w(65));
+      tl.to(["#air-dot", "#air-dot2"], { opacity: 0.2, duration: 0.4, yoyo: true, repeat: 40, ease: "steps(1)" }, w(54));
+      stamp("#stamp1", w(70) - 0.05);
+      tl.to(["#t-case", "#t-data", "#t-res", "#t-tip"], { opacity: 0.55, duration: 0.3 }, w(70));
+
+      /* ---------- S6 result ---------- */
+      headline("h6", 74, 82, [81, 82]);
+      ["#a1", "#a2", "#a3"].forEach((a, k) => tl.fromTo(a, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(2)" }, w(77) + k * 0.12));
+      tl.to("#ans", { y: 140, opacity: 0, duration: 0.35, ease: "power2.in" }, w(79));
+      pop("#res", w(80), 0.5);
+      const pc = { v: 0 };
+      tl.to(pc, { v: 87, duration: 1.2, ease: "power2.out", onUpdate: () => { document.getElementById("pct").textContent = Math.round(pc.v); } }, w(81));
+      tl.to("#ring", { attr: { "stroke-dashoffset": 741.4 * (1 - 0.87) }, duration: 1.2, ease: "power2.out" }, w(81));
+
+      /* ---------- S7 black ---------- */
+      headline("h7", 83, 88, [87, 88]);
+
+      /* ---------- S8 offer bento ---------- */
+      headline("h8", 89, 98, [97, 98]);
+      pop("#t-air2", w(92));
+      pop("#t-fit", w(101));
+      [["#ck1", w(103)], ["#ck2", w(105)], ["#ck3", w(106)]].forEach(([c, t]) => tl.to(c, { opacity: 1, duration: 0.2 }, t));
+      pop("#t-offer", w(108));
+      tl.to("#strike", { scaleX: 1, duration: 0.25 }, w(110));
+      tl.fromTo("#newp", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.5)", transformOrigin: "0% 50%" }, w(111));
+      pop("#t-timer", w(114));
+      const cd = { s: 900 };
+      tl.to(cd, { s: 900 - (STARTS.s9 - w(115)), duration: STARTS.s9 - w(115), ease: "none", onUpdate: () => {
+        const s = Math.ceil(cd.s); document.getElementById("cd").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+      } }, w(115));
+      tl.fromTo("#cdbar", { scaleX: 1 }, { scaleX: 0.86, duration: STARTS.s9 - w(115), ease: "none" }, w(115));
+      pop("#cta", w(119) - 0.1);
+      tl.to("#cta", { scale: 0.95, duration: 0.08, yoyo: true, repeat: 1 }, w(120));
+      tl.set("#cta", { backgroundColor: "#0b0b10" }, w(120) + 0.1).set("#cta-t", { textContent: "Oferta canjeada ✓" }, w(120) + 0.1);
+      stamp("#stamp2", w(120) + 0.25);
+
+      /* ---------- S9 black ---------- */
+      headline("h9a", 121, 126, [126]);
+      headline("h9b", 127, 137, [128, 130, 137]);
+      tl.to("#h9b .w", { color: "#f2efe6", duration: 0.3 }, w(133)); // grey -> white as it lands on "la compra"
+
+      /* ---------- S10 end ---------- */
+      const E = STARTS.s10;
+      tl.fromTo("#m-end", { y: 160 }, { y: 0, duration: 0.6, ease: "back.out(1.5)" }, E + 0.05);
+      tl.fromTo("#end-logo", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, E + 0.2);
+      tl.fromTo("#end-logo .in", { rotation: -25, scale: 0 }, { rotation: 0, scale: 1, duration: 0.45, ease: "back.out(3)" }, E + 0.35);
+      tl.fromTo("#end-tag", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, E + 0.7);
+      tl.fromTo("#end-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, E + 1.0);
+      tl.fromTo("#end-foot", { opacity: 0 }, { opacity: 1, duration: 0.4 }, E + 1.4);
+      tl.set({}, {}, END);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

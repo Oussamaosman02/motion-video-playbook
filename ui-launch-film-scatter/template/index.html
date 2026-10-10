@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --paper: #fdfdfb; --ink: #16141b; --muted: #67646e; --line: #e8eaee;
+        --red: #e8382d; --red-small: #c42a20; --red-deep: #7e140d; --cream: #f2efe6;
+        --sky1: #1b4f7a; --sky2: #2676ac; --sky3: #4f9ac9; --sky4: #a9d0ea; --night: #0b0b10; --imsg: #2f8cf0;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Archivo", sans-serif; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .abs { position: absolute; }
+
+      /* ---- white scatter scenes ---- */
+      .white { background: var(--paper); }
+      .plus { position: absolute; inset: -200px; background-image:
+        linear-gradient(rgba(22,20,27,0.10), rgba(22,20,27,0.10)), linear-gradient(rgba(22,20,27,0.10), rgba(22,20,27,0.10));
+        background-size: 2px 18px, 18px 2px; background-repeat: no-repeat; }
+      .grid { position: absolute; inset: -300px; background:
+        radial-gradient(circle, rgba(22,20,27,0.16) 1.6px, transparent 2px) 0 0 / 270px 270px; }
+      .layer { position: absolute; inset: 0; transform-origin: 50% 50%; }
+      .sw { position: absolute; font-size: 78px; font-weight: 640; letter-spacing: -0.03em; white-space: nowrap; color: var(--ink); }
+      .sw.acc { color: var(--red); }
+      .chip { position: absolute; border-radius: 26px; background: #fff; box-shadow: 0 18px 44px rgba(20, 40, 70, 0.14), 0 0 0 1px rgba(20, 40, 70, 0.06); overflow: hidden; }
+      .chip img { width: 100%; height: 100%; display: block; }
+      .ico { position: absolute; filter: drop-shadow(0 18px 30px rgba(20, 50, 90, 0.22)); }
+      .ico img { width: 100%; height: 100%; display: block; }
+      .pill { position: absolute; padding: 14px 26px; border-radius: 999px; font-size: 30px; font-weight: 650; background: #fff; box-shadow: 0 14px 34px rgba(20, 40, 70, 0.14); white-space: nowrap; }
+      .bar { height: 12px; border-radius: 6px; background: #e6edf4; }
+
+      /* ---- sky panel scenes ---- */
+      .sky { background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 30%, var(--sky3) 72%, var(--sky4) 100%); }
+      .skyart { position: absolute; inset: 0; }
+      .stage { position: absolute; inset: 0; perspective: 1700px; }
+      .glass { position: absolute; border-radius: 44px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 50px 120px rgba(8, 30, 60, 0.38); overflow: hidden; }
+      .chrome { height: 64px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 26px; }
+      .chrome i { width: 15px; height: 15px; border-radius: 50%; background: #dfe3e8; display: block; }
+      .url { margin-left: 16px; flex: 1; height: 36px; border-radius: 10px; background: #f0f3f6; color: var(--muted); font-size: 21px; display: flex; align-items: center; padding: 0 16px; }
+      .cap { position: absolute; left: 60px; right: 60px; bottom: 210px; text-align: center; color: #0e2740; font-size: 58px; font-weight: 640; line-height: 1.15; letter-spacing: -0.025em; text-shadow: 0 2px 24px rgba(255, 255, 255, 0.35); }
+      .capg { position: absolute; left: 0; right: 0; bottom: 0; }
+      .w { display: inline-block; }
+      .w.acc { color: #a01d14; }
+      .tag { display: inline-block; font-size: 20px; font-weight: 700; color: var(--muted); background: #eef1f5; border-radius: 8px; padding: 4px 10px; letter-spacing: 0.02em; }
+      .qrow { position: absolute; left: 50px; right: 50px; border: 2px solid var(--line); border-radius: 24px; padding: 24px 28px; background: #fff; }
+      .qrow .q { font-size: 38px; font-weight: 720; letter-spacing: -0.02em; }
+      .qrow .opts { display: flex; gap: 12px; margin-top: 18px; }
+      .opt { padding: 12px 22px; border-radius: 999px; font-size: 26px; font-weight: 600; background: #f0f3f6; color: var(--ink); position: relative; }
+      .opt.pick { background: var(--red-small); color: #fff; }
+      .icard { position: absolute; width: 420px; height: 330px; border-radius: 34px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 40px 90px rgba(8, 30, 60, 0.32); padding: 30px; }
+      .icard .k { font-size: 26px; font-weight: 750; color: var(--sky2); text-transform: uppercase; letter-spacing: 0.06em; }
+      .icard .v { font-size: 40px; font-weight: 720; letter-spacing: -0.025em; line-height: 1.08; margin-top: 14px; }
+      .icard .tag { position: absolute; left: 30px; bottom: 26px; }
+      .icard .ic { position: absolute; right: 18px; bottom: 14px; width: 110px; height: 110px; }
+
+      /* ---- dark scenes ---- */
+      .dark { background: radial-gradient(ellipse 80% 45% at 50% 46%, rgba(38, 118, 172, 0.30), rgba(11, 11, 16, 0) 70%), var(--night); }
+      .circ { position: absolute; left: 50%; top: 50%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; border-radius: 50%;
+        background: radial-gradient(circle at 50% 40%, #6aa9d6 0%, var(--sky3) 35%, var(--sky2) 75%, #1d5d8c 100%); }
+      .ctext { position: absolute; left: 120px; right: 120px; top: 50%; transform: translateY(-50%); text-align: center; color: #fff; font-size: 96px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; }
+      .orb { position: absolute; left: 50%; top: 50%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; border-radius: 50%; opacity: 0;
+        background: radial-gradient(circle at 36% 30%, #e4f1fb 0%, #9cc7e8 18%, #4f9ac9 46%, #22608f 78%, #12304d 100%);
+        box-shadow: inset 0 -40px 120px rgba(5, 15, 30, 0.6), 0 0 160px rgba(79, 154, 201, 0.45); }
+      .ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 2px solid rgba(169, 208, 234, 0.16); }
+      .glowt { color: #f6f3ec; font-weight: 640; letter-spacing: -0.025em; text-shadow: 0 0 34px rgba(120, 180, 230, 0.55); }
+      .dcard { position: absolute; left: 110px; right: 110px; height: 330px; border-radius: 40px; padding: 34px 40px;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)); color: #fff;
+        box-shadow: 0 0 0 2px rgba(169, 208, 234, 0.35), 0 30px 90px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+      .dcard .k { font-size: 26px; font-weight: 700; color: var(--sky4); text-transform: uppercase; letter-spacing: 0.08em; }
+      .dcard .v { font-size: 56px; font-weight: 760; letter-spacing: -0.03em; margin-top: 10px; }
+      .ok { font-size: 34px; font-weight: 600; color: #e8eef4; margin-top: 10px; }
+      .ok b { color: #7fe3a0; margin-right: 12px; }
+
+      /* ---- phone chat ---- */
+      .phone { position: absolute; left: 70px; top: 110px; width: 940px; height: 1900px; border-radius: 110px; background: #0d0d12; padding: 22px; box-shadow: 0 60px 140px rgba(0, 0, 0, 0.5); }
+      .screen { position: relative; width: 100%; height: 100%; border-radius: 90px; background: #fff; overflow: hidden; }
+      .bub { position: absolute; max-width: 660px; padding: 24px 34px; border-radius: 44px; font-size: 40px; line-height: 1.2; font-weight: 500; letter-spacing: -0.01em; }
+      .bub.l { left: 40px; background: #e9e9ee; color: #111; border-bottom-left-radius: 14px; }
+      .bub.r { right: 40px; background: var(--imsg); color: #fff; border-bottom-right-radius: 14px; }
+      .kb { position: absolute; left: 0; right: 0; bottom: 0; height: 640px; background: #d3d6dc; padding: 26px 10px 0; }
+      .kr { display: flex; justify-content: center; gap: 12px; margin-bottom: 22px; }
+      .key { width: 76px; height: 104px; border-radius: 14px; background: #fff; box-shadow: 0 3px 0 #9a9ea6; display: flex; align-items: center; justify-content: center; font-size: 46px; font-weight: 400; color: #111; }
+      .key.g { background: #abb0ba; }
+      .field { position: absolute; left: 30px; right: 30px; bottom: 668px; height: 92px; border-radius: 46px; border: 2px solid #d5d7dc; font-size: 38px; display: flex; align-items: center; padding: 0 30px; color: #111; background: #fff; }
+      .caret { display: inline-block; width: 3px; height: 46px; background: var(--imsg); margin-left: 3px; }
+      .cursor { position: absolute; width: 64px; height: 64px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="56" data-width="1080" data-height="1920">
+      <!-- audio -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="51.73" data-track-index="30" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="56" data-track-index="31" data-volume="0.2"></audio>
+      <audio id="wh1" src="assets/whoosh.mp3" data-start="1.2" data-duration="1.0" data-track-index="32" data-volume="0.35"></audio>
+      <audio id="bm1" src="assets/boom.mp3" data-start="4.1" data-duration="2.0" data-track-index="33" data-volume="0.45"></audio>
+      <audio id="key1" src="assets/key.mp3" data-start="6.0" data-duration="1.6" data-track-index="34" data-volume="0.45"></audio>
+      <audio id="snd" src="assets/send.mp3" data-start="7.65" data-duration="0.6" data-track-index="35" data-volume="0.5"></audio>
+      <audio id="rcv1" src="assets/recv.mp3" data-start="5.35" data-duration="0.6" data-track-index="36" data-volume="0.45"></audio>
+      <audio id="wh2" src="assets/whoosh.mp3" data-start="8.8" data-duration="1.0" data-track-index="37" data-volume="0.35"></audio>
+      <audio id="wh3" src="assets/whoosh.mp3" data-start="10.9" data-duration="1.0" data-track-index="38" data-volume="0.35"></audio>
+      <audio id="wh4" src="assets/whoosh.mp3" data-start="16.2" data-duration="1.0" data-track-index="39" data-volume="0.35"></audio>
+      <audio id="wh5" src="assets/whoosh.mp3" data-start="18.25" data-duration="1.0" data-track-index="40" data-volume="0.35"></audio>
+      <audio id="pop1" src="assets/pop.mp3" data-start="20.75" data-duration="0.5" data-track-index="41" data-volume="0.5"></audio>
+      <audio id="pop2" src="assets/pop.mp3" data-start="21.63" data-duration="0.5" data-track-index="42" data-volume="0.5"></audio>
+      <audio id="pop3" src="assets/pop.mp3" data-start="22.2" data-duration="0.5" data-track-index="43" data-volume="0.5"></audio>
+      <audio id="pop4" src="assets/pop.mp3" data-start="23.04" data-duration="0.5" data-track-index="44" data-volume="0.5"></audio>
+      <audio id="rcv2" src="assets/recv.mp3" data-start="25.12" data-duration="0.6" data-track-index="45" data-volume="0.5"></audio>
+      <audio id="wh6" src="assets/whoosh.mp3" data-start="27.3" data-duration="1.0" data-track-index="46" data-volume="0.35"></audio>
+      <audio id="wh7" src="assets/whoosh.mp3" data-start="29.6" data-duration="1.0" data-track-index="47" data-volume="0.35"></audio>
+      <audio id="bm2" src="assets/boom.mp3" data-start="33.35" data-duration="2.0" data-track-index="48" data-volume="0.55"></audio>
+      <audio id="pop5" src="assets/pop.mp3" data-start="38.2" data-duration="0.5" data-track-index="49" data-volume="0.5"></audio>
+      <audio id="pop6" src="assets/pop.mp3" data-start="41.33" data-duration="0.5" data-track-index="50" data-volume="0.5"></audio>
+      <audio id="tck" src="assets/tick.mp3" data-start="43.05" data-duration="1.5" data-track-index="51" data-volume="0.4"></audio>
+      <audio id="clk" src="assets/pop.mp3" data-start="44.62" data-duration="0.5" data-track-index="52" data-volume="0.55"></audio>
+      <audio id="wh8" src="assets/whoosh.mp3" data-start="46.3" data-duration="1.0" data-track-index="53" data-volume="0.3"></audio>
+      <audio id="chm" src="assets/chime.mp3" data-start="52.25" data-duration="2.0" data-track-index="54" data-volume="0.6"></audio>
+
+      <!-- ============ S1 · scatter: ¿Quieres vender tu SaaS ============ -->
+      <section id="s1" class="scene clip white" data-start="0" data-duration="1.75" data-track-index="1" style="z-index: 1;">
+        <div class="layer" id="s1-l"><div class="grid"></div></div>
+      </section>
+
+      <!-- ============ S2 · sky panel: same landing for everyone ============ -->
+      <section id="s2" class="scene clip sky" data-start="1.2" data-duration="2.95" data-track-index="2" style="z-index: 2;">
+        <div class="skyart"></div>
+        <div class="stage">
+          <div id="s2-card" class="glass" style="left: 120px; top: 520px; width: 840px; height: 760px;">
+            <div class="chrome"><i></i><i></i><i></i><div class="url">tusaas.com</div></div>
+            <div style="padding: 50px 54px;">
+              <div style="height: 22px; width: 260px; border-radius: 11px; background: #e6edf4;"></div>
+              <div style="font-size: 62px; font-weight: 780; letter-spacing: -0.035em; line-height: 1.02; margin-top: 30px;">La misma landing<br />para todo el mundo</div>
+              <div class="bar" style="width: 560px; margin-top: 34px;"></div>
+              <div class="bar" style="width: 460px; margin-top: 16px;"></div>
+              <div style="margin-top: 50px; display: inline-flex; padding: 26px 46px; border-radius: 20px; background: var(--ink); color: #fff; font-size: 34px; font-weight: 700;">Pedir una demo</div>
+              <div style="display: flex; gap: 16px; margin-top: 54px;"><div style="flex: 1; height: 120px; border-radius: 18px; background: #f0f3f6;"></div><div style="flex: 1; height: 120px; border-radius: 18px; background: #f0f3f6;"></div><div style="flex: 1; height: 120px; border-radius: 18px; background: #f0f3f6;"></div></div>
+            </div>
+          </div>
+          <div id="s2-dots"></div>
+        </div>
+        <div class="cap" id="s2-cap"></div>
+      </section>
+
+      <!-- ============ S3 · circle "Haz esto." → orb ============ -->
+      <section id="s3" class="scene clip dark" data-start="4.0" data-duration="1.4" data-track-index="3" style="z-index: 3;">
+        <div class="ring" style="width: 760px; height: 760px; margin: -380px 0 0 -380px;"></div>
+        <div class="ring" style="width: 1100px; height: 1100px; margin: -550px 0 0 -550px;"></div>
+        <div id="s3-circ" class="circ"></div>
+        <div id="s3-orb" class="orb"></div>
+        <div id="s3-t" class="ctext"><span class="w" id="s3-w14">Haz</span> <span class="w" id="s3-w15">esto.</span></div>
+      </section>
+
+      <!-- ============ S4 · phone chat ============ -->
+      <section id="s4" class="scene clip sky" data-start="4.95" data-duration="4.15" data-track-index="4" style="z-index: 4;">
+        <div class="skyart"></div>
+        <div id="s4-phone" class="phone">
+          <div class="screen">
+            <div style="position: absolute; left: 0; right: 0; top: 0; height: 250px; background: #f7f7f9; border-bottom: 1px solid #e3e3e8; text-align: center;">
+              <div style="position: absolute; left: 50%; top: 26px; width: 250px; height: 60px; margin-left: -125px; border-radius: 30px; background: #0d0d12;"></div>
+              <div style="position: absolute; left: 50%; top: 104px; width: 96px; height: 96px; margin-left: -48px; border-radius: 50%; background: var(--red); color: var(--cream); font-size: 52px; font-weight: 900; display: flex; align-items: center; justify-content: center;">S</div>
+              <div style="position: absolute; left: 0; right: 0; top: 206px; font-size: 26px; color: #333;">SaaS in House</div>
+            </div>
+            <div style="position: absolute; left: 0; right: 0; top: 290px; text-align: center; font-size: 26px; color: #8a8a92;">Hoy 9:41</div>
+            <div id="s4-b1" class="bub l" style="top: 350px;">Quiero vender mi SaaS. ¿Pongo un botón de «Pedir demo»?</div>
+            <div id="s4-b2" class="bub r" style="top: 590px;">Mejor crea un Quiz Funnel.</div>
+            <div id="s4-dl" style="position: absolute; right: 50px; top: 710px; font-size: 24px; color: #8a8a92;">Entregado</div>
+            <div id="s4-dots" class="bub l" style="top: 780px; padding: 22px 30px; font-size: 40px; letter-spacing: 6px; color: #8a8a92;">•••</div>
+            <div class="field"><span id="s4-typed"></span><span class="caret" id="s4-caret"></span></div>
+            <div class="kb" id="s4-kb"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S5 · scatter: Primero haces entre cinco y ocho preguntas ============ -->
+      <section id="s5" class="scene clip white" data-start="8.85" data-duration="2.5" data-track-index="5" style="z-index: 5;">
+        <div class="layer" id="s5-l"><div class="grid"></div></div>
+      </section>
+
+      <!-- ============ S6 · sky panel: quiz card ============ -->
+      <section id="s6" class="scene clip sky" data-start="10.9" data-duration="5.6" data-track-index="6" style="z-index: 6;">
+        <div class="skyart"></div>
+        <div class="stage">
+          <div id="s6-card" data-layout-allow-overlap class="glass" style="left: 90px; top: 300px; width: 900px; height: 1060px;">
+            <div class="chrome"><i></i><i></i><i></i><div class="url">quiz.tusaas.com</div></div>
+            <div style="padding: 36px 50px 0; display: flex; align-items: center; gap: 22px;">
+              <div style="font-size: 26px; font-weight: 700; color: var(--muted);">Pregunta <span id="s6-n">1</span> de 8</div>
+              <div class="bar" style="flex: 1; overflow: hidden;"><div id="s6-prog" style="height: 100%; width: 100%; background: var(--red); transform-origin: left center; transform: scaleX(0.125);"></div></div>
+            </div>
+            <div id="s6-q1" class="qrow" style="top: 160px;"><div class="q">¿Quién eres?</div><div class="opts"><div class="opt">Founder</div><div class="opt" id="s6-p1">Head of Growth</div><div class="opt">Marketing</div></div></div>
+            <div id="s6-q2" class="qrow" style="top: 450px;"><div class="q">¿Qué quieres conseguir?</div><div class="opts"><div class="opt" id="s6-p2">Más demos</div><div class="opt">Menos churn</div><div class="opt">Subir precio</div></div></div>
+            <div id="s6-q3" class="qrow" style="top: 740px;"><div class="q">¿Tu principal problema?</div><div class="opts"><div class="opt">Poco tráfico</div><div class="opt" id="s6-p3">Leads fríos</div><div class="opt">Ciclo largo</div></div></div>
+          </div>
+          <div id="s6-ic" class="ico" style="left: 800px; top: 180px; width: 220px; height: 220px;"><img src="assets/ic_q.png" alt="" /></div>
+        </div>
+        <div class="cap" id="s6-cap" style="bottom: 250px;"></div>
+      </section>
+
+      <!-- ============ S7 · scatter: Pero no hagas solo preguntas ============ -->
+      <section id="s7" class="scene clip white" data-start="16.25" data-duration="2.45" data-track-index="7" style="z-index: 7;">
+        <div class="layer" id="s7-l"><div class="grid"></div>
+          <svg class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px; overflow: visible;"><path id="s7-strike" d="M 470 1180 C 600 1168, 760 1196, 950 1172" stroke="#e8382d" stroke-width="12" fill="none" stroke-linecap="round" /></svg>
+        </div>
+      </section>
+
+      <!-- ============ S8 · sky panel: proof cards + "vale, esto tiene sentido" ============ -->
+      <section id="s8" class="scene clip sky" data-start="18.3" data-duration="9.3" data-track-index="8" style="z-index: 8;">
+        <div class="skyart"></div>
+        <div class="stage">
+          <div id="s8-wall" class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px;">
+            <div id="s8-c1" class="icard" style="left: 90px; top: 330px;"><div class="k">Caso real</div><div class="v">Una SaaS B2B pasó de 2 a 9 demos por semana</div><span class="tag">EJEMPLO</span></div>
+            <div id="s8-c2" class="icard" style="left: 570px; top: 420px;"><div class="k">Dato</div><div class="v">El 68% aún no está listo para una demo</div><span class="tag">EJEMPLO</span><div class="ic"><img src="assets/ic_chart.png" alt="" style="width: 100%;" /></div></div>
+            <div id="s8-c3" class="icard" style="left: 90px; top: 720px;"><div class="k">Resultado</div><div class="v">+34% de leads cualificados</div><span class="tag">EJEMPLO</span><div class="ic"><img src="assets/ic_target.png" alt="" style="width: 100%;" /></div></div>
+            <div id="s8-c4" class="icard" style="left: 570px; top: 810px;"><div class="k">Consejo</div><div class="v">Pregunta por el problema antes que por el precio</div></div>
+          </div>
+          <div id="s8-bub" class="bub r" style="right: auto; left: 170px; top: 1250px; font-size: 62px; padding: 34px 50px; max-width: none; box-shadow: 0 30px 80px rgba(8, 30, 60, 0.4);">vale, esto tiene sentido</div>
+        </div>
+        <div class="cap" id="s8-cap" style="bottom: 200px;"></div>
+      </section>
+
+      <!-- ============ S9 · scatter: Después, según sus respuestas ============ -->
+      <section id="s9" class="scene clip white" data-start="27.3" data-duration="2.75" data-track-index="9" style="z-index: 9;">
+        <div class="layer" id="s9-l"><div class="grid"></div></div>
+      </section>
+
+      <!-- ============ S10 · sky panel: personalised result ============ -->
+      <section id="s10" class="scene clip sky" data-start="29.6" data-duration="2.4" data-track-index="10" style="z-index: 10;">
+        <div class="skyart"></div>
+        <div class="stage">
+          <div id="s10-card" class="glass" style="left: 140px; top: 400px; width: 800px; height: 900px; text-align: center;">
+            <div class="chrome"><i></i><i></i><i></i><div class="url">quiz.tusaas.com/resultado</div></div>
+            <div style="font-size: 30px; font-weight: 700; color: var(--sky2); letter-spacing: 0.08em; margin-top: 50px;">TU RESULTADO</div>
+            <svg style="margin-top: 30px;" width="340" height="340" viewBox="0 0 340 340">
+              <circle cx="170" cy="170" r="140" stroke="#e6edf4" stroke-width="30" fill="none" />
+              <circle id="s10-ring" cx="170" cy="170" r="140" stroke="#e8382d" stroke-width="30" fill="none" stroke-linecap="round" transform="rotate(-90 170 170)" stroke-dasharray="879.6" stroke-dashoffset="879.6" />
+              <text id="s10-pct" x="170" y="192" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="76" fill="#16141b">0%</text>
+            </svg>
+            <div style="font-size: 50px; font-weight: 780; letter-spacing: -0.03em; margin-top: 26px;">Perfil: SaaS B2B<br />en crecimiento</div>
+            <div style="margin-top: 24px;"><span class="tag">ENCAJE · EJEMPLO</span></div>
+          </div>
+          <div class="ico" id="s10-ic" style="left: 780px; top: 290px; width: 230px; height: 230px;"><img src="assets/ic_target.png" alt="" /></div>
+        </div>
+        <div class="cap" id="s10-cap" style="bottom: 300px;"></div>
+      </section>
+
+      <!-- ============ S11 · circle "Y aquí viene la parte importante." → orb ============ -->
+      <section id="s11" class="scene clip dark" data-start="31.6" data-duration="3.3" data-track-index="11" style="z-index: 11;">
+        <div class="ring" style="width: 760px; height: 760px; margin: -380px 0 0 -380px;"></div>
+        <div class="ring" style="width: 1100px; height: 1100px; margin: -550px 0 0 -550px;"></div>
+        <div class="ring" style="width: 1500px; height: 1500px; margin: -750px 0 0 -750px;"></div>
+        <div id="s11-circ" class="circ"></div>
+        <div id="s11-orb" class="orb"></div>
+        <div id="s11-t" class="ctext" style="font-size: 104px;"></div>
+      </section>
+
+      <!-- ============ S12 · dark offer cards ============ -->
+      <section id="s12" class="scene clip dark" data-start="34.75" data-duration="11.8" data-track-index="12" style="z-index: 12;">
+        <div id="s12-top" class="abs glowt" style="left: 80px; right: 80px; top: 200px; height: 260px; text-align: center; font-size: 60px; line-height: 1.15;"></div>
+        <div id="s12-c1" class="dcard" style="top: 560px; height: 360px;"><div class="k">Por qué encaja contigo</div>
+          <div class="ok" style="margin-top: 22px;"><b>✓</b>Head of Growth</div><div class="ok"><b>✓</b>Quieres más demos</div><div class="ok"><b>✓</b>Tus leads llegan fríos</div></div>
+        <div id="s12-c2" class="dcard" style="top: 960px;"><div class="k">Oferta específica</div>
+          <div class="v">Plan Growth · <span style="color: #9aa3ad; text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 6px;">99€</span> 69€<span style="font-size: 34px;">/mes</span></div>
+          <div style="margin-top: 18px;"><span class="tag" style="background: rgba(255,255,255,0.12); color: var(--sky4);">−30% · OFERTA DE EJEMPLO</span></div></div>
+        <div id="s12-c3" class="dcard" style="top: 1330px; display: flex; align-items: center; justify-content: space-between;">
+          <div><div class="k">Termina en</div><div class="v" id="s12-clock" style="font-size: 110px; font-variant-numeric: tabular-nums;">15:00</div></div>
+          <div id="s12-btn" style="padding: 30px 40px; border-radius: 26px; background: var(--red); font-size: 38px; font-weight: 760; box-shadow: 0 16px 50px rgba(232, 56, 45, 0.5);">Canjear</div>
+        </div>
+        <svg id="s12-cur" class="cursor" viewBox="0 0 24 24" style="left: 900px; top: 1700px;"><path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L17.5 13.3 Z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round" /></svg>
+      </section>
+
+      <!-- ============ S13 · dark glow statement ============ -->
+      <section id="s13" class="scene clip dark" data-start="46.4" data-duration="5.95" data-track-index="13" style="z-index: 13;">
+        <div id="s13-a" class="abs glowt" style="left: 60px; right: 60px; top: 880px; text-align: center; font-size: 72px;"></div>
+        <svg class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px;"><rect id="s13-rect" x="120" y="600" width="840" height="720" rx="60" stroke="rgba(190,225,250,0.9)" stroke-width="3" fill="rgba(79,154,201,0.05)" style="filter: drop-shadow(0 0 18px rgba(120,190,240,0.8));" /></svg>
+        <div id="s13-b" class="abs glowt" style="left: 0; right: 0; top: 700px; text-align: center; font-size: 132px; font-weight: 760; line-height: 1.12; letter-spacing: -0.04em;">
+          <div id="s13-b1">Segmenta.</div><div id="s13-b2">Educa.</div><div id="s13-b3" style="color: #ff6a5e; text-shadow: 0 0 40px rgba(232, 56, 45, 0.7);">Vende.</div>
+        </div>
+      </section>
+
+      <!-- ============ S14 · wordmark ============ -->
+      <section id="s14" class="scene clip dark" data-start="52.2" data-duration="3.8" data-track-index="14" style="z-index: 14;">
+        <div class="abs" style="left: 0; right: 0; top: 820px; display: flex; justify-content: center;">
+          <div id="s14-word" style="display: flex; align-items: center; gap: 22px; color: #fff; text-shadow: 0 0 40px rgba(120, 180, 230, 0.6);">
+            <div style="font-size: 124px; font-weight: 860; font-stretch: 116%; letter-spacing: -0.02em; line-height: 1;">SaaS</div>
+            <div class="px" style="font-size: 56px; background: var(--red-small); color: #fff; padding: 14px 18px 8px; border-radius: 14px; box-shadow: 6px 6px 0 var(--red-deep); text-shadow: none;">IN</div>
+            <div style="font-size: 124px; font-weight: 860; font-stretch: 116%; letter-spacing: -0.02em; line-height: 1;">House</div>
+          </div>
+        </div>
+        <div id="s14-sub" class="abs glowt" style="left: 0; right: 0; top: 1010px; text-align: center; font-size: 44px; font-weight: 560; color: #c9d4de;">Quiz Funnels que venden tu SaaS</div>
+        <div class="abs" style="left: 0; right: 0; top: 1150px; display: flex; justify-content: center;"><div id="s14-cta" class="px" style="padding: 30px 46px 24px; border-radius: 24px; background: #fff; color: var(--ink); font-size: 38px;">comenta «quiz»</div></div>
+      </section>
+    </div>
+
+    <script>
+      const VO = 0.3;
+      const W = /*W*/[["¿Quieres",0.0],["vender",0.325],["tu",0.639],["SaaS",0.778],["sin",1.207],["mandar",1.393],["a",1.741],["todo",1.811],["el",1.997],["mundo",2.078],["a",2.322],["la",2.368],["misma",2.461],["landing?",2.74],["Haz",3.901],["esto.",4.145],["En",4.807],["lugar",4.934],["de",5.271],["pedir",5.375],["una",5.654],["demo",5.817],["directamente,",6.06],["crea",6.908],["un",7.21],["Quiz",7.372],["Funnel.",7.628],["Primero",8.812],["haces",9.195],["entre",9.462],["cinco",9.729],["y",10.124],["ocho",10.217],["preguntas",10.426],["para",11.018],["saber",11.262],["quién",11.598],["es",11.877],["esa",11.993],["persona,",12.19],["qué",12.817],["quiere",12.991],["conseguir",13.224],["y",13.781],["cuál",13.967],["es",14.234],["su",14.303],["principal",14.454],["problema.",14.977],["Pero",16.254],["no",16.533],["hagas",16.637],["solo",16.869],["preguntas.",17.113],["Entre",18.274],["medias,",18.611],["añade",19.075],["pequeñas",19.458],["cards",19.923],["con",20.294],["casos",20.515],["reales,",20.817],["datos,",21.397],["resultados",21.966],["o",22.686],["consejos",22.802],["que",23.464],["le",23.638],["hagan",23.731],["pensar:",23.986],["\"vale,",24.892],["esto",25.577],["tiene",25.879],["sentido\".",26.099],["Después,",27.307],["según",27.875],["sus",28.189],["respuestas,",28.329],["le",29.002],["muestras",29.13],["un",29.571],["resultado",29.687],["personalizado.",30.221],["Y",31.545],["aquí",31.649],["viene",31.847],["la",32.056],["parte",32.16],["importante.",32.404],["Las",34.587],["últimas",34.807],["cards",35.202],["ya",35.666],["tienen",35.829],["que",36.049],["llevarlo",36.142],["hacia",36.514],["tu",36.734],["producto:",36.862],["le",37.977],["explicas",38.093],["por",38.592],["qué",38.813],["encaja",38.963],["con",39.358],["su",39.509],["situación,",39.637],["le",40.357],["presentas",40.484],["una",40.972],["oferta",41.1],["específica",41.448],["y",42.226],["añades",42.319],["un",42.69],["contador",42.807],["con",43.271],["tiempo",43.434],["limitado",43.701],["para",44.165],["canjearla.",44.374],["Así",46.278],["no",46.812],["solo",46.975],["captas",47.195],["el",47.532],["lead.",47.648],["Lo",48.217],["segmentas,",48.391],["lo",49.041],["educas",49.157],["y",49.726],["lo",49.854],["llevas",49.958],["directamente",50.191],["hacia",50.817],["la",51.003],["compra.",51.108]]/*W*/; // [word, start] from assets/words.json (embed_words.py)
+      const w = (i) => W[i][1] + VO;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      const txt = (i) => W[i][0].replace(/^"/, "“").replace(/"([.,:]?)$/, "”$1");
+
+      /* ---------- shared art: sky line art + plus marks ---------- */
+      document.querySelectorAll(".skyart").forEach((el) => {
+        el.innerHTML = `<svg width="1080" height="1920" style="position:absolute;inset:0">
+          <circle cx="980" cy="420" r="560" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none"/>
+          <circle cx="60" cy="1560" r="420" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+          <line x1="0" y1="1180" x2="1080" y2="1180" stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
+          <line x1="300" y1="0" x2="300" y2="1920" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+          ${[[180, 260], [880, 1500], [520, 1700], [960, 980], [120, 980]].map(([x, y]) => `<path d="M${x - 16} ${y} H${x + 16} M${x} ${y - 16} V${y + 16}" stroke="rgba(255,255,255,0.8)" stroke-width="3"/>`).join("")}
+        </svg>`;
+      });
+
+      /* ---------- helpers ---------- */
+      // slanted sweep: the incoming scene is revealed by a diagonal edge moving right → left (the reference's tilted sky beam)
+      const sweep = (sel, at, d = 0.5) =>
+        tl.fromTo(sel, { clipPath: "polygon(112% 0%, 140% 0%, 140% 100%, 92% 100%)" }, { clipPath: "polygon(-30% 0%, 140% 0%, 140% 100%, -50% 100%)", duration: d, ease: "power3.inOut" }, at);
+      // scatter word: pops at its word time where it was placed
+      function sword(layer, i, x, y, acc, size) {
+        const s = document.createElement("div");
+        s.className = "sw" + (acc ? " acc" : "");
+        s.textContent = txt(i);
+        s.style.left = x + "px"; s.style.top = y + "px";
+        if (size) s.style.fontSize = size + "px";
+        $(layer).appendChild(s);
+        tl.fromTo(s, { opacity: 0, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "power3.out" }, w(i) - 0.05);
+        return s;
+      }
+      // floating chip: glossy icon or mini UI; pops at t and drifts
+      function chip(layer, html, cls, x, y, wd, ht, t, drift = 30) {
+        const c = document.createElement("div");
+        c.className = cls; c.innerHTML = html;
+        Object.assign(c.style, { left: x + "px", top: y + "px", width: wd ? wd + "px" : "", height: ht ? ht + "px" : "" });
+        $(layer).appendChild(c);
+        tl.fromTo(c, { opacity: 0, scale: 0.6, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.4, ease: "back.out(1.8)" }, t);
+        tl.to(c, { y: -drift, duration: 3, ease: "sine.inOut" }, t);
+        return c;
+      }
+      const icon = (n) => `<img src="assets/ic_${n}.png" alt="">`;
+      const miniCard = (inner) => `<div style="padding:18px 20px">${inner}</div>`;
+      const miniBars = `<div style="display:flex;align-items:flex-end;gap:8px;height:70px;padding:16px 18px">${[30, 46, 38, 62, 70].map((h, k) => `<div style="flex:1;height:${h}px;border-radius:5px;background:${k === 4 ? "#e8382d" : "#a9d0ea"}"></div>`).join("")}</div>`;
+      const miniToggle = `<div style="display:flex;align-items:center;gap:14px;padding:18px 20px"><div style="width:62px;height:36px;border-radius:18px;background:#2676ac;position:relative"><div style="position:absolute;right:4px;top:4px;width:28px;height:28px;border-radius:50%;background:#fff"></div></div><div class="bar" style="width:90px"></div></div>`;
+      const miniPlay = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M7 4 L20 12 L7 20 Z" fill="#16141b"/></svg></div>`;
+      const miniFrame = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#4f9ac9,#2676ac)"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><circle cx="12" cy="12" r="3"/></svg></div>`;
+      const miniWave = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:5px">${[12, 26, 40, 22, 34, 16].map((h) => `<i style="display:block;width:6px;height:${h}px;border-radius:3px;background:#4f9ac9"></i>`).join("")}</div>`;
+      // caption under a sky panel: words sharpen from blur, groups replace each other
+      function caption(hostId, groups, sceneEnd) {
+        const host = $(hostId);
+        groups.forEach((g, gi) => {
+          const el = document.createElement("div");
+          el.className = "capg";
+          for (let i = g.a; i <= g.b; i++) {
+            const s = document.createElement("span");
+            s.className = "w" + ((g.acc || []).includes(i) ? " acc" : "");
+            s.textContent = txt(i);
+            el.appendChild(s); el.appendChild(document.createTextNode(" "));
+            tl.fromTo(s, { opacity: 0, y: 12, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, w(i) - 0.06);
+          }
+          host.appendChild(el);
+          const next = groups[gi + 1];
+          tl.to(el, { opacity: 0, filter: "blur(8px)", duration: 0.18 }, (next ? w(next.a) : sceneEnd) - 0.22);
+        });
+      }
+      // a slow 3D push on a tilted glass card (the reference's floating screens)
+      const tilt = (sel, at, d, from, to) => tl.fromTo(sel, { transformPerspective: 1700, ...from }, { transformPerspective: 1700, ...to, duration: d, ease: "power1.inOut" }, at);
+
+      /* ---------- S1 · scatter ---------- */
+      tl.fromTo("#s1-l", { scale: 1.0, y: 0 }, { scale: 1.12, y: -60, duration: 1.75, ease: "none" }, 0);
+      sword("s1-l", 0, 110, 640); sword("s1-l", 1, 560, 560); sword("s1-l", 2, 250, 860); sword("s1-l", 3, 560, 950, true, 110);
+      chip("s1-l", icon("funnel"), "ico", 760, 300, 200, 200, 0.15);
+      chip("s1-l", miniBars, "chip", 90, 1180, 230, 110, 0.35);
+      chip("s1-l", miniPlay, "chip", 820, 1250, 96, 96, 0.55);
+      chip("s1-l", miniFrame, "chip", 150, 360, 100, 100, 0.25);
+      chip("s1-l", miniToggle, "chip", 470, 1420, 220, 72, 0.7);
+      chip("s1-l", miniWave, "chip", 860, 760, 120, 70, 0.9);
+
+      /* ---------- S2 · same landing for everyone ---------- */
+      sweep("#s2", 1.2);
+      tilt("#s2-card", 1.2, 2.95, { rotationX: 18, rotationY: -22, rotationZ: 5, scale: 0.86, y: 60 }, { rotationX: 8, rotationY: -8, rotationZ: 2, scale: 1, y: -20 });
+      // a crowd of dots all funnelled into the same landing
+      for (let k = 0; k < 18; k++) {
+        const d = document.createElement("div");
+        const col = ["#ffffff", "#ffd9d4", "#a9d0ea"][k % 3];
+        const dx = 60 + (k % 6) * 180, dy = 130 + Math.floor(k / 6) * 110;
+        Object.assign(d.style, { position: "absolute", width: "44px", height: "44px", borderRadius: "50%", background: col, boxShadow: "0 8px 20px rgba(8,30,60,0.35)", left: dx + "px", top: dy + "px", opacity: 0 });
+        $("s2-dots").appendChild(d);
+        tl.to(d, { opacity: 1, duration: 0.2 }, 1.55 + k * 0.03);
+        tl.to(d, { x: 520 - dx, y: 1060 - dy, scale: 0.3, opacity: 0, duration: 0.9, ease: "power2.in" }, 2.1 + k * 0.06);
+      }
+      caption("s2-cap", [{ a: 4, b: 9 }, { a: 10, b: 13, acc: [12, 13] }], 4.15);
+
+      /* ---------- S3 · Haz esto. → orb ---------- */
+      tl.fromTo("#s3-circ", { scale: 1.6 }, { scale: 0.62, duration: 0.45, ease: "power3.out" }, 4.0);
+      tl.fromTo("#s3-w14", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, w(14) - 0.05);
+      tl.fromTo("#s3-w15", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, w(15) - 0.05);
+      tl.to("#s3-t", { opacity: 0, filter: "blur(12px)", duration: 0.25 }, 4.85);
+      tl.to("#s3-circ", { scale: 0.24, duration: 0.45, ease: "power3.inOut" }, 4.8);
+      tl.fromTo("#s3-orb", { scale: 0.62, opacity: 0 }, { scale: 0.24, opacity: 1, duration: 0.45, ease: "power3.inOut" }, 4.8);
+      tl.to("#s3-orb", { scale: 1.4, duration: 0.25, ease: "power2.in" }, 5.15);
+
+      /* ---------- S4 · phone chat ---------- */
+      tl.fromTo("#s4", { clipPath: "circle(9% at 50% 50%)" }, { clipPath: "circle(80% at 50% 50%)", duration: 0.4, ease: "power2.in" }, 4.95);
+      tl.fromTo("#s4-phone", { scale: 1.25, y: 120 }, { scale: 1, y: 0, duration: 0.7, ease: "power3.out" }, 4.95);
+      // keyboard
+      const rows = ["qwertyuiop", "asdfghjklñ", "zxcvbnm"];
+      const kb = $("s4-kb");
+      rows.forEach((r, ri) => {
+        const row = document.createElement("div"); row.className = "kr";
+        if (ri === 2) row.innerHTML += `<div class="key g" style="width:110px">⇧</div>`;
+        [...r].forEach((ch) => { row.innerHTML += `<div class="key" id="k-${ch}">${ch}</div>`; });
+        if (ri === 2) row.innerHTML += `<div class="key g" style="width:110px">⌫</div>`;
+        kb.appendChild(row);
+      });
+      kb.innerHTML += `<div class="kr"><div class="key g" style="width:180px;font-size:32px">123</div><div class="key" id="k- " style="width:430px;font-size:32px">espacio</div><div class="key g" style="width:180px;font-size:32px">intro</div></div>`;
+      tl.fromTo("#s4-b1", { opacity: 0, scale: 0.7, transformOrigin: "0% 100%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, 5.35);
+      tl.set(["#s4-b2", "#s4-dl", "#s4-dots"], { opacity: 0 }, 0);
+      const msg = "Mejor crea un Quiz Funnel.";
+      const typ = { n: 0 }, t0 = 6.0, t1 = 7.45;
+      tl.to(typ, { n: msg.length, duration: t1 - t0, ease: "none", onUpdate: () => { $("s4-typed").textContent = msg.slice(0, Math.round(typ.n)); } }, t0);
+      [...msg].forEach((ch, k) => {
+        const key = document.getElementById("k-" + ch.toLowerCase());
+        if (key) tl.fromTo(key, { background: "#ffffff" }, { background: "#aeb4be", duration: 0.05, yoyo: true, repeat: 1 }, t0 + (k + 0.5) * (t1 - t0) / msg.length);
+      });
+      tl.call(() => { $("s4-typed").textContent = ""; }, null, 7.65);
+      tl.set("#s4-typed", { opacity: 0 }, 7.65);
+      tl.fromTo("#s4-b2", { opacity: 0, y: 120, scale: 0.8, transformOrigin: "100% 100%" }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 7.65);
+      tl.to("#s4-dl", { opacity: 1, duration: 0.2 }, 8.05);
+      tl.to("#s4-dots", { opacity: 1, duration: 0.2 }, 8.35);
+      tl.to("#s4-dots", { opacity: 0.4, duration: 0.25, yoyo: true, repeat: 2 }, 8.5);
+      tl.to("#s4-caret", { opacity: 0, duration: 0.01, yoyo: true, repeat: 7, repeatDelay: 0.25 }, 5.3);
+
+      /* ---------- S5 · scatter ---------- */
+      sweep("#s5", 8.85);
+      tl.fromTo("#s5-l", { scale: 1.06, x: 30 }, { scale: 1.16, x: -30, duration: 2.5, ease: "none" }, 8.85);
+      sword("s5-l", 27, 120, 520); sword("s5-l", 28, 560, 610); sword("s5-l", 29, 200, 760);
+      sword("s5-l", 30, 560, 860, true, 104); sword("s5-l", 31, 170, 1010); sword("s5-l", 32, 340, 1010, true, 104); sword("s5-l", 33, 420, 1190);
+      chip("s5-l", icon("q"), "ico", 120, 1290, 190, 190, 9.0);
+      chip("s5-l", `<div style="padding:16px 22px;font-size:26px;font-weight:700">Pregunta 3/8</div>`, "chip", 680, 330, 230, 70, 9.2);
+      chip("s5-l", miniToggle, "chip", 700, 1380, 220, 72, 9.45);
+      chip("s5-l", miniFrame, "chip", 140, 300, 100, 100, 9.7);
+      chip("s5-l", miniWave, "chip", 860, 1100, 120, 70, 9.9);
+
+      /* ---------- S6 · quiz card ---------- */
+      sweep("#s6", 10.9);
+      tilt("#s6-card", 10.9, 5.6, { rotationX: 16, rotationY: 20, rotationZ: -4, scale: 0.85, y: 80 }, { rotationX: 6, rotationY: 6, rotationZ: -1, scale: 0.98, y: 0 });
+      tl.fromTo("#s6-ic", { opacity: 0, scale: 0.5, rotation: -15 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 11.3);
+      tl.to("#s6-ic", { y: -40, duration: 5, ease: "sine.inOut" }, 11.3);
+      [["#s6-q1", "#s6-p1", 36], ["#s6-q2", "#s6-p2", 40], ["#s6-q3", "#s6-p3", 44]].forEach(([q, p, i], k) => {
+        tl.fromTo(q, { opacity: 0.25 }, { opacity: 1, duration: 0.3 }, w(i) - 0.1);
+        tl.to(q, { borderColor: "#e8382d", duration: 0.2 }, w(i) - 0.1);
+        tl.to(p, { backgroundColor: "#c42a20", color: "#ffffff", scale: 1.06, duration: 0.2 }, w(i) + 0.45);
+        tl.to(p, { scale: 1, duration: 0.2 }, w(i) + 0.65);
+        if (k > 0) tl.to(["#s6-q1", "#s6-q2"][k - 1], { borderColor: "#e8eaee", duration: 0.2 }, w(i) - 0.1);
+        tl.to("#s6-prog", { scaleX: (k + 1) / 8 + 0.01, duration: 0.4 }, w(i) + 0.45);
+        tl.call(() => { $("s6-n").textContent = String(k + 1); }, null, w(i) + 0.45);
+      });
+      tl.set(["#s6-q2", "#s6-q3"], { opacity: 0.25 }, 0);
+      caption("s6-cap", [{ a: 34, b: 39 }, { a: 40, b: 42 }, { a: 43, b: 48, acc: [47, 48] }], 16.5);
+
+      /* ---------- S7 · scatter + strike ---------- */
+      sweep("#s7", 16.25);
+      tl.fromTo("#s7-l", { scale: 1.0, y: 20 }, { scale: 1.1, y: -40, duration: 2.45, ease: "none" }, 16.25);
+      sword("s7-l", 49, 150, 640); sword("s7-l", 50, 560, 720); sword("s7-l", 51, 210, 900); sword("s7-l", 52, 600, 980); sword("s7-l", 53, 470, 1110, true, 100);
+      { const p = $("s7-strike"); p.style.strokeDasharray = 520; tl.fromTo(p, { strokeDashoffset: 520 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 17.95); }
+      chip("s7-l", icon("q"), "ico", 760, 330, 180, 180, 16.4);
+      chip("s7-l", miniPlay, "chip", 160, 1340, 96, 96, 16.6);
+      chip("s7-l", miniBars, "chip", 700, 1400, 230, 110, 16.8);
+      chip("s7-l", miniFrame, "chip", 130, 380, 100, 100, 17.0);
+
+      /* ---------- S8 · proof cards ---------- */
+      sweep("#s8", 18.3);
+      tilt("#s8-wall", 18.3, 9.3, { rotationX: 14, rotationY: -14, rotationZ: 3, scale: 0.9 }, { rotationX: 6, rotationY: -4, rotationZ: 1, scale: 1.0 });
+      [["#s8-c1", 60], ["#s8-c2", 62], ["#s8-c3", 63], ["#s8-c4", 65]].forEach(([c, i]) =>
+        tl.fromTo(c, { opacity: 0, y: 60, scale: 0.8, filter: "blur(8px)" }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "back.out(1.7)" }, w(i) - 0.08));
+      tl.fromTo("#s8-bub", { opacity: 0, scale: 0.5, transformOrigin: "100% 100%" }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, w(70) - 0.1);
+      tl.to("#s8-wall", { opacity: 0.55, filter: "blur(4px)", duration: 0.4 }, w(70) - 0.1);
+      caption("s8-cap", [{ a: 54, b: 58 }, { a: 59, b: 65 }, { a: 66, b: 69 }], 25.0);
+
+      /* ---------- S9 · scatter ---------- */
+      sweep("#s9", 27.3);
+      tl.fromTo("#s9-l", { scale: 1.04, x: -20 }, { scale: 1.14, x: 20, duration: 2.75, ease: "none" }, 27.3);
+      sword("s9-l", 74, 110, 600); sword("s9-l", 75, 590, 690); sword("s9-l", 76, 200, 850); sword("s9-l", 77, 400, 850, true); sword("s9-l", 78, 160, 1040); sword("s9-l", 79, 360, 1040);
+      chip("s9-l", icon("chart"), "ico", 740, 300, 190, 190, 27.45);
+      chip("s9-l", `<div style="padding:16px 22px;font-size:26px;font-weight:700">✓ 8/8 respuestas</div>`, "chip", 120, 360, 280, 70, 27.7);
+      chip("s9-l", miniWave, "chip", 780, 1280, 120, 70, 28.0);
+      chip("s9-l", miniToggle, "chip", 170, 1340, 220, 72, 28.3);
+
+      /* ---------- S10 · result ---------- */
+      sweep("#s10", 29.6);
+      tilt("#s10-card", 29.6, 2.4, { rotationX: 14, rotationY: -18, rotationZ: 3, scale: 0.86 }, { rotationX: 4, rotationY: -6, rotationZ: 1, scale: 1 });
+      tl.fromTo("#s10-ic", { opacity: 0, scale: 0.5, rotation: 15 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 30.0);
+      { const pr = { v: 0 }; tl.to(pr, { v: 82, duration: 1.0, ease: "power2.out", onUpdate: () => { $("s10-pct").textContent = Math.round(pr.v) + "%"; $("s10-ring").setAttribute("stroke-dashoffset", (879.6 * (1 - pr.v / 100)).toFixed(1)); } }, 30.0); }
+      caption("s10-cap", [{ a: 80, b: 82, acc: [82] }], 32.0);
+
+      /* ---------- S11 · la parte importante → orb ---------- */
+      { const host = $("s11-t");
+        for (let i = 83; i <= 88; i++) { const s = document.createElement("span"); s.className = "w"; s.textContent = txt(i); host.appendChild(s); host.appendChild(document.createTextNode(" "));
+          tl.fromTo(s, { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, w(i) - 0.05); } }
+      tl.fromTo("#s11-circ", { scale: 1.6 }, { scale: 0.72, duration: 0.5, ease: "power3.out" }, 31.6);
+      tl.to("#s11-t", { opacity: 0, filter: "blur(14px)", duration: 0.3 }, 33.2);
+      tl.to("#s11-circ", { scale: 0.26, duration: 0.5, ease: "power3.inOut" }, 33.25);
+      tl.fromTo("#s11-orb", { scale: 0.72, opacity: 0 }, { scale: 0.26, opacity: 1, duration: 0.5, ease: "power3.inOut" }, 33.25);
+      tl.to("#s11-orb", { scale: 0.3, duration: 0.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, 33.75);
+      tl.to("#s11-orb", { scale: 2.2, opacity: 0, duration: 0.3, ease: "power2.in" }, 34.6);
+
+      /* ---------- S12 · offer cards ---------- */
+      tl.fromTo("#s12", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 34.75);
+      { const host = $("s12-top");
+        [[89, 98], [99, 106], [107, 111], [112, 120]].forEach(([a, b], gi, arr) => {
+          const el = document.createElement("div"); el.style.position = "absolute"; el.style.left = "0"; el.style.right = "0"; el.style.bottom = "0";
+          for (let i = a; i <= b; i++) { const s = document.createElement("span"); s.className = "w"; s.textContent = txt(i); el.appendChild(s); el.appendChild(document.createTextNode(" "));
+            tl.fromTo(s, { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3 }, w(i) - 0.06); }
+          host.appendChild(el);
+          const nx = arr[gi + 1];
+          tl.to(el, { opacity: 0, filter: "blur(8px)", duration: 0.2 }, (nx ? w(nx[0]) : 46.4) - 0.24);
+        }); }
+      const dpop = (sel, at) => tl.fromTo(sel, { opacity: 0, y: 80, rotationX: 30, transformPerspective: 1400, filter: "blur(10px)" }, { opacity: 1, y: 0, rotationX: 0, filter: "blur(0px)", duration: 0.55, ease: "back.out(1.5)" }, at);
+      dpop("#s12-c1", w(99) - 0.1); dpop("#s12-c2", w(110) - 0.1); dpop("#s12-c3", w(115) - 0.08);
+      { const ck = { s: 900 }; tl.to(ck, { s: 897, duration: 3.3, ease: "none", onUpdate: () => { const v = Math.ceil(ck.s); $("s12-clock").textContent = `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`; } }, w(115) + 0.3); }
+      tl.fromTo("#s12-cur", { opacity: 0, x: 60, y: 120 }, { opacity: 1, x: -100, y: -160, duration: 0.7, ease: "power2.out" }, w(120) - 0.8);
+      tl.to("#s12-cur", { scale: 0.8, duration: 0.08, yoyo: true, repeat: 1 }, w(120));
+      tl.to("#s12-btn", { scale: 0.9, duration: 0.08, yoyo: true, repeat: 1 }, w(120));
+      tl.to("#s12-btn", { backgroundColor: "#1f9d55", duration: 0.2 }, w(120) + 0.1);
+      tl.call(() => { $("s12-btn").textContent = "¡Canjeada!"; }, null, w(120) + 0.1);
+      tl.call(() => { $("s12-btn").textContent = "Canjear"; }, null, w(120) + 0.05);
+
+      /* ---------- S13 · statement ---------- */
+      tl.fromTo("#s13", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 46.4);
+      { const host = $("s13-a");
+        for (let i = 121; i <= 126; i++) { const s = document.createElement("span"); s.className = "w"; s.textContent = txt(i); host.appendChild(s); host.appendChild(document.createTextNode(" "));
+          tl.fromTo(s, { opacity: 0, filter: "blur(12px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.35 }, w(i) - 0.06); } }
+      tl.to("#s13-a", { opacity: 0, filter: "blur(12px)", duration: 0.25 }, w(127) - 0.3);
+      { const r = $("s13-rect"); const L = 2 * (840 + 720); r.style.strokeDasharray = L;
+        tl.fromTo(r, { strokeDashoffset: L, opacity: 1 }, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut" }, w(127) - 0.2); }
+      [["#s13-b1", 128], ["#s13-b2", 130], ["#s13-b3", 133]].forEach(([s, i]) =>
+        tl.fromTo(s, { opacity: 0, y: 30, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, w(i) - 0.06));
+      tl.to("#s13-b3", { scale: 1.08, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, w(136));
+
+      /* ---------- S14 · wordmark ---------- */
+      tl.fromTo("#s14", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 52.2);
+      tl.fromTo("#s14-word", { opacity: 0, scale: 0.9, filter: "blur(16px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out" }, 52.3);
+      tl.fromTo("#s14-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45 }, 52.9);
+      tl.fromTo("#s14-cta", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 53.3);
+      tl.to("#s14-cta", { scale: 1.05, duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 53.8);
+      tl.to("#s14-word", { scale: 1.04, duration: 3.5, ease: "none" }, 52.5);
+
+      tl.to({}, { duration: 0.01 }, 55.99);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

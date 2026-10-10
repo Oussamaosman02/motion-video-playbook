@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "GPix"; src: url("assets/GeistPixel-Square.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silk"; src: url("assets/Silkscreen-700.ttf") format("truetype"); font-weight: 400; }
+      @font-face { font-family: "GMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      :root {
+        /* crt-desktop look: phosphor grey-mint on near-black, mint = agent/highlight, red = brand/app accent */
+        --bg: #0b1011; --panel: #111819; --line: #3c4a47; --fg: #dfe9e5; --dim: #8fa29c; --faint: #5f716c;
+        --mint: #9fe8d0; --mint-ink: #08201a; --ac: #e8382d; --ac2: #ff7a6e; --paper: #e4e8e2;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font-family: "GMono", monospace; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .pix { font-family: "GPix", monospace; }
+      .silk { font-family: "Silk", monospace !important; letter-spacing: 0.02em; -webkit-text-stroke: 0 !important; }
+      .glow { text-shadow: 0 0 10px rgba(159, 232, 208, 0.35); }
+      .hl { background: var(--mint); color: var(--mint-ink); padding: 0 0.18em; }
+      .hr { background: var(--ac); color: #fff; padding: 0 0.18em; }
+      .ch { display: none; }
+      .cur { display: inline-block; width: 0.5em; height: 0.95em; background: var(--mint); vertical-align: -0.12em; margin-left: 0.08em; opacity: 0; }
+      .head { position: absolute; left: 70px; right: 70px; font-family: "GPix", monospace; color: var(--fg); line-height: 1.18; text-shadow: 0 0 12px rgba(223, 233, 229, 0.25); -webkit-text-stroke: 1.4px currentColor; }
+      .chip { display: inline-block; font-family: "GMono"; font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border: 1px solid currentColor; border-radius: 4px; opacity: 0.8; vertical-align: 4px; }
+
+      /* ---- persistent desktop chrome ---- */
+      #menubar { position: absolute; left: 34px; right: 34px; top: 46px; height: 64px; display: flex; align-items: center; gap: 34px; padding: 0 22px; font-family: "Silk"; font-size: 24px; color: var(--fg); border-bottom: 2px solid var(--line); }
+      #menubar .logo { width: 30px; height: 30px; border: 2px solid var(--fg); position: relative; }
+      #menubar .logo:after { content: ""; position: absolute; left: 6px; top: 6px; width: 14px; height: 14px; border: 2px solid var(--fg); }
+      #menubar .sp { flex: 1; }
+      #menubar .stat { border: 2px solid var(--fg); padding: 2px 10px; font-size: 20px; white-space: nowrap; }
+      #menubar .stat b { font-weight: 400; }
+      #foot { position: absolute; right: 70px; bottom: 74px; font-family: "Silk"; font-size: 22px; color: var(--mint); z-index: 60; }
+      #cursor { position: absolute; left: 0; top: 0; width: 64px; height: 84px; z-index: 70; transform-origin: 4px 4px; }
+      #cursor svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6)); }
+
+      /* ---- windows ---- */
+      .win { position: absolute; background: var(--panel); border: 2px solid var(--dim); box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55); opacity: 0; }
+      .win.paper { background: var(--paper); color: #1a2220; border-color: #1a2220; }
+      .tbar { height: 50px; border-bottom: 2px solid currentColor; display: flex; align-items: center; padding: 0 16px; font-family: "Silk"; font-size: 22px; gap: 14px; }
+      .tbar .bx { margin-left: auto; display: flex; gap: 6px; }
+      .tbar .bx i { width: 16px; height: 16px; border: 2px solid currentColor; display: block; }
+      .win.paper .tbar { background: repeating-linear-gradient(0deg, #c9cfc8 0 2px, transparent 2px 5px); }
+      .btn { display: inline-block; border: 3px solid currentColor; padding: 8px 26px; font-family: "Silk"; font-size: 30px; box-shadow: 5px 5px 0 currentColor; }
+
+      /* landing windows (hook) */
+      .land .body { padding: 26px; }
+      .land .nav { height: 16px; width: 60%; background: #9aa39c; margin-bottom: 26px; }
+      .land .h { height: 34px; width: 86%; background: #2a3330; margin-bottom: 14px; }
+      .land .h2 { height: 34px; width: 64%; background: #2a3330; margin-bottom: 30px; }
+      .land .cta { display: inline-block; font-family: "GPix"; font-size: 24px; background: #1a2220; color: var(--paper); padding: 10px 18px; }
+
+      /* desktop icons */
+      .icon { position: absolute; width: 300px; text-align: center; font-family: "Silk"; opacity: 0; }
+      .icon .sq { width: 220px; height: 220px; margin: 0 auto 18px; border: 4px solid var(--fg); position: relative; display: flex; align-items: center; justify-content: center; font-size: 110px; background-image: radial-gradient(rgba(223, 233, 229, 0.22) 1.6px, transparent 1.8px); background-size: 9px 9px; }
+      .icon.red .sq { border-color: var(--ac); color: var(--ac2); background-color: rgba(232, 56, 45, 0.22); background-image: radial-gradient(rgba(255, 122, 110, 0.55) 1.8px, transparent 2px); box-shadow: 0 0 30px rgba(232, 56, 45, 0.45); }
+      .icon.mint .sq { border-color: var(--mint); color: var(--mint); background-image: radial-gradient(rgba(159, 232, 208, 0.4) 1.6px, transparent 1.8px); box-shadow: 0 0 24px rgba(159, 232, 208, 0.3); }
+      .icon .lb { font-size: 34px; line-height: 1.15; }
+      .icon.red .lb { color: var(--fg); }
+      .file { position: absolute; width: 220px; text-align: center; font-family: "GMono"; font-size: 24px; color: var(--dim); opacity: 0; }
+      .file .pg { width: 76px; height: 94px; margin: 0 auto 12px; border: 3px solid var(--dim); position: relative; clip-path: polygon(0 0, 72% 0, 100% 22%, 100% 100%, 0 100%); }
+      .file .pg:after { content: ""; position: absolute; left: 14px; right: 14px; top: 36px; height: 30px; background: repeating-linear-gradient(0deg, var(--dim) 0 3px, transparent 3px 9px); }
+      .file.sel .pg { border-color: var(--mint); background: rgba(159, 232, 208, 0.12); }
+      .file.sel span { background: var(--mint); color: var(--mint-ink); }
+      .menu { position: absolute; background: var(--panel); border: 2px solid var(--fg); font-family: "Silk"; font-size: 30px; opacity: 0; box-shadow: 8px 8px 0 #000; }
+      .menu div { padding: 10px 22px; white-space: nowrap; }
+
+      /* editor */
+      #ttl { position: absolute; left: 0; right: 0; top: 150px; text-align: center; font-family: "Silk"; font-size: 54px; }
+      .pane { position: absolute; border: 2px solid var(--line); background: rgba(17, 24, 25, 0.9); }
+      .pane .ph { height: 36px; background: #2b3634; color: var(--fg); font-family: "Silk"; font-size: 19px; padding: 7px 12px; letter-spacing: 0.06em; }
+      .bl div { font-size: 21px; color: var(--dim); padding: 5px 14px; white-space: nowrap; opacity: 0; }
+      .bl div:before { content: ""; display: inline-block; width: 14px; height: 14px; border: 2px solid var(--faint); margin-right: 12px; vertical-align: -1px; }
+      .bl div.c { color: var(--mint); }
+      .pv { position: absolute; left: 22px; right: 22px; top: 58px; bottom: 22px; opacity: 0; }
+      .pv .qn { font-family: "GMono"; font-size: 20px; color: var(--dim); letter-spacing: 0.1em; }
+      .pv .qt { font-family: "GPix"; font-size: 38px; -webkit-text-stroke: 1px currentColor; line-height: 1.15; margin: 12px 0 18px; }
+      .opt { font-size: 23px; border: 2px solid var(--line); padding: 8px 14px; margin-bottom: 10px; color: var(--dim); }
+      .opt.on { border-color: var(--mint); color: var(--mint-ink); background: var(--mint); }
+      .track { position: absolute; left: 0; right: 0; height: 64px; border-top: 1px solid var(--line); }
+      .track .tn { position: absolute; left: 0; top: 0; width: 64px; height: 64px; border-right: 2px solid var(--line); font-family: "GPix"; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+      .clipb { position: absolute; top: 10px; height: 44px; border: 2px solid var(--dim); background: rgba(143, 162, 156, 0.18); font-size: 17px; padding: 10px 8px; white-space: nowrap; overflow: hidden; color: var(--fg); opacity: 0; }
+      .clipb.c { border-color: var(--mint); background: rgba(159, 232, 208, 0.22); color: var(--mint); }
+      .clipb.r { border-color: var(--ac); background: rgba(232, 56, 45, 0.25); color: var(--ac2); }
+      #playhead { position: absolute; top: 40px; bottom: 0; width: 3px; background: var(--fg); }
+      #playhead:before { content: ""; position: absolute; left: -9px; top: -4px; border: 10px solid transparent; border-top: 14px solid var(--fg); }
+      .prompt { position: absolute; left: 60px; right: 60px; height: 96px; border: 2px solid var(--dim); background: rgba(17, 24, 25, 0.95); display: flex; align-items: center; padding: 0 24px; font-size: 30px; gap: 18px; }
+      .prompt .who { font-family: "GPix"; font-size: 20px; color: var(--dim); position: absolute; left: -2px; top: -36px; background: #2b3634; padding: 6px 12px; }
+      .prompt .you { font-size: 20px; color: var(--dim); }
+      .prompt .st { margin-left: auto; font-size: 18px; color: var(--dim); letter-spacing: 0.08em; opacity: 0; }
+      .card { position: absolute; left: 22px; right: 22px; top: 58px; bottom: 22px; padding: 20px; border: 2px solid var(--mint); background: rgba(159, 232, 208, 0.08); opacity: 0; }
+
+      /* hero */
+      #floor { position: absolute; left: -900px; right: -900px; top: 1180px; height: 1400px; transform-origin: 50% 0; transform: perspective(700px) rotateX(72deg); background-image: linear-gradient(rgba(159, 232, 208, 0.55) 2px, transparent 2px), linear-gradient(90deg, rgba(159, 232, 208, 0.55) 2px, transparent 2px); background-size: 120px 120px; }
+      #horizon { position: absolute; left: 0; right: 0; top: 1150px; height: 60px; background: linear-gradient(rgba(159, 232, 208, 0), rgba(159, 232, 208, 0.35), rgba(159, 232, 208, 0)); }
+      #heroglow { position: absolute; left: 90px; top: 520px; width: 900px; height: 900px; border-radius: 50%; background: radial-gradient(rgba(60, 140, 120, 0.45), rgba(11, 16, 17, 0) 65%); }
+      #hero { position: absolute; left: 160px; top: 420px; width: 760px; height: 760px; }
+      #hero img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+      #scanbar { position: absolute; left: 100px; right: 100px; top: 440px; height: 4px; background: var(--mint); box-shadow: 0 0 22px 6px rgba(159, 232, 208, 0.7); opacity: 0; }
+      .tag { position: absolute; font-size: 26px; color: var(--dim); letter-spacing: 0.04em; white-space: nowrap; }
+      .tag b { color: var(--mint); font-weight: 600; }
+      #ring { position: absolute; left: 140px; top: 470px; width: 800px; height: 800px; border: 2px solid rgba(159, 232, 208, 0.35); border-radius: 50%; transform: rotateX(72deg); }
+      #gridwall { position: absolute; left: 90px; top: 520px; width: 900px; height: 900px; opacity: 0; transform: perspective(1400px) rotateY(-14deg) rotateX(8deg); border: 2px solid var(--mint); box-shadow: 0 0 60px rgba(159, 232, 208, 0.3); }
+      #gridwall img { width: 100%; height: 100%; display: block; }
+      #gridwall .sel { position: absolute; width: 225px; height: 225px; border: 5px solid var(--mint); }
+
+      /* offer windows */
+      .bigtxt { font-family: "GPix"; }
+      .clock { font-family: "Silk"; font-size: 200px; line-height: 1; text-align: center; color: var(--ac2); text-shadow: 0 0 30px rgba(232, 56, 45, 0.6); }
+      .li { position: absolute; left: 70px; right: 60px; font-family: "GPix"; font-size: 42px; -webkit-text-stroke: 1px currentColor; color: var(--faint); white-space: nowrap; }
+      .li .n { display: inline-block; width: 52px; height: 52px; border: 3px solid currentColor; text-align: center; line-height: 46px; margin-right: 20px; font-size: 30px; }
+      .li.on { color: var(--fg); }
+      .li.on .n { background: var(--mint); color: var(--mint-ink); border-color: var(--mint); }
+      .li.done { color: var(--dim); }
+
+      /* end card */
+      #photo { position: absolute; left: 0; top: -8px; width: 1080px; height: 1935px; transform-origin: 543px 970px; }
+      #photo img { position: absolute; inset: 0; width: 100%; height: 100%; }
+      #scr { position: absolute; left: 292px; top: 768px; width: 506px; height: 386px; border-radius: 26px / 30px; overflow: hidden; background: linear-gradient(180deg, #2d8f87 0%, #6fb7ad 38%, #e8b28a 66%, #b05c3a 100%); box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.55); }
+      #scr .wm { position: absolute; left: 0; right: 0; top: 150px; text-align: center; font-family: "GPix"; font-size: 46px; color: #0f1513; }
+      #scr .wm .in { background: var(--ac); color: #fff; padding: 2px 8px; margin: 0 8px; font-size: 34px; vertical-align: 4px; }
+      #scr .sub { position: absolute; left: 0; right: 0; top: 214px; text-align: center; font-family: "GMono"; font-weight: 600; font-size: 19px; color: #182220; letter-spacing: 0.08em; }
+      #scr .mk { position: absolute; left: 50%; top: 82px; width: 46px; height: 46px; margin-left: -23px; border: 5px solid #0f1513; }
+      #scr .mk:after { content: ""; position: absolute; left: 9px; top: 9px; width: 18px; height: 18px; background: var(--ac); }
+      #scr .lines { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.13) 0 2px, transparent 2px 4px); }
+
+      /* ---- CRT overlay ---- */
+      #crt { position: absolute; inset: 0; pointer-events: none; z-index: 80; }
+      #crt .sl { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 2px, rgba(0, 0, 0, 0) 2px 5px); }
+      #crt .vig { position: absolute; inset: 0; background: radial-gradient(ellipse 75% 62% at 50% 50%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.6) 100%); }
+      #crt .bez { position: absolute; inset: -60px; border-radius: 130px; box-shadow: inset 0 0 0 84px #000, inset 0 0 50px 100px rgba(0, 0, 0, 0.7); }
+      #crt .fl { position: absolute; inset: 0; background: rgba(159, 232, 208, 0.03); opacity: 0; }
+      #power { position: absolute; left: 0; right: 0; top: 955px; height: 10px; background: #f2fff9; box-shadow: 0 0 40px 10px rgba(200, 255, 235, 0.8); z-index: 85; }
+      #flash { position: absolute; left: 0; right: 0; top: 0; height: 220px; background: linear-gradient(rgba(220, 255, 240, 0), rgba(220, 255, 240, 0.25), rgba(220, 255, 240, 0)); z-index: 82; opacity: 0; }
+      #fontwarm { position: absolute; left: -3000px; top: 0; font-family: "GPix"; font-size: 40px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="45.5" data-width="1080" data-height="1920">
+      <div id="fontwarm">¿Quieres SaaS IN House 14:59 –30% @ ñáéíóú</div>
+
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="45.5" data-track-index="10" data-volume="0.75"></audio>
+      <audio id="a-pw" src="assets/glitch.mp3" data-start="0.05" data-duration="0.6" data-track-index="11" data-volume="0.5"></audio>
+      <audio id="a-p1" src="assets/pop.mp3" data-start="0.35" data-duration="0.5" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="a-p2" src="assets/pop.mp3" data-start="0.65" data-duration="0.5" data-track-index="13" data-volume="0.35"></audio>
+      <audio id="a-p3" src="assets/pop.mp3" data-start="0.95" data-duration="0.5" data-track-index="14" data-volume="0.35"></audio>
+      <audio id="a-wr" src="assets/ding.mp3" data-start="1.35" data-duration="1.0" data-track-index="15" data-volume="0.4"></audio>
+      <audio id="a-gl1" src="assets/glitch.mp3" data-start="3.55" data-duration="0.6" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="a-c1" src="assets/click.mp3" data-start="4.6" data-duration="0.5" data-track-index="17" data-volume="0.7"></audio>
+      <audio id="a-c2" src="assets/click.mp3" data-start="5.7" data-duration="0.5" data-track-index="18" data-volume="0.7"></audio>
+      <audio id="a-gl2" src="assets/glitch.mp3" data-start="6.35" data-duration="0.6" data-track-index="19" data-volume="0.45"></audio>
+      <audio id="a-p4" src="assets/pop.mp3" data-start="6.55" data-duration="0.5" data-track-index="20" data-volume="0.4"></audio>
+      <audio id="a-c3" src="assets/click.mp3" data-start="8.3" data-duration="0.5" data-track-index="21" data-volume="0.7"></audio>
+      <audio id="a-dg1" src="assets/ding.mp3" data-start="9.3" data-duration="1.0" data-track-index="22" data-volume="0.4"></audio>
+      <audio id="a-ty1" src="assets/type.mp3" data-start="9.95" data-duration="1.4" data-track-index="23" data-volume="0.35"></audio>
+      <audio id="a-t1" src="assets/tick.mp3" data-start="10.6" data-duration="0.5" data-track-index="24" data-volume="0.45"></audio>
+      <audio id="a-t2" src="assets/tick.mp3" data-start="11.4" data-duration="0.5" data-track-index="25" data-volume="0.45"></audio>
+      <audio id="a-t3" src="assets/tick.mp3" data-start="12.2" data-duration="0.5" data-track-index="26" data-volume="0.45"></audio>
+      <audio id="a-ty2" src="assets/type.mp3" data-start="13.55" data-duration="1.4" data-track-index="27" data-volume="0.35"></audio>
+      <audio id="a-p5" src="assets/pop.mp3" data-start="14.6" data-duration="0.5" data-track-index="28" data-volume="0.45"></audio>
+      <audio id="a-p6" src="assets/pop.mp3" data-start="14.95" data-duration="0.5" data-track-index="29" data-volume="0.45"></audio>
+      <audio id="a-p7" src="assets/pop.mp3" data-start="15.3" data-duration="0.5" data-track-index="30" data-volume="0.45"></audio>
+      <audio id="a-p8" src="assets/pop.mp3" data-start="15.65" data-duration="0.5" data-track-index="31" data-volume="0.45"></audio>
+      <audio id="a-dg2" src="assets/ding.mp3" data-start="17.3" data-duration="1.0" data-track-index="32" data-volume="0.35"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="18.65" data-duration="0.8" data-track-index="33" data-volume="0.5"></audio>
+      <audio id="a-s1" src="assets/swarm.mp3" data-start="19.55" data-duration="1.6" data-track-index="34" data-volume="0.3"></audio>
+      <audio id="a-s2" src="assets/swarm.mp3" data-start="21.05" data-duration="1.6" data-track-index="35" data-volume="0.3"></audio>
+      <audio id="a-gl3" src="assets/glitch.mp3" data-start="22.75" data-duration="0.6" data-track-index="36" data-volume="0.45"></audio>
+      <audio id="a-sh" src="assets/shimmer.mp3" data-start="24.15" data-duration="1.5" data-track-index="37" data-volume="0.4"></audio>
+      <audio id="a-ty3" src="assets/type.mp3" data-start="24.4" data-duration="1.6" data-track-index="38" data-volume="0.35"></audio>
+      <audio id="a-rs" src="assets/riser.mp3" data-start="25.8" data-duration="1.48" data-track-index="39" data-volume="0.45"></audio>
+      <audio id="a-im1" src="assets/impact.mp3" data-start="27.3" data-duration="1.5" data-track-index="40" data-volume="0.5"></audio>
+      <audio id="a-p9" src="assets/pop.mp3" data-start="27.75" data-duration="0.5" data-track-index="41" data-volume="0.45"></audio>
+      <audio id="a-p10" src="assets/pop.mp3" data-start="31.0" data-duration="0.5" data-track-index="42" data-volume="0.45"></audio>
+      <audio id="a-p11" src="assets/pop.mp3" data-start="34.6" data-duration="0.5" data-track-index="43" data-volume="0.45"></audio>
+      <audio id="a-k1" src="assets/tick.mp3" data-start="35.6" data-duration="0.5" data-track-index="44" data-volume="0.4"></audio>
+      <audio id="a-k2" src="assets/tick.mp3" data-start="36.6" data-duration="0.5" data-track-index="45" data-volume="0.4"></audio>
+      <audio id="a-c4" src="assets/click.mp3" data-start="37.7" data-duration="0.5" data-track-index="46" data-volume="0.7"></audio>
+      <audio id="a-dg3" src="assets/ding.mp3" data-start="37.8" data-duration="1.0" data-track-index="47" data-volume="0.45"></audio>
+      <audio id="a-gl4" src="assets/glitch.mp3" data-start="39.15" data-duration="0.6" data-track-index="48" data-volume="0.4"></audio>
+      <audio id="a-p12" src="assets/pop.mp3" data-start="40.0" data-duration="0.5" data-track-index="49" data-volume="0.45"></audio>
+      <audio id="a-p13" src="assets/pop.mp3" data-start="40.45" data-duration="0.5" data-track-index="50" data-volume="0.45"></audio>
+      <audio id="a-p14" src="assets/pop.mp3" data-start="40.9" data-duration="0.5" data-track-index="51" data-volume="0.45"></audio>
+      <audio id="a-sw" src="assets/swell.mp3" data-start="41.9" data-duration="1.48" data-track-index="52" data-volume="0.4"></audio>
+
+      <!-- ============ S1 hook: CRT power-on, a cascade of identical landings + warning dialog ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="3.6" data-track-index="1">
+        <div class="win paper land" id="l1" style="left: 70px; top: 420px; width: 720px; height: 560px;"><div class="tbar">misma_landing.html<span class="bx"><i></i><i></i></span></div><div class="body"><div class="nav"></div><div class="h"></div><div class="h2"></div><span class="cta">PEDIR DEMO</span></div></div>
+        <div class="win paper land" id="l2" style="left: 130px; top: 510px; width: 720px; height: 560px;"><div class="tbar">misma_landing.html<span class="bx"><i></i><i></i></span></div><div class="body"><div class="nav"></div><div class="h"></div><div class="h2"></div><span class="cta">PEDIR DEMO</span></div></div>
+        <div class="win paper land" id="l3" style="left: 190px; top: 600px; width: 720px; height: 560px;"><div class="tbar">misma_landing.html<span class="bx"><i></i><i></i></span></div><div class="body"><div class="nav"></div><div class="h"></div><div class="h2"></div><span class="cta">PEDIR DEMO</span></div></div>
+        <div class="win paper land" id="l4" style="left: 250px; top: 690px; width: 720px; height: 560px;"><div class="tbar">misma_landing.html<span class="bx"><i></i><i></i></span></div><div class="body"><div class="nav"></div><div class="h"></div><div class="h2"></div><span class="cta">PEDIR DEMO</span></div></div>
+        <div class="win" id="warn" style="left: 60px; top: 1060px; width: 960px; height: 560px;">
+          <div class="tbar">AVISO.SYS<span class="bx"><i></i><i></i></span></div>
+          <div style="display: flex; gap: 30px; padding: 34px 34px 0;">
+            <div class="pix" style="flex: none; width: 96px; height: 96px; border: 4px solid var(--ac); color: var(--ac2); font-size: 70px; text-align: center; line-height: 90px;">!</div>
+            <div class="pix glow" style="font-size: 54px; line-height: 1.18; -webkit-text-stroke: 1.4px currentColor;">¿Quieres vender tu SaaS sin mandar a todo el mundo a la <span class="hr">misma landing?</span></div>
+          </div>
+          <div style="position: absolute; right: 34px; bottom: 30px; display: flex; gap: 26px; color: var(--fg);"><span class="btn">SÍ</span><span class="btn" style="color: var(--dim);">NO</span></div>
+        </div>
+      </section>
+
+      <!-- ============ S2 "Haz esto.": desktop icons + context menu ============ -->
+      <section id="s2" class="scene clip" data-start="3.6" data-duration="2.8" data-track-index="1">
+        <div class="head silk" id="s2h" style="top: 260px; font-size: 140px;">Haz esto.</div>
+        <div class="icon" id="i1" style="left: 30px; top: 620px;"><div class="sq pix">?</div><div class="lb">SAAS IN<br />HOUSE</div></div>
+        <div class="icon red" id="i2" style="left: 390px; top: 620px;"><div class="sq pix">?</div><div class="lb">QUIZ<br />FUNNEL</div></div>
+        <div class="icon" id="i3" style="left: 750px; top: 620px;"><div class="sq pix">%</div><div class="lb">OFERTA</div></div>
+        <div class="file sel" id="f1" style="left: 70px; top: 1160px;"><div class="pg"></div><span>landing.html</span></div>
+        <div class="file" id="f2" style="left: 430px; top: 1160px;"><div class="pg"></div><span>demo.ics</span></div>
+        <div class="file" id="f3" style="left: 790px; top: 1160px;"><div class="pg"></div><span>leads.csv</span></div>
+        <div class="menu" id="ctx" style="left: 200px; top: 1320px;">
+          <div>ABRIR</div>
+          <div id="ctx2">ABRIR CON › QUIZ FUNNEL</div>
+        </div>
+      </section>
+
+      <!-- ============ S3 install dialog ============ -->
+      <section id="s3" class="scene clip" data-start="6.4" data-duration="3.2" data-track-index="1">
+        <div class="head" id="s3h" style="top: 240px; font-size: 66px;">En lugar de pedir una demo directamente,</div>
+        <div class="win paper" id="d0" style="left: 120px; top: 640px; width: 840px; height: 330px; rotate: -4deg;"><div class="tbar">pedir_demo.exe</div><div class="pix" style="padding: 40px; font-size: 40px; text-decoration: line-through; text-decoration-color: var(--ac); text-decoration-thickness: 6px;">RESERVA UNA DEMO</div></div>
+        <div class="win paper" id="d1" style="left: 60px; top: 880px; width: 960px; height: 640px;">
+          <div class="tbar">QUIZ_FUNNEL.SYS<span class="bx"><i></i><i></i></span></div>
+          <div style="display: flex; gap: 34px; padding: 50px 44px 0; align-items: center;">
+            <div style="flex: none; width: 120px; height: 120px; border: 5px solid #1a2220; position: relative; background: repeating-linear-gradient(0deg, #1a2220 0 4px, transparent 4px 10px);"><div style="position: absolute; left: 22px; right: 22px; bottom: 0; height: 46px; background: var(--paper); border: 5px solid #1a2220;"></div></div>
+            <div class="silk" style="font-size: 72px; line-height: 1.05;">CREA UN<br />QUIZ FUNNEL</div>
+          </div>
+          <div style="position: absolute; left: 44px; right: 44px; bottom: 54px; height: 70px; display: flex; align-items: center; gap: 30px;">
+            <div style="flex: 1; height: 40px; border: 3px solid #1a2220; position: relative;"><div id="prog" style="position: absolute; left: 4px; top: 4px; bottom: 4px; width: calc(100% - 8px); background: repeating-linear-gradient(90deg, #1a2220 0 18px, transparent 18px 24px); transform-origin: left;"></div></div>
+            <span class="btn" id="inst" style="color: #1a2220;">INSTALAR</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S4+S5 funnel editor (NLE look) ============ -->
+      <section id="s4" class="scene clip" data-start="9.6" data-duration="9.2" data-track-index="1">
+        <div id="ttl" class="glow">funnel_v1<span class="hl">.quiz</span></div>
+        <div class="head" id="h4a" style="top: 250px; font-size: 44px; color: var(--dim);">Primero, entre <span style="color: var(--fg);">5 y 8 preguntas</span>: quién es, qué quiere conseguir y cuál es su principal problema.</div>
+        <div class="head silk" id="h4b" style="top: 240px; font-size: 66px; opacity: 0;">Pero no hagas<br /><span class="hl">solo preguntas.</span></div>
+        <div class="pane bin" style="left: 60px; top: 470px; width: 370px; height: 470px;">
+          <div class="ph">BIN</div>
+          <div class="bl" style="padding-top: 10px;">
+            <div id="b1">pregunta_01.q</div><div id="b2">pregunta_02.q</div><div id="b3">pregunta_03.q</div><div id="b4">pregunta_04…07.q</div>
+            <div id="b5" class="c">caso_real.card</div><div id="b6" class="c">dato.card</div><div id="b7" class="c">resultado.card</div><div id="b8" class="c">consejo.card</div>
+          </div>
+        </div>
+        <div class="pane" style="left: 450px; top: 470px; width: 570px; height: 470px;">
+          <div class="ph">PREVIEW</div>
+          <div class="pv" id="q1"><div class="qn">PREGUNTA 1/7</div><div class="qt">¿Quién eres?</div><div class="opt" id="q1o">Founder SaaS B2B</div><div class="opt">Marketing</div><div class="opt">Ventas</div></div>
+          <div class="pv" id="q2"><div class="qn">PREGUNTA 2/7</div><div class="qt">¿Qué quieres conseguir?</div><div class="opt">Más demos</div><div class="opt" id="q2o">Más ventas</div><div class="opt">Menos churn</div></div>
+          <div class="pv" id="q3"><div class="qn">PREGUNTA 3/7</div><div class="qt">¿Tu principal problema?</div><div class="opt">Pocos leads</div><div class="opt" id="q3o">Leads fríos</div><div class="opt">Ciclo largo</div></div>
+          <div class="card" id="cd1"><div class="qn" style="color: var(--mint); font-size: 20px; letter-spacing: 0.1em;">CASO REAL <span class="chip">ejemplo</span></div><div class="pix" style="font-size: 40px; line-height: 1.15; margin-top: 18px;">SaaS B2B:<br />del 2% al 6%<br />de demo a cierre</div></div>
+          <div class="card" id="cd2" style="border-color: var(--fg); background: var(--paper); color: #1a2220;"><div class="qn" style="font-size: 20px; letter-spacing: 0.1em;">LO QUE PIENSA</div><div class="pix" style="font-size: 50px; line-height: 1.12; margin-top: 26px;">“Vale, esto<br />tiene sentido.”</div></div>
+        </div>
+        <div class="pane" id="tlpane" style="left: 60px; top: 960px; width: 960px; height: 330px;">
+          <div class="ph">TIMELINE <span style="float: right; color: var(--dim);">00:00:<span id="tc">00</span>:00</span></div>
+          <div class="track" style="top: 40px;"><div class="tn">Q</div>
+            <div class="clipb" id="k1" style="left: 74px; width: 110px;">P1 quién</div><div class="clipb" id="k2" style="left: 238px; width: 110px;">P2 qué</div><div class="clipb" id="k3" style="left: 402px; width: 110px;">P3 dolor</div><div class="clipb" id="k4" style="left: 566px; width: 110px;">P4</div><div class="clipb" id="k5" style="left: 730px; width: 100px;">P5–7</div>
+          </div>
+          <div class="track" style="top: 104px;"><div class="tn">C</div>
+            <div class="clipb c" id="m1" style="left: 186px; width: 50px;">caso</div><div class="clipb c" id="m2" style="left: 350px; width: 50px;">dato</div><div class="clipb c" id="m3" style="left: 514px; width: 50px;">res.</div><div class="clipb c" id="m4" style="left: 678px; width: 50px;">tip</div>
+          </div>
+          <div class="track" style="top: 168px;"><div class="tn">R</div><div class="clipb r" id="r1" style="left: 834px; width: 116px;">resultado</div></div>
+          <div class="track" style="top: 232px; border-bottom: 1px solid var(--line);"><div class="tn">♪</div><div style="position: absolute; left: 74px; right: 10px; top: 14px; height: 36px; background: repeating-linear-gradient(90deg, rgba(143, 162, 156, 0.6) 0 3px, transparent 3px 7px); clip-path: polygon(0 40%, 10% 10%, 20% 50%, 30% 0, 40% 45%, 50% 15%, 60% 50%, 70% 5%, 80% 40%, 90% 20%, 100% 45%, 100% 100%, 0 100%);"></div></div>
+          <div id="playhead" style="left: 74px;"></div>
+        </div>
+        <div class="prompt" id="pr4" style="top: 1420px;"><span class="who">SAAS IN HOUSE · AGENTE</span><span class="you">TÚ</span><span id="pt1" style="position: relative;"><span class="hl">@SaaSinHouse</span> haz 5–8 preguntas</span><span id="pt2" style="position: absolute; left: 92px; opacity: 0;"><span class="hl">@SaaSinHouse</span> añade cards entre medias</span><span class="st" id="st1">EJECUTADO</span></div>
+        <div class="head" id="h4c" style="top: 1560px; font-size: 34px; color: var(--dim); opacity: 0;">casos reales · datos · resultados · consejos</div>
+      </section>
+
+      <!-- ============ S6 hero object: one funnel, many renders ============ -->
+      <section id="s6" class="scene clip" data-start="18.8" data-duration="5.3" data-track-index="1">
+        <div id="heroglow"></div>
+        <div id="floor"></div>
+        <div id="horizon"></div>
+        <div id="ring"></div>
+        <div id="hero">
+          <img id="v0" src="assets/chrome.png" alt="" /><img id="v1" src="assets/dither.png" alt="" /><img id="v2" src="assets/ascii.png" alt="" /><img id="v3" src="assets/contour.png" alt="" />
+          <img id="v4" src="assets/halftone.png" alt="" /><img id="v5" src="assets/thermal.png" alt="" /><img id="v6" src="assets/xray.png" alt="" /><img id="v7" src="assets/red.png" alt="" />
+        </div>
+        <div id="scanbar"></div>
+        <div id="gridwall"><img src="assets/grid.png" alt="" /><div class="sel" id="gsel" style="left: 450px; top: 0;"></div></div>
+        <div class="head" id="h6a" style="top: 180px; font-size: 56px;">Después, según sus respuestas,<br /><span class="hl">un resultado personalizado.</span></div>
+        <div class="tag" id="tg" style="left: 70px; top: 1500px;">render: <b id="tgr">resultado_01</b> · perfil: <b id="tgp">founder</b></div>
+        <div class="tag" style="right: 70px; top: 120px;">1080P / 30 FPS</div>
+      </section>
+
+      <!-- ============ S7 "la parte importante" ============ -->
+      <section id="s7" class="scene clip" data-start="24.1" data-duration="3.2" data-track-index="1">
+        <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(40, 110, 95, 0.55), rgba(11, 16, 17, 0) 70%);"></div>
+        <img id="pts" src="assets/points.png" alt="" style="position: absolute; left: 140px; top: 560px; width: 800px; height: 800px; opacity: 0.0;" />
+        <div class="head silk" id="s7h" style="top: 780px; font-size: 84px; text-align: center; left: 40px; right: 40px;">Y aquí viene<br />la parte <span class="hr">importante.</span></div>
+      </section>
+
+      <!-- ============ S8 last cards → product ============ -->
+      <section id="s8" class="scene clip" data-start="27.3" data-duration="11.9" data-track-index="1">
+        <div class="head" id="s8h" style="top: 170px; font-size: 46px;">Las últimas cards lo llevan<br />hacia <span class="hl">tu producto:</span></div>
+        <div class="li" id="li1" style="top: 330px;"><span class="n">1</span>por qué encaja</div>
+        <div class="li" id="li2" style="top: 400px;"><span class="n">2</span>una oferta específica</div>
+        <div class="li" id="li3" style="top: 470px;"><span class="n">3</span>un contador limitado</div>
+        <div class="win paper" id="w1" style="left: 60px; top: 640px; width: 900px; height: 700px;">
+          <div class="tbar">por_que_encaja.card<span class="bx"><i></i><i></i></span></div>
+          <div style="padding: 36px 40px;">
+            <div style="font-size: 24px; letter-spacing: 0.1em;">TU SITUACIÓN <span class="chip">ejemplo</span></div>
+            <div class="pix" style="font-size: 46px; line-height: 1.2; margin: 22px 0 30px; -webkit-text-stroke: 1px currentColor;">SaaS B2B · 3 comerciales · leads fríos</div>
+            <div style="height: 3px; background: #1a2220; margin-bottom: 30px;"></div>
+            <div class="pix" style="font-size: 54px; line-height: 1.15; -webkit-text-stroke: 1.2px currentColor;">→ Por eso tu producto encaja: califica al lead antes de la demo.</div>
+          </div>
+        </div>
+        <div class="win" id="w2" style="left: 120px; top: 800px; width: 900px; height: 700px; border-color: var(--mint);">
+          <div class="tbar" style="color: var(--mint);">oferta.card<span class="bx"><i></i><i></i></span></div>
+          <div style="padding: 36px 40px;">
+            <div style="font-size: 24px; letter-spacing: 0.1em; color: var(--mint);">SOLO PARA TU PERFIL <span class="chip">ejemplo</span></div>
+            <div class="pix glow" style="font-size: 210px; line-height: 1; margin: 30px 0 26px; color: var(--mint); -webkit-text-stroke: 4px currentColor;">–30%</div>
+            <div class="pix" style="font-size: 46px;">Plan Growth · 3 meses</div>
+          </div>
+        </div>
+        <div class="win" id="w3" style="left: 60px; top: 960px; width: 960px; height: 700px; border-color: var(--ac);">
+          <div class="tbar" style="color: var(--ac2);">contador.exe<span class="bx"><i></i><i></i></span></div>
+          <div style="padding: 30px 40px 0; font-size: 24px; letter-spacing: 0.1em; color: var(--ac2);">LA OFERTA CADUCA EN <span class="chip">ejemplo</span></div>
+          <div class="clock" id="clk" style="margin-top: 70px;">14:59</div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 56px; text-align: center;"><span class="btn" id="canj" style="color: var(--fg); font-size: 44px; padding: 12px 50px;">CANJEAR</span></div>
+        </div>
+      </section>
+
+      <!-- ============ S9 closing desktop: 3 icons ============ -->
+      <section id="s9" class="scene clip" data-start="39.2" data-duration="2.8" data-track-index="1">
+        <div class="head silk" id="s9h" style="top: 260px; font-size: 76px;">Así no solo<br />captas el lead.</div>
+        <div class="icon mint" id="j1" style="left: 30px; top: 720px;"><div class="sq pix">#</div><div class="lb">Lo<br />segmentas</div></div>
+        <div class="icon mint" id="j2" style="left: 390px; top: 720px;"><div class="sq pix">i</div><div class="lb">lo<br />educas</div></div>
+        <div class="icon red" id="j3" style="left: 750px; top: 720px;"><div class="sq pix">€</div><div class="lb">y lo llevas<br />a la compra</div></div>
+        <div class="file sel" id="j4" style="left: 430px; top: 1300px;"><div class="pg"></div><span>LEAD.quiz</span></div>
+      </section>
+
+      <!-- ============ S10 end card: the real CRT ============ -->
+      <section id="s10" class="scene clip" data-start="42.0" data-duration="3.5" data-track-index="1">
+        <div id="photo">
+          <img src="assets/crt.jpg" alt="" />
+          <div id="scr"><div class="mk"></div><div class="wm">SaaS<span class="in">IN</span>House</div><div class="sub">QUIZ FUNNELS QUE VENDEN</div><div class="lines"></div></div>
+        </div>
+      </section>
+
+      <!-- persistent desktop chrome -->
+      <div id="menubar"><span class="logo"></span><span>ARCHIVO</span><span>EDITAR</span><span>VER</span><span>AGENTE</span><span class="sp"></span><span class="stat">FUNNEL: <b id="fst">OFF</b></span><span>23:58</span></div>
+      <div id="foot">Made with SaaS in House</div>
+      <div id="cursor"><svg viewBox="0 0 16 21" shape-rendering="crispEdges"><path d="M1 1 L1 16 L5 12 L8 19 L10 18 L7 11 L12 11 Z" fill="#f4fbf8" stroke="#000" stroke-width="1.2" /></svg></div>
+      <div id="flash"></div>
+      <div id="crt"><div class="sl"></div><div class="vig"></div><div class="fl" id="crtfl"></div><div class="bez" id="bez"></div></div>
+      <div id="power"></div>
+    </div>
+
+    <script>
+      const END = 45.5;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+
+      function wrapChars(el) {
+        if (el.dataset.wrapped) return Array.from(el.querySelectorAll(".ch"));
+        const walk = (node) => {
+          Array.from(node.childNodes).forEach((n) => {
+            if (n.nodeType === 3) {
+              const frag = document.createDocumentFragment();
+              for (const c of n.textContent) { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; frag.appendChild(s); }
+              n.replaceWith(frag);
+            } else if (n.nodeType === 1 && !n.classList.contains("cur")) walk(n);
+          });
+        };
+        walk(el); el.dataset.wrapped = "1";
+        return Array.from(el.querySelectorAll(".ch"));
+      }
+      // type `sel` from t0 at cps chars/s with a mint block cursor that blinks until `hold`
+      function typeIn(sel, t0, cps, hold) {
+        const el = $(sel);
+        const chars = wrapChars(el);
+        let cur = el.querySelector(".cur");
+        if (!cur) { cur = document.createElement("span"); cur.className = "cur"; el.appendChild(cur); }
+        chars.forEach((c, i) => tl.set(c, { display: "inline" }, t0 + i / cps));
+        const t1 = t0 + chars.length / cps;
+        tl.set(cur, { opacity: 1 }, t0);
+        if (hold) { for (let k = t1; k < hold - 0.25; k += 0.5) tl.set(cur, { opacity: 0 }, k + 0.25).set(cur, { opacity: 1 }, k + 0.5); tl.set(cur, { opacity: 0 }, hold); }
+        return t1;
+      }
+      const fadeIn = (sel, at, d = 0.3, y = 18) => tl.fromTo(sel, { opacity: 0, y }, { opacity: 1, y: 0, duration: d, ease: "power3.out" }, at);
+      const fadeOut = (sel, at, d = 0.2) => tl.to(sel, { opacity: 0, duration: d, ease: "power1.in" }, at);
+      const popIn = (sel, at, d = 0.28) => tl.fromTo(sel, { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: d, ease: "back.out(2.2)" }, at);
+      // CRT-style window open: a thin horizontal line that snaps open vertically
+      const winOpen = (sel, at) => tl.set(sel, { opacity: 1, scaleY: 0.02, scaleX: 0.6 }, at).to(sel, { scaleX: 1, duration: 0.08, ease: "none" }, at).to(sel, { scaleY: 1, duration: 0.14, ease: "power3.out" }, at + 0.08);
+      // cursor: move (tip position) and click
+      const CUR = $("#cursor");
+      const moveTo = (x, y, at, d = 0.45) => tl.to(CUR, { x, y, duration: d, ease: "power2.inOut" }, at);
+      const click = (at) => tl.to(CUR, { scale: 0.82, duration: 0.06 }, at).to(CUR, { scale: 1, duration: 0.1 }, at + 0.06);
+      const cut = (at) => { tl.fromTo("#flash", { opacity: 1, y: -220 }, { y: 1920, duration: 0.22, ease: "none", immediateRender: false }, at).set("#flash", { opacity: 0 }, at + 0.22); tl.fromTo("#root", { x: -14 }, { x: 0, duration: 0.12, ease: "steps(3)", immediateRender: false }, at); };
+
+      /* ===================== persistent ===================== */
+      // power on: a line expands, then the picture opens
+      tl.fromTo("#power", { scaleX: 0, scaleY: 1, opacity: 1 }, { scaleX: 1, duration: 0.14, ease: "power2.out" }, 0.0)
+        .fromTo("#power", { scaleY: 1, opacity: 1 }, { scaleY: 190, opacity: 0, duration: 0.22, ease: "power2.in", immediateRender: false }, 0.16);
+      tl.fromTo("#s1", { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.25);
+      tl.fromTo("#menubar", { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.25);
+      // phosphor flicker (finite)
+      tl.fromTo("#crtfl", { opacity: 0 }, { opacity: 1, duration: 0.07, repeat: 300, yoyo: true, ease: "steps(1)" }, 0);
+      tl.set(CUR, { x: 900, y: 1700 }, 0);
+      // hide desktop chrome on hero / break / end card
+      tl.set("#menubar", { opacity: 0 }, 18.8).set("#menubar", { opacity: 1 }, 27.3).set("#menubar", { opacity: 0 }, 42.0);
+      tl.set(CUR, { opacity: 0 }, 18.8).set(CUR, { opacity: 1 }, 27.3).set(CUR, { opacity: 0 }, 42.0);
+      tl.set("#crt", { opacity: 0 }, 42.0);
+      tl.set("#foot", { color: "#f3e9dc" }, 42.0);
+      [3.6, 6.4, 9.6, 18.8, 24.1, 27.3, 39.2].forEach(cut);
+
+      /* ===================== S1 hook ===================== */
+      ["#l1", "#l2", "#l3", "#l4"].forEach((s, i) => winOpen(s, 0.32 + i * 0.3 * (i < 3 ? 1 : 0.85)));
+      winOpen("#warn", 1.32);
+      moveTo(760, 1460, 1.6, 0.9);
+      tl.to("#l4", { x: 8, duration: 0.05, repeat: 5, yoyo: true }, 2.3);
+
+      /* ===================== S2 Haz esto ===================== */
+      tl.set(CUR, { x: 640, y: 1500 }, 3.6);
+      typeIn("#s2h", 3.65, 22, 6.35);
+      popIn("#i1", 3.75); popIn("#i2", 3.85); popIn("#i3", 3.95);
+      fadeIn("#f1", 4.0, 0.2, 10); fadeIn("#f2", 4.05, 0.2, 10); fadeIn("#f3", 4.1, 0.2, 10);
+      moveTo(190, 1230, 3.95, 0.6);
+      click(4.6);
+      winOpen("#ctx", 4.7);
+      moveTo(380, 1425, 5.0, 0.45);
+      tl.set("#ctx2", { background: "#9fe8d0", color: "#08201a" }, 5.4);
+      click(5.7);
+      tl.to("#i2", { scale: 1.12, duration: 0.15, yoyo: true, repeat: 1 }, 5.8);
+
+      /* ===================== S3 install ===================== */
+      tl.set(CUR, { x: 860, y: 1640 }, 6.4);
+      typeIn("#s3h", 6.45, 40, 9.55);
+      winOpen("#d0", 6.5); winOpen("#d1", 6.75);
+      moveTo(850, 1420, 7.4, 0.8);
+      click(8.3);
+      tl.set("#inst", { background: "#1a2220", color: "#e4e8e2" }, 8.32);
+      tl.fromTo("#prog", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "steps(12)" }, 8.4);
+      tl.set("#inst", { innerText: "LISTO" }, 9.3);
+      tl.set("#fst", { innerText: "ON", color: "#9fe8d0" }, 9.3);
+
+      /* ===================== S4/S5 editor ===================== */
+      tl.set(CUR, { x: 980, y: 1700 }, 9.6);
+      fadeIn("#ttl", 9.65, 0.25, 0);
+      fadeIn("#h4a", 9.75, 0.35, 10);
+      ["#b1", "#b2", "#b3", "#b4"].forEach((s, i) => tl.set(s, { opacity: 1 }, 9.7 + i * 0.08));
+      const p1 = typeIn("#pt1", 9.95, 26, 13.4);
+      tl.set("#st1", { opacity: 1 }, p1 + 0.1);
+      // questions land on the Q track one by one, preview shows each
+      [["#k1", "#q1", "#q1o", 10.6], ["#k2", "#q2", "#q2o", 11.4], ["#k3", "#q3", "#q3o", 12.2]].forEach(([k, q, o, t], i) => {
+        tl.fromTo(k, { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.2, ease: "back.out(2)" }, t);
+        tl.set(q, { opacity: 1 }, t);
+        if (i > 0) tl.set(i === 1 ? "#q1" : "#q2", { opacity: 0 }, t);
+        tl.set(o, { className: "opt on" }, t + 0.5);
+        tl.set("#tc", { innerText: String(3 + i * 4).padStart(2, "0") }, t);
+      });
+      moveTo(640, 640, 10.4, 0.4); click(11.05);
+      moveTo(640, 700, 11.3, 0.3); click(11.85);
+      moveTo(640, 700, 12.1, 0.2); click(12.65);
+      tl.fromTo("#k4", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.2, ease: "back.out(2)" }, 12.8);
+      tl.fromTo("#k5", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.2, ease: "back.out(2)" }, 13.0);
+      tl.fromTo("#playhead", { x: 0 }, { x: 846, duration: 9.0, ease: "none" }, 9.7);
+      // drop (13.5): "pero no hagas solo preguntas"
+      fadeOut("#h4a", 13.45, 0.1);
+      tl.fromTo("#h4b", { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power3.out" }, 13.5);
+      tl.set("#pt1", { opacity: 0 }, 13.5).set("#st1", { opacity: 0 }, 13.5).set("#pt2", { opacity: 1 }, 13.5);
+      const p2 = typeIn("#pt2", 13.55, 30, 18.7);
+      tl.set("#st1", { opacity: 1 }, p2 + 0.1);
+      ["#b5", "#b6", "#b7", "#b8"].forEach((s, i) => tl.set(s, { opacity: 1 }, 14.4 + i * 0.1));
+      ["#m1", "#m2", "#m3", "#m4"].forEach((s, i) => tl.fromTo(s, { opacity: 0, y: -40, scaleX: 0.4 }, { opacity: 1, y: 0, scaleX: 1, duration: 0.25, ease: "back.out(2.5)" }, 14.6 + i * 0.35));
+      fadeIn("#h4c", 15.0, 0.3, 8);
+      moveTo(260, 760, 14.4, 0.6);
+      tl.set("#q3", { opacity: 0 }, 15.9);
+      popIn("#cd1", 15.9);
+      tl.set("#cd1", { opacity: 0 }, 17.2);
+      popIn("#cd2", 17.2);
+      tl.fromTo("#r1", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.2, ease: "back.out(2)" }, 18.0);
+
+      /* ===================== S6 hero ===================== */
+      typeIn("#h6a", 18.85, 42, 24.0);
+      tl.fromTo("#hero", { y: 60, scale: 0.9 }, { y: 0, scale: 1, duration: 0.6, ease: "power3.out" }, 18.8);
+      tl.to("#hero", { y: -24, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 5 }, 19.45);
+      tl.fromTo("#floor", { backgroundPosition: "0px 0px" }, { backgroundPosition: "0px 600px", duration: 5.3, ease: "none" }, 18.8);
+      const V = [["v0", "resultado_01", "founder", 18.8], ["v1", "resultado_02", "marketing", 19.6], ["v2", "resultado_03", "dev", 20.05], ["v3", "resultado_04", "ventas", 20.5], ["v4", "resultado_05", "agencia", 20.95], ["v5", "resultado_06", "e-commerce", 21.4], ["v6", "resultado_07", "CTO", 21.85], ["v7", "resultado_08", "tú", 22.3]];
+      V.forEach(([id, r, p, t], i) => {
+        if (i === 0) { tl.set("#" + id, { opacity: 1 }, t); return; }
+        const prev = "#" + V[i - 1][0];
+        // scan-wipe: the new render paints in from top to bottom behind a bright scan bar
+        tl.set("#" + id, { opacity: 1, clipPath: "inset(0% 0% 100% 0%)" }, t);
+        tl.to("#" + id, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.26, ease: "none" }, t);
+        tl.fromTo("#scanbar", { opacity: 1, y: 0 }, { y: 720, duration: 0.26, ease: "none", immediateRender: false }, t);
+        tl.set("#scanbar", { opacity: 0 }, t + 0.27);
+        tl.set(prev, { opacity: 0 }, t + 0.27);
+        tl.set("#tgr", { innerText: r }, t).set("#tgp", { innerText: p }, t);
+      });
+      // 4x4 wall of results
+      tl.set(["#hero", "#ring", "#floor", "#horizon"], { opacity: 0 }, 22.8);
+      tl.fromTo("#gridwall", { opacity: 0, scale: 0.6, rotationY: -40 }, { opacity: 1, scale: 1, rotationY: -14, duration: 0.45, ease: "power3.out" }, 22.8);
+      [[450, 0], [675, 225], [0, 450], [225, 675]].forEach(([x, y], i) => tl.set("#gsel", { left: x, top: y }, 22.9 + i * 0.3));
+      tl.set("#tgr", { innerText: "16 resultados" }, 22.8).set("#tgp", { innerText: "1 por perfil" }, 22.8);
+
+      /* ===================== S7 break ===================== */
+      tl.fromTo("#pts", { opacity: 0, scale: 0.7, filter: "blur(0px)" }, { opacity: 0.55, scale: 1.25, filter: "blur(2px)", duration: 3.2, ease: "none" }, 24.1);
+      typeIn("#s7h", 24.35, 22, 27.25);
+      tl.to("#s7h", { scale: 1.06, duration: 1.6, ease: "power2.in" }, 25.6);
+
+      /* ===================== S8 last cards ===================== */
+      tl.set(CUR, { x: 980, y: 1720 }, 27.3);
+      fadeIn("#s8h", 27.35, 0.25, 0);
+      ["#li1", "#li2", "#li3"].forEach((s, i) => fadeIn(s, 27.45 + i * 0.1, 0.25, 8));
+      tl.set("#li1", { className: "li on" }, 27.7);
+      winOpen("#w1", 27.75);
+      moveTo(520, 1150, 28.4, 0.8);
+      tl.set("#li1", { className: "li done" }, 31.0).set("#li2", { className: "li on" }, 31.0);
+      winOpen("#w2", 31.0);
+      tl.to("#w1", { y: -120, scale: 0.9, opacity: 0.18, duration: 0.3, ease: "power2.out" }, 31.0);
+      moveTo(700, 1250, 31.5, 0.8);
+      tl.set("#li2", { className: "li done" }, 34.6).set("#li3", { className: "li on" }, 34.6);
+      winOpen("#w3", 34.6);
+      tl.to("#w2", { y: -120, scale: 0.9, opacity: 0.18, duration: 0.3, ease: "power2.out" }, 34.6);
+      tl.to("#w1", { opacity: 0, duration: 0.2 }, 34.6);
+      ["14:58", "14:57", "14:56", "14:55"].forEach((v, i) => tl.set("#clk", { innerText: v }, 35.6 + i));
+      moveTo(560, 1580, 36.6, 0.9);
+      click(37.7);
+      tl.set("#canj", { background: "#e8382d", color: "#fff", borderColor: "#e8382d", boxShadow: "5px 5px 0 #7a1a14" }, 37.72);
+      tl.set("#canj", { innerText: "CANJEADO" }, 37.72);
+
+      /* ===================== S9 three icons ===================== */
+      tl.set(CUR, { x: 900, y: 1720 }, 39.2);
+      typeIn("#s9h", 39.25, 30, 41.95);
+      popIn("#j1", 40.0); popIn("#j2", 40.45); popIn("#j3", 40.9);
+      fadeIn("#j4", 41.2, 0.2, 8);
+      moveTo(560, 1420, 40.0, 1.0);
+
+      /* ===================== S10 end card ===================== */
+      tl.fromTo("#photo", { scale: 2.12 }, { scale: 1, duration: 2.0, ease: "power3.inOut" }, 42.0);
+      tl.fromTo("#scr .wm", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "steps(4)" }, 42.1);
+      tl.fromTo("#scr .sub", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "steps(4)" }, 42.5);
+
+      tl.set({}, {}, END);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

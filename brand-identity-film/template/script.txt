@@ -1,0 +1,15 @@
+On-screen text (music only, no VO) — beat map, 42.5s
+0.0  S1  logo build (IN pixel blocks → chip, SaaS/House slide out, yellow box) · "Quiz Funnel · sistema de venta"
+3.2  S2  invert to ink, small wordmark, red dot drops + bounces → pink circle wipe
+4.6  S3  type specimen on red: "¿Vendes tu SaaS / con la misma / landing para todos?" (middle line swaps sans→serif at 6.6)
+8.6  S4  "Haz esto." / "En lugar de pedir una demo," / "crea un Quiz Funnel." (swaps to serif at 11.0)
+12.0 S5  "Primero, 5–8 preguntas." + 6 colour swatches, each = one question
+15.6 S6  red card + dot → dusk landscape "Pero no hagas solo preguntas." → circle wipe to day "Entre medias, añade cards." → shrinks
+19.25 S7 mosaic wall (5x5 tiles: casos/datos/resultados/consejos/quiz/landscapes) → dim → «vale, esto tiene sentido»
+23.0 S8  line-drawn pod → pod in cliffs → beam drops result cards on 3 backgrounds: "Según sus respuestas, un resultado personalizado."
+28.6 S9  icon grid + "Y aquí viene la parte importante."
+30.6 S10 laptop on dusk sea: "Las últimas cards lo llevan a tu producto." por qué encaja / oferta −30% (ejemplo) / 14:59 countdown
+34.0 S11 "Así no solo captas el lead." → studio triptych: captas / segmentas / educas
+36.0 S12 lockups over landscapes: "lo segmentas, / lo educas, / y lo llevas a la compra."
+38.6 S13 red + pod + floating rocks/confetti: "Haz que tu funnel venda."
+40.6 S14 end lockup SaaS IN House + "Comenta «QUIZ»"

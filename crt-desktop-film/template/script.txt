@@ -1,0 +1,21 @@
+CRT desktop film — beat map (music only; the base script is on-screen text). Times in seconds, 45.5s total.
+Music: reused samuel-uiux bed (47s). Drop 13.5 · break 24.1–27.3 · return 27.3 · tail fade 44.3–45.5.
+
+S1  0.0–3.6   CRT power-on line → 4 "misma_landing.html" windows open → AVISO.SYS dialog:
+              "¿Quieres vender tu SaaS sin mandar a todo el mundo a la misma landing?"  [SÍ] [NO]
+S2  3.6–6.4   "Haz esto."  desktop icons SAAS IN HOUSE / QUIZ FUNNEL (red) / OFERTA; files landing.html, demo.ics, leads.csv
+              cursor right-clicks landing.html → ABRIR / ABRIR CON › QUIZ FUNNEL
+S3  6.4–9.6   "En lugar de pedir una demo directamente,"  pedir_demo.exe (struck) behind QUIZ_FUNNEL.SYS "CREA UN QUIZ FUNNEL"
+              [INSTALAR] → progress → LISTO; menu bar FUNNEL: OFF → ON
+S4  9.6–13.5  editor funnel_v1.quiz: "Primero, entre 5 y 8 preguntas: quién es, qué quiere conseguir y cuál es su principal problema."
+              BIN, PREVIEW (P1 ¿Quién eres? · P2 ¿Qué quieres conseguir? · P3 ¿Tu principal problema?), Q-track clips, prompt "@SaaSinHouse haz 5–8 preguntas"
+S5 13.5–18.8  (drop) "Pero no hagas solo preguntas."  prompt "@SaaSinHouse añade cards entre medias"; C-track cards drop between questions
+              "casos reales · datos · resultados · consejos"; preview: CASO REAL (ejemplo: del 2% al 6% de demo a cierre) → “Vale, esto tiene sentido.”
+S6 18.8–24.1  hero funnel on a grid floor: "Después, según sus respuestas, un resultado personalizado."
+              scan-wipe through 8 renders (chrome, dither, ascii, wireframe, halftone, thermal, x-ray, red) = 8 profiles → 4x4 wall "16 resultados · 1 por perfil"
+S7 24.1–27.3  (break) "Y aquí viene la parte importante."  over a blurred point-cloud funnel, riser
+S8 27.3–39.2  "Las últimas cards lo llevan hacia tu producto:" checklist 1 por qué encaja / 2 una oferta específica / 3 un contador limitado
+              por_que_encaja.card (ejemplo) → oferta.card –30% Plan Growth (ejemplo) → contador.exe 14:59…14:55 (ejemplo), cursor clicks CANJEAR → CANJEADO
+S9 39.2–42.0  "Así no solo captas el lead."  icons: Lo segmentas / lo educas / y lo llevas a la compra; file LEAD.quiz
+S10 42.0–45.5 photo of a real CRT on a desk (pull-back from the screen): SaaS [IN] House · QUIZ FUNNELS QUE VENDEN
+Persistent: menu bar (ARCHIVO EDITAR VER AGENTE · FUNNEL: OFF/ON · 23:58), pixel cursor, "Made with SaaS in House", CRT scanlines + bezel + flicker, scan-flash on every cut.

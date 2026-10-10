@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      @font-face { font-family: "InstrumentSerif"; src: url("assets/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+      :root {
+        --ink: #0b0b10; --red: #e8382d; --deep: #7e140d; --gold: #f5c51b; --cream: #f2efe6; --pink: #f7dcd7; --muted: #8b8790;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--ink); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--ink); color: var(--cream); font-family: "Archivo", sans-serif; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .cam { position: absolute; inset: 0; }
+      .abs { position: absolute; }
+      .full { position: absolute; inset: 0; }
+      .c { left: 0; width: 1080px; text-align: center; }
+      .h { font-weight: 860; letter-spacing: -0.04em; line-height: 0.95; }
+      .serif { font-family: "InstrumentSerif", Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: -0.02em; }
+      .px { font-family: "Silkscreen", monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+      .spec { font-family: "Silkscreen", monospace; font-size: 17px; line-height: 1.5; letter-spacing: 0.08em; text-transform: uppercase; }
+      .ex { display: inline-block; font-family: "Silkscreen", monospace; font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; color: #9a6d00; background: rgba(245, 197, 27, 0.28); border-radius: 8px; padding: 5px 9px 2px; vertical-align: middle; }
+      .chip { display: inline-block; font-family: "Silkscreen", monospace; font-weight: 700; background: var(--red); color: var(--cream); vertical-align: middle; letter-spacing: 0.04em; }
+      .land { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; object-fit: cover; }
+      .sw { position: absolute; width: 400px; height: 330px; border-radius: 52px; padding: 30px 32px; }
+      .sw .nm { font-weight: 650; font-size: 28px; }
+      .sw .hx { font-family: "Silkscreen", monospace; font-size: 17px; opacity: 0.7; margin-top: 4px; }
+      .sw .q { position: absolute; left: 32px; right: 28px; bottom: 30px; font-weight: 760; font-size: 40px; line-height: 1.02; letter-spacing: -0.03em; }
+      .tile { position: absolute; width: 304px; height: 495px; border-radius: 26px; overflow: hidden; background: var(--cream); color: var(--ink); }
+      .tile .land { width: 304px; height: 540px; }
+      .tile .lab { position: absolute; left: 24px; top: 24px; font-family: "Silkscreen", monospace; font-size: 16px; letter-spacing: 0.1em; color: var(--red); }
+      .tile .big { position: absolute; left: 24px; right: 20px; top: 70px; font-weight: 820; font-size: 48px; line-height: 0.98; letter-spacing: -0.035em; }
+      .tile .sm { position: absolute; left: 24px; right: 20px; bottom: 26px; font-size: 22px; line-height: 1.2; color: #55525a; }
+      .tile .opt { margin-top: 12px; padding: 12px 16px; border: 2px solid #d9d4c8; border-radius: 14px; font-size: 22px; font-weight: 600; }
+      .tile .opt.on { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+      .rcard { position: absolute; left: 230px; width: 620px; background: var(--cream); color: var(--ink); border-radius: 36px; padding: 34px 40px 36px; box-shadow: 0 40px 80px rgba(60, 10, 5, 0.35); }
+      .rcard .lab { font-family: "Silkscreen", monospace; font-size: 18px; letter-spacing: 0.12em; color: var(--red); }
+      .rcard .big { font-weight: 840; font-size: 74px; letter-spacing: -0.04em; margin-top: 10px; line-height: 0.95; }
+      .rcard .sm { font-size: 28px; margin-top: 14px; color: #55525a; }
+      .beam { position: absolute; left: 140px; top: 400px; width: 800px; height: 1150px; clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.05)); }
+      .pill { display: inline-block; padding: 14px 26px 12px; border-radius: 999px; font-weight: 700; font-size: 34px; margin: 0 6px; }
+      .band { position: absolute; left: 0; width: 1080px; height: 640px; overflow: hidden; }
+      .obj { position: absolute; left: 250px; top: 170px; width: 580px; height: 300px; border-radius: 34px; background: #fff; color: var(--ink); box-shadow: 0 50px 70px rgba(0, 0, 0, 0.18); padding: 34px 38px; }
+      .obj .lab { font-family: "Silkscreen", monospace; font-size: 18px; letter-spacing: 0.12em; color: var(--red); }
+      .obj .big { font-weight: 830; font-size: 58px; letter-spacing: -0.04em; margin-top: 14px; line-height: 1; }
+      .obj .sm { font-size: 24px; margin-top: 12px; color: #55525a; }
+      .bandlab { position: absolute; left: 60px; bottom: 40px; font-family: "Silkscreen", monospace; font-size: 20px; letter-spacing: 0.14em; color: rgba(11, 11, 16, 0.45); }
+      .w { display: inline-block; white-space: pre; }
+      img[src$="pod.png"] { object-fit: contain; }
+      .ico { position: absolute; width: 56px; height: 56px; }
+      .rock { position: absolute; background: #5c0f0a; border-radius: 40% 55% 45% 60%; }
+      .conf { position: absolute; width: 16px; height: 16px; background: var(--gold); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="42.5" data-width="1080" data-height="1920">
+      <!-- ================= audio: reused airy-launch bed (lift at 19.25, fade from 40) + reused SFX ================= -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="42.5" data-track-index="20" data-volume="0.9"></audio>
+      <audio id="sx-p0" src="assets/pop.mp3" data-start="0.9" data-duration="0.5" data-track-index="21" data-volume="0.5"></audio>
+      <audio id="sx-c0" src="assets/chime.mp3" data-start="2.2" data-duration="1.4" data-track-index="22" data-volume="0.35"></audio>
+      <audio id="sx-w1" src="assets/whoosh.mp3" data-start="3.15" data-duration="0.8" data-track-index="23" data-volume="0.5"></audio>
+      <audio id="sx-p1" src="assets/pop.mp3" data-start="4.25" data-duration="0.5" data-track-index="24" data-volume="0.55"></audio>
+      <audio id="sx-w2" src="assets/whoosh.mp3" data-start="4.55" data-duration="0.8" data-track-index="25" data-volume="0.55"></audio>
+      <audio id="sx-w3" src="assets/whoosh.mp3" data-start="8.55" data-duration="0.8" data-track-index="26" data-volume="0.5"></audio>
+      <audio id="sx-w4" src="assets/whoosh.mp3" data-start="11.95" data-duration="0.8" data-track-index="27" data-volume="0.5"></audio>
+      <audio id="sx-p41" src="assets/pop.mp3" data-start="12.6" data-duration="0.5" data-track-index="28" data-volume="0.45"></audio>
+      <audio id="sx-p42" src="assets/pop.mp3" data-start="12.95" data-duration="0.5" data-track-index="29" data-volume="0.45"></audio>
+      <audio id="sx-p43" src="assets/pop.mp3" data-start="13.3" data-duration="0.5" data-track-index="30" data-volume="0.45"></audio>
+      <audio id="sx-p44" src="assets/pop.mp3" data-start="13.65" data-duration="0.5" data-track-index="31" data-volume="0.45"></audio>
+      <audio id="sx-p45" src="assets/pop.mp3" data-start="14.0" data-duration="0.5" data-track-index="32" data-volume="0.45"></audio>
+      <audio id="sx-p46" src="assets/pop.mp3" data-start="14.35" data-duration="0.5" data-track-index="33" data-volume="0.45"></audio>
+      <audio id="sx-w5" src="assets/whoosh.mp3" data-start="15.55" data-duration="0.8" data-track-index="34" data-volume="0.5"></audio>
+      <audio id="sx-w51" src="assets/whoosh.mp3" data-start="18.1" data-duration="0.8" data-track-index="35" data-volume="0.45"></audio>
+      <audio id="sx-w6" src="assets/whoosh.mp3" data-start="18.95" data-duration="0.8" data-track-index="36" data-volume="0.55"></audio>
+      <audio id="sx-c6" src="assets/chime.mp3" data-start="21.4" data-duration="1.4" data-track-index="37" data-volume="0.4"></audio>
+      <audio id="sx-w7" src="assets/whoosh.mp3" data-start="22.95" data-duration="0.8" data-track-index="38" data-volume="0.45"></audio>
+      <audio id="sx-p8" src="assets/pop.mp3" data-start="24.2" data-duration="0.5" data-track-index="39" data-volume="0.5"></audio>
+      <audio id="sx-w81" src="assets/whoosh.mp3" data-start="25.55" data-duration="0.8" data-track-index="40" data-volume="0.5"></audio>
+      <audio id="sx-c8" src="assets/chime.mp3" data-start="26.1" data-duration="1.4" data-track-index="41" data-volume="0.35"></audio>
+      <audio id="sx-p82" src="assets/pop.mp3" data-start="27.15" data-duration="0.5" data-track-index="42" data-volume="0.45"></audio>
+      <audio id="sx-p83" src="assets/pop.mp3" data-start="27.95" data-duration="0.5" data-track-index="43" data-volume="0.45"></audio>
+      <audio id="sx-w9" src="assets/whoosh.mp3" data-start="28.55" data-duration="0.8" data-track-index="44" data-volume="0.5"></audio>
+      <audio id="sx-w10" src="assets/whoosh.mp3" data-start="30.55" data-duration="0.8" data-track-index="45" data-volume="0.5"></audio>
+      <audio id="sx-t101" src="assets/tick.mp3" data-start="32.4" data-duration="0.5" data-track-index="46" data-volume="0.45"></audio>
+      <audio id="sx-t102" src="assets/tick.mp3" data-start="33.4" data-duration="0.5" data-track-index="47" data-volume="0.45"></audio>
+      <audio id="sx-w11" src="assets/whoosh.mp3" data-start="33.95" data-duration="0.8" data-track-index="48" data-volume="0.5"></audio>
+      <audio id="sx-p111" src="assets/pop.mp3" data-start="34.85" data-duration="0.5" data-track-index="49" data-volume="0.45"></audio>
+      <audio id="sx-p112" src="assets/pop.mp3" data-start="35.15" data-duration="0.5" data-track-index="50" data-volume="0.45"></audio>
+      <audio id="sx-p113" src="assets/pop.mp3" data-start="35.45" data-duration="0.5" data-track-index="51" data-volume="0.45"></audio>
+      <audio id="sx-w12" src="assets/whoosh.mp3" data-start="35.95" data-duration="0.8" data-track-index="52" data-volume="0.45"></audio>
+      <audio id="sx-w13" src="assets/whoosh.mp3" data-start="38.55" data-duration="0.8" data-track-index="53" data-volume="0.5"></audio>
+      <audio id="sx-c14" src="assets/chime.mp3" data-start="40.65" data-duration="1.4" data-track-index="54" data-volume="0.5"></audio>
+
+      <!-- ============ S1 · logo construction on cream (0–3.2) ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="3.2" data-track-index="1" style="background: var(--cream);">
+        <div class="cam">
+          <div id="s1-tag" class="abs c spec" style="top: 1230px; color: var(--muted); font-size: 22px;">Quiz Funnel · sistema de venta</div>
+          <div id="s1-word" class="abs c" style="top: 880px; white-space: nowrap; color: var(--ink);">
+            <span id="s1-a" class="h" style="display: inline-block; font-size: 128px; vertical-align: middle;">SaaS</span>
+            <span id="s1-chipw" style="position: relative; display: inline-block; width: 150px; height: 112px; vertical-align: middle; margin: 0 14px;">
+              <span id="s1-px1" class="abs" style="left: 0; top: 0; width: 75px; height: 56px; background: var(--red);"></span>
+              <span id="s1-px2" class="abs" style="left: 75px; top: 0; width: 75px; height: 56px; background: var(--red);"></span>
+              <span id="s1-px3" class="abs" style="left: 0; top: 56px; width: 75px; height: 56px; background: var(--red);"></span>
+              <span id="s1-px4" class="abs" style="left: 75px; top: 56px; width: 75px; height: 56px; background: var(--red);"></span>
+              <span id="s1-chip" class="abs chip" style="left: 0; top: 0; width: 150px; height: 112px; font-size: 70px; line-height: 118px; text-align: center; box-shadow: 9px 9px 0 var(--deep);">IN</span>
+            </span>
+            <span id="s1-b" class="h" style="display: inline-block; font-size: 128px; vertical-align: middle;">House</span>
+          </div>
+          <div id="s1-box" class="abs" style="left: 52px; top: 838px; width: 976px; height: 210px; border: 8px solid var(--gold); border-radius: 6px;"></div>
+        </div>
+      </section>
+
+      <!-- ============ S2 · invert to ink, dot drops (3.2–4.6) ============ -->
+      <section id="s2" class="scene clip" data-start="3.2" data-duration="1.4" data-track-index="2">
+        <div class="cam">
+          <div id="s2-word" class="abs c" style="top: 920px; white-space: nowrap;">
+            <span class="h" style="font-size: 64px; vertical-align: middle;">SaaS</span>
+            <span class="chip" style="font-size: 36px; padding: 8px 10px 3px; margin: 0 6px; box-shadow: 5px 5px 0 var(--deep);">IN</span>
+            <span class="h" style="font-size: 64px; vertical-align: middle;">House</span>
+          </div>
+          <div id="s2-wipe" class="abs" style="left: 500px; top: 1300px; width: 80px; height: 80px; border-radius: 50%; background: var(--pink);"></div>
+          <div id="s2-dot" class="abs" style="left: 520px; top: 1320px; width: 40px; height: 40px; border-radius: 50%; background: var(--red);"></div>
+        </div>
+      </section>
+
+      <!-- ============ S3 · hook as type specimen on red (4.6–8.6) ============ -->
+      <section id="s3" class="scene clip" data-start="4.6" data-duration="4.0" data-track-index="3" style="background: var(--red);">
+        <div class="cam" data-layout-allow-overlap>
+          <div class="abs spec" style="left: 60px; top: 150px; color: rgba(11, 11, 16, 0.7);">Archivo Heavy<br />100% / −4%</div>
+          <div class="abs spec" style="right: 60px; top: 150px; text-align: right; color: rgba(11, 11, 16, 0.7);">Instrument Serif<br />Italic / −2%</div>
+          <div id="s3-l1" class="abs h" style="left: 40px; top: 560px; font-size: 196px; white-space: nowrap; color: var(--ink);">¿Vendes tu SaaS</div>
+          <div id="s3-l2a" class="abs h" style="left: 40px; top: 790px; font-size: 196px; white-space: nowrap; color: var(--cream);"><span style="color: var(--gold);">con</span> la misma</div>
+          <div id="s3-l2b" class="abs serif" style="left: 40px; top: 770px; font-size: 236px; line-height: 1; white-space: nowrap; color: var(--cream);"><span style="color: var(--gold);">con</span> la misma</div>
+          <div id="s3-l3" class="abs h" style="left: 40px; top: 1020px; font-size: 196px; white-space: nowrap; color: var(--ink);">landing para todos?</div>
+          <div class="abs spec" style="left: 60px; bottom: 150px; color: rgba(11, 11, 16, 0.7);">Rojo SaaS in House · #E8382D</div>
+        </div>
+      </section>
+
+      <!-- ============ S4 · "Haz esto." + Quiz Funnel on ink (8.6–12.0) ============ -->
+      <section id="s4" class="scene clip" data-start="8.6" data-duration="3.4" data-track-index="4">
+        <div class="cam" data-layout-allow-overlap>
+          <div id="s4-haz" class="abs serif" style="left: 80px; top: 360px; font-size: 120px; color: var(--gold);">Haz esto.</div>
+          <div class="abs spec" style="right: 80px; top: 600px; text-align: right; color: var(--muted);">Archivo Medium<br />100% / −4%</div>
+          <div id="s4-l1" class="abs h" style="left: 80px; top: 700px; font-size: 128px; font-weight: 640;">En lugar de</div>
+          <div id="s4-l2" class="abs h" style="left: 80px; top: 830px; font-size: 128px; font-weight: 640;">pedir una demo,</div>
+          <div class="abs spec" style="left: 80px; top: 1010px; color: var(--muted);">Instrument Serif<br />Italic / −2%</div>
+          <div id="s4-l3a" class="abs h" style="left: 80px; top: 1100px; font-size: 128px; font-weight: 640; color: var(--gold);">crea un<br />Quiz Funnel.</div>
+          <div id="s4-l3b" class="abs serif" style="left: 80px; top: 1080px; font-size: 166px; line-height: 0.95; color: var(--gold);">crea un<br />Quiz Funnel.</div>
+        </div>
+      </section>
+
+      <!-- ============ S5 · palette swatches = the questions (12.0–15.6) ============ -->
+      <section id="s5" class="scene clip" data-start="12.0" data-duration="3.6" data-track-index="5" style="background: var(--pink);">
+        <div class="cam">
+          <div id="s5-t" class="abs" style="left: 100px; top: 210px; color: var(--ink);">
+            <div class="h" style="font-size: 92px;">Primero,</div>
+            <div class="h" style="font-size: 92px;">5–8 <span class="serif" style="font-size: 116px; color: var(--red);">preguntas.</span></div>
+            <div class="spec" style="font-size: 22px; margin-top: 18px; color: rgba(11, 11, 16, 0.55);">quién es · qué quiere · su problema</div>
+          </div>
+          <div id="sw1" class="sw" style="left: 100px; top: 600px; background: var(--ink); color: var(--cream);"><div class="nm">Tinta</div><div class="hx">#0B0B10</div><div class="q">¿Quién eres?</div></div>
+          <div id="sw2" class="sw" style="left: 580px; top: 600px; background: var(--red); color: var(--cream);"><div class="nm">Rojo</div><div class="hx">#E8382D</div><div class="q">¿Qué quieres conseguir?</div></div>
+          <div id="sw3" class="sw" style="left: 100px; top: 970px; background: var(--deep); color: var(--cream);"><div class="nm">Granate</div><div class="hx">#7E140D</div><div class="q">¿Tu mayor problema?</div></div>
+          <div id="sw4" class="sw" style="left: 580px; top: 970px; background: var(--gold); color: var(--ink);"><div class="nm">Amarillo</div><div class="hx">#F5C51B</div><div class="q">¿Qué has probado ya?</div></div>
+          <div id="sw5" class="sw" style="left: 100px; top: 1340px; background: transparent; color: var(--ink); border: 2px dashed rgba(11, 11, 16, 0.25);"><div class="nm">Rosa</div><div class="hx">#F7DCD7</div><div class="q">¿Tamaño del equipo?</div></div>
+          <div id="sw6" class="sw" style="left: 580px; top: 1340px; background: var(--cream); color: var(--ink);"><div class="nm">Crema</div><div class="hx">#F2EFE6</div><div class="q">¿Para cuándo lo necesitas?</div></div>
+        </div>
+      </section>
+
+      <!-- ============ S6 · red card with dot → landscape cards (15.6–19.25) ============ -->
+      <section id="s6" class="scene clip" data-start="15.6" data-duration="3.65" data-track-index="6">
+        <div id="s6-cam" class="cam">
+          <div id="s6-card" class="abs" style="left: 80px; top: 210px; width: 920px; height: 1500px; border-radius: 60px; overflow: hidden; background: var(--red);">
+            <img id="s6-img1" class="abs" src="assets/land_dusk.jpg" style="left: 0; top: -80px; width: 920px; height: 1636px; object-fit: cover;" />
+            <img id="s6-img2" class="abs" src="assets/land_day.jpg" style="left: 0; top: -80px; width: 920px; height: 1636px; object-fit: cover;" />
+            <div id="s6-t1" class="abs serif" style="left: 0; width: 920px; top: 260px; text-align: center; font-size: 104px; line-height: 1; color: var(--cream);">Pero no hagas<br />solo preguntas.</div>
+            <div id="s6-t2" class="abs serif" style="left: 0; width: 920px; top: 230px; text-align: center; font-size: 96px; line-height: 1; color: #fff;">Entre medias,<br />añade cards.</div>
+            <div id="s6-dot" class="abs" style="left: 830px; top: 1410px; width: 34px; height: 34px; border-radius: 50%; background: var(--gold);"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S7 · mosaic wall of cards (19.25–23.0) ============ -->
+      <section id="s7" data-layout-allow-overlap class="scene clip" data-start="19.25" data-duration="3.75" data-track-index="7">
+        <div id="s7-grid" class="full" data-layout-allow-overlap></div>
+        <div id="s7-dim" data-layout-allow-overlap class="full" style="background: rgba(11, 11, 16, 0.72);"></div>
+        <div id="s7-q" data-layout-allow-overlap class="abs c" style="top: 760px;">
+          <div class="spec" style="font-size: 22px; color: var(--muted);">y tu lead piensa:</div>
+          <div class="serif" style="font-size: 132px; line-height: 1; color: var(--gold); margin-top: 20px;">«vale, esto<br />tiene sentido»</div>
+        </div>
+        <div id="s7-cap" data-layout-allow-overlap class="abs c" style="top: 1700px;">
+          <span class="pill" style="background: var(--ink); color: var(--cream); font-size: 40px; padding: 20px 34px 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">casos · datos · resultados · consejos</span>
+        </div>
+      </section>
+
+      <!-- ============ S8 · line pod → pod, beam drops personalised results (23.0–28.6) ============ -->
+      <section id="s8" class="scene clip" data-start="23.0" data-duration="5.6" data-track-index="8" style="background: var(--cream);">
+        <div class="cam">
+          <svg id="s8-line" class="abs" style="left: 330px; top: 650px;" width="420" height="420" viewBox="0 0 420 420" fill="none" stroke="#b5ae9f" stroke-width="3">
+            <circle class="dr" cx="210" cy="210" r="180" />
+            <rect class="dr" x="70" y="150" width="280" height="110" rx="55" />
+            <ellipse class="dr" cx="210" cy="372" rx="54" ry="14" />
+            <line class="dr" x1="30" y1="210" x2="390" y2="210" stroke-dasharray="6 8" />
+          </svg>
+          <img id="s8-cliffs" class="land" src="assets/cliffs.jpg" />
+          <img id="s8-pod" class="abs" src="assets/pod.png" style="left: 330px; top: 650px; width: 420px; height: 420px;" />
+          <!-- results: three backgrounds + beam + cards -->
+          <div id="s8-r1" class="full" style="background: linear-gradient(#e8382d 0%, #f39a8c 48%, #fbe3dc 72%, #f6cfc6 100%);"></div>
+          <img id="s8-r2" class="land" src="assets/land_desert.jpg" />
+          <img id="s8-r3" class="land" src="assets/land_dusk.jpg" />
+          <div id="s8-beam" class="beam"></div>
+          <img id="s8-pod2" class="abs" src="assets/pod.png" style="left: 430px; top: 230px; width: 220px; height: 220px;" />
+          <div id="s8-c1" class="rcard" style="top: 760px;"><div class="lab">Tu resultado</div><div class="big">Plan Growth</div><div class="sm">92% de encaje <span class="ex">ejemplo</span></div></div>
+          <div id="s8-c2" class="rcard" style="top: 760px;"><div class="lab">Tu resultado</div><div class="big">Plan Starter</div><div class="sm">Founder en solitario <span class="ex">ejemplo</span></div></div>
+          <div id="s8-c3" class="rcard" style="top: 760px;"><div class="lab">Tu resultado</div><div class="big">Plan Scale</div><div class="sm">Equipo de ventas <span class="ex">ejemplo</span></div></div>
+          <div id="s8-h" class="abs" style="left: 70px; top: 1440px; width: 940px; border-radius: 40px; background: var(--cream); color: var(--ink); padding: 40px 46px;">
+            <div class="h" style="font-size: 66px; font-weight: 760;">Según sus respuestas,</div>
+            <div class="serif" style="font-size: 84px; color: var(--red); margin-top: 6px;">un resultado personalizado.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S9 · icon grid, "la parte importante" (28.6–30.6) ============ -->
+      <section id="s9" class="scene clip" data-start="28.6" data-duration="2.0" data-track-index="9">
+        <div class="cam">
+          <svg id="s9-lines" class="full" width="1080" height="1920" viewBox="0 0 1080 1920" stroke="rgba(242,239,230,0.14)" stroke-width="2">
+            <line class="dr" x1="540" y1="960" x2="0" y2="300" />
+            <line class="dr" x1="540" y1="960" x2="1080" y2="520" />
+            <line class="dr" x1="540" y1="960" x2="200" y2="1920" />
+            <line class="dr" x1="540" y1="960" x2="1080" y2="1700" />
+          </svg>
+          <div id="s9-icons" class="full"></div>
+          <div id="s9-t" data-layout-allow-overlap class="abs c" style="top: 800px;">
+            <div class="h" style="font-size: 96px; font-weight: 700;">Y aquí viene</div>
+            <div class="serif" style="font-size: 126px; line-height: 1.05; color: var(--gold);">la parte importante.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S10 · laptop on dusk sea: why it fits + offer + countdown (30.6–34.0) ============ -->
+      <section id="s10" class="scene clip" data-start="30.6" data-duration="3.4" data-track-index="10">
+        <div id="s10-cam" class="cam">
+          <img class="land" src="assets/land_dusk.jpg" />
+          <div id="s10-h" class="abs c" style="top: 240px;">
+            <div class="h" style="font-size: 82px; font-weight: 760;">Las últimas cards lo</div>
+            <div class="serif" style="font-size: 104px;">llevan a tu producto.</div>
+          </div>
+          <div id="s10-pills" class="abs c" style="top: 540px;">
+            <span id="s10-p1" class="pill" style="background: var(--cream); color: var(--ink);">por qué encaja</span>
+            <span id="s10-p2" class="pill" style="background: var(--gold); color: var(--ink);">oferta</span>
+            <span id="s10-p3" class="pill" style="background: var(--ink); color: var(--cream);">tiempo limitado</span>
+          </div>
+          <div id="s10-lap" class="abs" style="left: 100px; top: 760px; width: 880px;">
+            <div style="position: relative; width: 880px; height: 570px; background: #16161c; border-radius: 30px 30px 0 0; padding: 18px;">
+              <div style="position: relative; width: 844px; height: 534px; background: var(--cream); border-radius: 12px; overflow: hidden; color: var(--ink);">
+                <div style="position: absolute; left: 0; right: 0; top: 0; height: 64px; border-bottom: 2px solid #e2ddd1; padding: 16px 28px; font-weight: 800; font-size: 26px;">SaaS <span class="chip" style="font-size: 15px; padding: 4px 6px 1px;">IN</span> House <span style="float: right;" class="spec">tu resultado</span></div>
+                <div id="s10-s1" class="abs h" style="left: 32px; top: 92px; font-size: 52px; font-weight: 800;">Por qué encaja contigo</div>
+                <div id="s10-s2" class="abs" style="left: 32px; top: 168px; font-size: 26px; line-height: 1.55;">✓ Vendes B2B con ciclo largo<br />✓ Tu problema: leads que no convierten<br />✓ Ya tienes tráfico, falta segmentarlo</div>
+                <div id="s10-s3" class="abs" style="left: 32px; top: 330px; width: 780px; height: 176px; border-radius: 22px; background: var(--ink); color: var(--cream); padding: 22px 28px;">
+                  <div class="spec" style="color: var(--gold);">Oferta para tu perfil <span class="ex" style="color: var(--gold); margin-left: 8px;">ejemplo</span></div>
+                  <div class="h" style="font-size: 46px; margin-top: 12px;">−30% el primer año</div>
+                  <div class="abs" style="right: 28px; top: 26px; text-align: right;"><div class="spec" style="color: var(--muted);">caduca en</div><div id="s10-cd" class="px" style="font-size: 44px; color: var(--cream);">14:59</div></div>
+                  <div id="s10-btn" class="abs" style="right: 28px; bottom: 22px; background: var(--red); border-radius: 14px; padding: 12px 18px 10px; font-weight: 800; font-size: 22px;">Canjear oferta →</div>
+                </div>
+              </div>
+            </div>
+            <div style="width: 1000px; margin-left: -60px; height: 34px; background: linear-gradient(#2a2a31, #0e0e12); border-radius: 0 0 24px 24px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S11 · "Así no solo captas el lead." + studio triptych (34.0–36.0) ============ -->
+      <section id="s11" class="scene clip" data-start="34.0" data-duration="2.0" data-track-index="11" style="background: var(--cream);">
+        <div class="band" id="b1" style="top: 0; background: radial-gradient(circle at 50% 45%, #e9e2d6, #cfc6b6);">
+          <div class="obj"><div class="lab">Nuevo lead</div><div class="big">Lead captado ✓</div><div class="sm">vía Quiz Funnel</div></div>
+          <div class="bandlab">01 · captas</div>
+        </div>
+        <div class="band" id="b2" style="top: 640px; background: radial-gradient(circle at 50% 45%, #f1d6d0, #d9b1a8);">
+          <div class="obj"><div class="lab">Segmento</div><div class="big">B2B · ciclo largo</div><div class="sm">perfil asignado por respuestas</div></div>
+          <div class="bandlab">02 · segmentas</div>
+        </div>
+        <div class="band" id="b3" style="top: 1280px; background: radial-gradient(circle at 50% 45%, #f4f1ea, #d8d4cb);">
+          <div class="obj"><div class="lab">Educado</div><div class="big">4 cards vistas</div><div class="sm">casos · datos · consejos</div></div>
+          <div class="bandlab">03 · educas</div>
+        </div>
+        <div id="s11-h" data-layout-allow-overlap class="full" style="background: var(--cream);">
+          <div class="abs c" style="top: 780px; color: var(--ink);">
+            <div class="h" style="font-size: 104px;">Así no solo</div>
+            <div class="serif" style="font-size: 150px; color: var(--red); line-height: 1.05;">captas el lead.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S12 · product lockups over landscapes (36.0–38.6) ============ -->
+      <section id="s12" class="scene clip" data-start="36.0" data-duration="2.6" data-track-index="12">
+        <img id="s12-i1" class="land" src="assets/land_day.jpg" />
+        <img id="s12-i2" class="land" src="assets/land_desert.jpg" />
+        <img id="s12-i3" class="land" src="assets/land_dusk.jpg" />
+        <div class="abs spec" style="left: 70px; top: 120px; color: rgba(255, 255, 255, 0.75);">SaaS in House</div>
+        <div class="abs spec" style="right: 70px; top: 120px; color: rgba(255, 255, 255, 0.75);">Quiz Funnel</div>
+        <div class="abs" style="left: 70px; right: 70px; top: 150px; height: 2px; background: rgba(255, 255, 255, 0.35);"></div>
+        <div class="abs c" style="top: 760px; white-space: nowrap; color: #fff;">
+          <span class="h" style="font-size: 60px; vertical-align: middle;">SaaS</span>
+          <span class="chip" style="font-size: 32px; padding: 7px 9px 2px; margin: 0 4px; box-shadow: 4px 4px 0 var(--deep);">IN</span>
+          <span class="h" style="font-size: 60px; vertical-align: middle;">House</span>
+        </div>
+        <div id="s12-t1" class="abs c serif" style="top: 870px; font-size: 120px; color: #fff;">lo segmentas,</div>
+        <div id="s12-t2" class="abs c serif" style="top: 870px; font-size: 120px; color: #fff;">lo educas,</div>
+        <div id="s12-t3" class="abs c serif" style="top: 870px; font-size: 104px; line-height: 1; color: #fff;">y lo llevas<br />a la compra.</div>
+      </section>
+
+      <!-- ============ S13 · tagline on red with pod and floating rocks (38.6–40.6) ============ -->
+      <section id="s13" class="scene clip" data-start="38.6" data-duration="2.0" data-track-index="13" style="background: radial-gradient(circle at 70% 25%, #ff6a55, #e8382d 40%, #7e140d 100%);">
+        <div id="s13-fx" class="full"></div>
+        <img id="s13-pod" class="abs" src="assets/pod.png" style="left: 600px; top: 330px; width: 360px; height: 360px;" />
+        <div id="s13-t" class="abs" style="left: 80px; top: 1080px; color: var(--cream);">
+          <div class="h" style="font-size: 128px;">Haz que tu</div>
+          <div class="h" style="font-size: 128px;">funnel <span class="serif" style="font-size: 160px; color: var(--gold);">venda.</span></div>
+        </div>
+      </section>
+
+      <!-- ============ S14 · end lockup on ink (40.6–42.5) ============ -->
+      <section id="s14" class="scene clip" data-start="40.6" data-duration="1.9" data-track-index="14">
+        <img id="s14-pod" class="abs" src="assets/pod.png" style="left: 470px; top: 700px; width: 140px; height: 140px;" />
+        <div id="s14-word" class="abs c" style="top: 900px; white-space: nowrap;">
+          <span class="h" style="font-size: 92px; vertical-align: middle;">SaaS</span>
+          <span class="chip" style="font-size: 50px; padding: 10px 13px 4px; margin: 0 8px; box-shadow: 7px 7px 0 var(--deep);">IN</span>
+          <span class="h" style="font-size: 92px; vertical-align: middle;">House</span>
+        </div>
+        <div id="s14-cta" class="abs c spec" style="top: 1070px; font-size: 30px; color: var(--gold);">Comenta «QUIZ»</div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      let seed = 20261007;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => Array.from(document.querySelectorAll(s));
+      const END = 42.5;
+      // draw-on for any svg .dr element (stroke dash), seek-safe
+      function draw(sel, t, dur, stagger = 0.12) {
+        $$(sel).forEach((el, i) => {
+          const L = el.getTotalLength ? el.getTotalLength() : 1200;
+          el.style.strokeDasharray = el.getAttribute("stroke-dasharray") ? el.getAttribute("stroke-dasharray") : L;
+          if (!el.getAttribute("stroke-dasharray")) tl.fromTo(el, { strokeDashoffset: L }, { strokeDashoffset: 0, duration: dur, ease: "power2.inOut" }, t + i * stagger);
+          else tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: dur, ease: "none" }, t + i * stagger);
+        });
+      }
+      const blurIn = (sel, t, d = 0.5, y = 30) => tl.fromTo(sel, { opacity: 0, y, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: d, ease: "expo.out" }, t);
+
+      // ================= S1 logo construction (0–3.2) =================
+      ["#s1-px1", "#s1-px2", "#s1-px3", "#s1-px4"].forEach((s, i) => {
+        tl.fromTo(s, { backgroundColor: "#dcd7cc", scale: 0.6, opacity: 0 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 0.15 + i * 0.12);
+        tl.to(s, { backgroundColor: "#e8382d", duration: 0.3 }, 0.6 + i * 0.06);
+      });
+      tl.fromTo("#s1-chip", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 0.95);
+      tl.fromTo("#s1-chipw", { scale: 1.6 }, { scale: 1, duration: 0.5, ease: "expo.out" }, 0.15);
+      tl.fromTo("#s1-a", { opacity: 0, x: 140, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 1.15);
+      tl.fromTo("#s1-b", { opacity: 0, x: -140, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 1.2);
+      tl.fromTo("#s1-box", { opacity: 0, scaleX: 0.85, scaleY: 0.6 }, { opacity: 1, scaleX: 1, scaleY: 1, duration: 0.45, ease: "back.out(2)" }, 2.2);
+      blurIn("#s1-tag", 2.35, 0.5, 16);
+      tl.to("#s1 .cam", { scale: 1.04, duration: 3.2, ease: "none" }, 0);
+
+      // ================= S2 invert + dot (3.2–4.6) =================
+      tl.fromTo("#s2-word", { scale: 1.9 }, { scale: 1, duration: 0.5, ease: "expo.out" }, 3.2);
+      tl.fromTo("#s2-dot", { y: -1400 }, { y: 0, duration: 0.45, ease: "power2.in" }, 3.8);
+      tl.to("#s2-dot", { y: -160, duration: 0.18, ease: "power2.out" }, 4.25);
+      tl.to("#s2-dot", { y: 0, duration: 0.15, ease: "power2.in" }, 4.43);
+      tl.fromTo("#s2-wipe", { scale: 0 }, { scale: 60, duration: 0.25, ease: "power2.in", immediateRender: true }, 4.35);
+
+      // ================= S3 hook specimen (4.6–8.6) =================
+      tl.fromTo("#s3-l1", { x: 120 }, { x: -380, duration: 4.0, ease: "none" }, 4.6);
+      tl.fromTo("#s3-l2a", { x: -220 }, { x: 60, duration: 4.0, ease: "none" }, 4.6);
+      tl.fromTo("#s3-l2b", { x: -220 }, { x: 60, duration: 4.0, ease: "none" }, 4.6);
+      tl.fromTo("#s3-l3", { x: 60 }, { x: -760, duration: 4.0, ease: "none" }, 4.6);
+      blurIn("#s3-l1", 4.65, 0.5, 60);
+      tl.fromTo("#s3-l2a", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.95);
+      tl.fromTo("#s3-l3", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 5.3);
+      // sans -> serif swap of the middle line
+      tl.set("#s3-l2b", { opacity: 0 }, 4.6);
+      tl.to("#s3-l2a", { opacity: 0, filter: "blur(10px)", duration: 0.25 }, 6.6);
+      tl.fromTo("#s3-l2b", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, immediateRender: false }, 6.65);
+      tl.to("#s3 .cam", { yPercent: -4, scale: 1.05, duration: 4.0, ease: "none" }, 4.6);
+
+      // ================= S4 Haz esto + Quiz Funnel (8.6–12.0) =================
+      tl.fromTo("#s4-haz", { opacity: 0, x: -60, filter: "blur(12px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 8.7);
+      blurIn("#s4-l1", 9.3, 0.5, 50);
+      blurIn("#s4-l2", 9.55, 0.5, 50);
+      blurIn("#s4-l3a", 10.2, 0.5, 50);
+      tl.set("#s4-l3b", { opacity: 0 }, 8.6);
+      tl.to("#s4-l3a", { opacity: 0, filter: "blur(10px)", duration: 0.25 }, 11.0);
+      tl.fromTo("#s4-l3b", { opacity: 0, filter: "blur(10px)", scale: 0.96 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.35, immediateRender: false }, 11.05);
+      tl.to("#s4 .cam", { scale: 1.04, duration: 3.4, ease: "none" }, 8.6);
+
+      // ================= S5 swatches (12.0–15.6) =================
+      blurIn("#s5-t", 12.05, 0.5, 30);
+      ["#sw1", "#sw2", "#sw3", "#sw4", "#sw5", "#sw6"].forEach((s, i) => {
+        tl.fromTo(s, { opacity: 0, scale: 0.5, y: 80 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.8)" }, 12.6 + i * 0.35);
+      });
+      tl.to("#s5 .cam", { scale: 1.03, duration: 3.6, ease: "none" }, 12.0);
+
+      // ================= S6 card → landscapes (15.6–19.25) =================
+      tl.fromTo("#s6-card", { scale: 0.4, opacity: 0, borderRadius: 120 }, { scale: 1, opacity: 1, borderRadius: 60, duration: 0.6, ease: "expo.out" }, 15.6);
+      tl.fromTo("#s6-img1", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, 15.95);
+      blurIn("#s6-t1", 16.3, 0.6, 40);
+      tl.fromTo("#s6-dot", { scale: 0 }, { scale: 1, duration: 0.3, ease: "back.out(3)" }, 15.8);
+      tl.set("#s6-img2", { clipPath: "circle(0% at 90% 92%)" }, 15.6);
+      tl.to("#s6-img2", { clipPath: "circle(150% at 90% 92%)", duration: 0.7, ease: "power2.in" }, 18.0);
+      tl.to("#s6-t1", { opacity: 0, duration: 0.2 }, 18.1);
+      blurIn("#s6-t2", 18.45, 0.4, 30);
+      tl.set("#s6-t2", { opacity: 0 }, 15.6);
+      tl.to("#s6-cam", { scale: 0.33, duration: 0.35, ease: "power3.in" }, 18.9);
+
+      // ================= S7 mosaic (19.25–23.0) =================
+      const tiles = [
+        { k: "img", src: "assets/land_dusk.jpg", t: "Tu próxima venta" },
+        { k: "ui", lab: "CASO REAL", big: "4 → 19 demos al mes", sm: "SaaS B2B tras su Quiz Funnel", ex: 1 },
+        { k: "logo" },
+        { k: "ui", lab: "DATO", big: "7 de cada 10 no están listos para una demo", ex: 1 },
+        { k: "img", src: "assets/cliffs.jpg", t: "" },
+        { k: "quiz" },
+        { k: "img", src: "assets/land_desert.jpg", t: "Pregunta 3 de 7" },
+        { k: "ui", lab: "CONSEJO", big: "Habla del problema antes que del producto", sm: "card educativa" },
+        { k: "img", src: "assets/land_day.jpg", t: "Entre medias, añade cards." },
+        { k: "ui", lab: "RESULTADO", big: "Plan Growth · 92% de encaje", ex: 1 },
+        { k: "pod" },
+        { k: "img", src: "assets/land_dusk.jpg", t: "" },
+        { k: "ui", lab: "CASO REAL", big: "Del formulario al quiz: +2,3× leads cualificados", ex: 1 },
+        { k: "img", src: "assets/land_day.jpg", t: "" },
+        { k: "quiz2" },
+        { k: "ui", lab: "DATO", big: "Las respuestas dicen qué oferta mostrar", sm: "segmentación" },
+        { k: "img", src: "assets/land_desert.jpg", t: "" },
+        { k: "logo" },
+        { k: "ui", lab: "CONSEJO", big: "5–8 preguntas. Ni una más.", sm: "card educativa" },
+        { k: "img", src: "assets/cliffs.jpg", t: "" },
+        { k: "pod" },
+        { k: "ui", lab: "RESULTADO", big: "Plan Starter · founder en solitario", ex: 1 },
+        { k: "img", src: "assets/land_dusk.jpg", t: "" },
+        { k: "quiz" },
+        { k: "img", src: "assets/land_day.jpg", t: "" },
+      ];
+      // centre tile (index 12 in a 5x5 grid) must be the land_day card that S6 shrank into
+      tiles[12] = { k: "img", src: "assets/land_day.jpg", t: "Entre medias, añade cards.", center: 1 };
+      tiles[8] = { k: "ui", lab: "CASO REAL", big: "Del formulario al quiz: +2,3× leads cualificados", ex: 1 };
+      const grid = $("#s7-grid");
+      tiles.forEach((d, i) => {
+        const r = Math.floor(i / 5), c = i % 5;
+        const el = document.createElement("div"); el.className = "tile"; el.id = "tile" + i;
+        el.style.left = 388 + (c - 2) * 328 + "px"; el.style.top = 713 + (r - 2) * 519 + "px";
+        if (d.k === "img") el.innerHTML = `<img class="land" src="${d.src}" style="top:-20px" />` + (d.t ? `<div class="serif" style="position:absolute;left:0;right:0;top:80px;text-align:center;font-size:${d.center ? 32 : 34}px;color:#fff;line-height:1">${d.t}</div>` : "");
+        else if (d.k === "ui") el.innerHTML = `<div class="lab">${d.lab}</div><div class="big">${d.big}</div><div class="sm">${d.sm || ""}${d.ex ? '<span class="ex">ejemplo</span>' : ""}</div>`;
+        else if (d.k === "logo") { el.style.background = "#e8382d"; el.innerHTML = `<div style="position:absolute;left:0;right:0;top:200px;text-align:center;color:#f2efe6;font-weight:860;font-size:40px;letter-spacing:-0.04em">SaaS <span class="chip" style="font-size:22px;padding:5px 7px 1px;background:#f2efe6;color:#e8382d">IN</span> House</div>`; }
+        else if (d.k === "pod") { el.style.background = "#f7dcd7"; el.innerHTML = `<img src="assets/pod.png" style="position:absolute;left:52px;top:120px;width:200px;height:200px" /><div class="lab" style="top:auto;bottom:26px">tu resultado</div>`; }
+        else el.innerHTML = `<div class="lab">PREGUNTA ${d.k === "quiz" ? "3" : "5"} / 7</div><div style="position:absolute;left:24px;right:20px;top:66px"><div style="font-weight:800;font-size:34px;line-height:1.02;letter-spacing:-0.03em">${d.k === "quiz" ? "¿Cuál es tu mayor problema?" : "¿Qué quieres conseguir?"}</div><div class="opt">${d.k === "quiz" ? "Pocos leads" : "Más demos"}</div><div class="opt on">${d.k === "quiz" ? "No convierten" : "Más ventas"}</div><div class="opt">${d.k === "quiz" ? "Churn" : "Menos churn"}</div></div>`;
+        grid.appendChild(el);
+      });
+      tl.fromTo("#s7-grid", { scale: 1 }, { scale: 0.86, x: -40, y: -60, duration: 3.75, ease: "power1.out" }, 19.25);
+      $$("#s7-grid .tile").forEach((el, i) => {
+        if (i === 12) return;
+        const r = Math.floor(i / 5), c = i % 5, dd = Math.abs(r - 2) + Math.abs(c - 2);
+        tl.fromTo(el, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out" }, 19.3 + dd * 0.08);
+      });
+      tl.fromTo("#s7-cap", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 19.9);
+      tl.fromTo("#s7-dim", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 21.3);
+      tl.fromTo("#s7-q", { opacity: 0, scale: 0.9, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 21.4);
+      tl.to("#s7-cap", { opacity: 0, duration: 0.3 }, 21.3);
+
+      // ================= S8 pod + beams (23.0–28.6) =================
+      draw("#s8-line .dr", 23.05, 0.7, 0.12);
+      tl.fromTo("#s8-cliffs", { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" }, 24.0);
+      tl.fromTo("#s8-pod", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 24.15);
+      tl.to("#s8-pod", { y: -40, duration: 1.4, ease: "sine.inOut" }, 24.3);
+      tl.set(["#s8-r1", "#s8-r2", "#s8-r3", "#s8-beam", "#s8-pod2", "#s8-c1", "#s8-c2", "#s8-c3", "#s8-h"], { opacity: 0 }, 23.0);
+      tl.set("#s8-r1", { opacity: 1 }, 25.6);
+      tl.set(["#s8-pod2", "#s8-beam"], { opacity: 1 }, 25.6);
+      tl.fromTo("#s8-pod2", { y: -300 }, { y: 0, duration: 0.45, ease: "back.out(1.6)", immediateRender: false }, 25.6);
+      tl.fromTo("#s8-beam", { scaleY: 0, transformOrigin: "50% 0%" }, { scaleY: 1, duration: 0.35, ease: "power2.out", immediateRender: false }, 25.9);
+      tl.fromTo("#s8-c1", { opacity: 0, y: -260, scale: 0.6 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)", immediateRender: false }, 26.1);
+      tl.fromTo("#s8-h", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out", immediateRender: false }, 26.3);
+      tl.set("#s8-r2", { opacity: 1 }, 27.1);
+      tl.set("#s8-c1", { opacity: 0 }, 27.1);
+      tl.fromTo("#s8-c2", { opacity: 0, y: -260, scale: 0.6 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.6)", immediateRender: false }, 27.15);
+      tl.set("#s8-r3", { opacity: 1 }, 27.9);
+      tl.set("#s8-c2", { opacity: 0 }, 27.9);
+      tl.fromTo("#s8-c3", { opacity: 0, y: -260, scale: 0.6 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.6)", immediateRender: false }, 27.95);
+      tl.to("#s8-pod2", { y: -14, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 2 }, 26.1);
+
+      // ================= S9 icon grid (28.6–30.6) =================
+      const ICONS = [
+        '<rect x="6" y="12" width="44" height="32" rx="4"/><path d="M6 14 L28 30 L50 14"/>',
+        '<circle cx="28" cy="28" r="22"/><path d="M21 22 a7 7 0 1 1 9 7 v5"/><circle cx="28" cy="41" r="1.5"/>',
+        '<circle cx="28" cy="28" r="22"/><path d="M18 29 l7 7 l13 -15"/>',
+        '<circle cx="28" cy="30" r="20"/><path d="M28 18 v12 l8 5 M22 6 h12"/>',
+        '<path d="M8 46 h40 M14 46 V30 M26 46 V18 M38 46 V24"/>',
+        '<circle cx="28" cy="28" r="22"/><circle cx="28" cy="28" r="12"/><circle cx="28" cy="28" r="3"/>',
+        '<rect x="8" y="22" width="40" height="26" rx="3"/><path d="M8 30 h40 M28 22 v26 M28 22 c-6 -12 -16 -4 0 0 c6 -12 16 -4 0 0"/>',
+        '<circle cx="28" cy="20" r="10"/><path d="M10 50 c2 -14 34 -14 36 0"/>',
+      ];
+      const ib = $("#s9-icons");
+      for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) {
+        const x = 50 + c * 132 + (r % 2) * 66, y = 40 + r * 136;
+        if (y > 700 && y < 1180) continue;
+        const d = document.createElement("div"); d.className = "ico";
+        d.style.left = x + "px"; d.style.top = y + "px";
+        const hot = rnd() < 0.08;
+        d.innerHTML = `<svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="${hot ? "#e8382d" : "rgba(242,239,230,0.22)"}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONS[(r * 3 + c) % ICONS.length]}</svg>`;
+        ib.appendChild(d);
+        const dist = Math.hypot(x - 540, y - 960);
+        tl.fromTo(d, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 28.7 + dist / 2600);
+      }
+      draw("#s9-lines .dr", 28.6, 0.6, 0.05);
+      blurIn("#s9-t", 28.75, 0.55, 40);
+      tl.to("#s9 .cam", { scale: 1.06, duration: 2.0, ease: "none" }, 28.6);
+
+      // ================= S10 laptop (30.6–34.0) =================
+      blurIn("#s10-h", 30.65, 0.5, 30);
+      tl.fromTo("#s10-lap", { y: 500, rotationX: 25, transformPerspective: 1600 }, { y: 0, rotationX: 0, duration: 0.8, ease: "expo.out" }, 30.7);
+      ["#s10-p1", "#s10-p2", "#s10-p3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.4)" }, 31.2 + i * 0.4));
+      blurIn("#s10-s1", 31.2, 0.4, 20);
+      blurIn("#s10-s2", 31.45, 0.4, 20);
+      tl.fromTo("#s10-s3", { opacity: 0, y: 40, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, 31.65);
+      const cd = { v: 899 };
+      tl.fromTo(cd, { v: 899 }, { v: 896, duration: 2.0, ease: "steps(3)", onUpdate: () => { const v = Math.round(cd.v); $("#s10-cd").textContent = String(Math.floor(v / 60)).padStart(2, "0") + ":" + String(v % 60).padStart(2, "0"); } }, 31.9);
+      tl.fromTo("#s10-btn", { scale: 1 }, { scale: 1.08, duration: 0.25, yoyo: true, repeat: 3, ease: "sine.inOut" }, 32.6);
+      tl.to("#s10-cam", { scale: 1.08, duration: 3.4, ease: "none" }, 30.6);
+
+      // ================= S11 headline + triptych (34.0–36.0) =================
+      blurIn("#s11-h .c", 34.02, 0.4, 30);
+      tl.to("#s11-h", { opacity: 0, duration: 0.2 }, 34.75);
+      tl.fromTo("#b1", { xPercent: -100 }, { xPercent: 0, duration: 0.45, ease: "expo.out" }, 34.8);
+      tl.fromTo("#b2", { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: "expo.out" }, 35.1);
+      tl.fromTo("#b3", { xPercent: -100 }, { xPercent: 0, duration: 0.45, ease: "expo.out" }, 35.4);
+      $$("#s11 .obj").forEach((o, i) => tl.fromTo(o, { y: 14, rotation: i % 2 ? 3 : -3 }, { y: -14, rotation: i % 2 ? -2 : 2, duration: 1.2, ease: "sine.inOut" }, 34.8 + i * 0.3));
+
+      // ================= S12 lockups (36.0–38.6) =================
+      tl.set(["#s12-i2", "#s12-i3", "#s12-t2", "#s12-t3"], { opacity: 0 }, 36.0);
+      blurIn("#s12-t1", 36.05, 0.4, 20);
+      tl.set(["#s12-i2"], { opacity: 1 }, 36.85); tl.set("#s12-t1", { opacity: 0 }, 36.85);
+      blurIn("#s12-t2", 36.87, 0.4, 20);
+      tl.set(["#s12-i3"], { opacity: 1 }, 37.7); tl.set("#s12-t2", { opacity: 0 }, 37.7);
+      blurIn("#s12-t3", 37.72, 0.45, 20);
+      tl.fromTo(["#s12-i1", "#s12-i2", "#s12-i3"], { scale: 1.1 }, { scale: 1, duration: 2.6, ease: "none" }, 36.0);
+
+      // ================= S13 tagline (38.6–40.6) =================
+      const fx = $("#s13-fx");
+      for (let i = 0; i < 10; i++) {
+        const r = document.createElement("div"); r.className = "rock";
+        const s = 50 + rnd() * 110; Object.assign(r.style, { width: s + "px", height: s * 0.8 + "px", left: rnd() * 1000 + "px", top: 150 + rnd() * 1650 + "px", opacity: 0.85 });
+        fx.appendChild(r);
+        tl.fromTo(r, { y: 60, rotation: rnd() * 40 }, { y: -80, rotation: rnd() * 80, duration: 2.0, ease: "none" }, 38.6);
+      }
+      for (let i = 0; i < 22; i++) {
+        const q = document.createElement("div"); q.className = "conf";
+        const s = 8 + rnd() * 14; Object.assign(q.style, { width: s + "px", height: s + "px", left: rnd() * 1060 + "px", top: rnd() * 1900 + "px", background: rnd() < 0.7 ? "#f5c51b" : "#f2efe6" });
+        fx.appendChild(q);
+        tl.fromTo(q, { y: 0, rotation: 0 }, { y: -120 - rnd() * 120, rotation: 180 + rnd() * 180, duration: 2.0, ease: "none" }, 38.6);
+      }
+      tl.fromTo("#s13-pod", { x: 300, y: 200, scale: 0.6 }, { x: 0, y: 0, scale: 1, duration: 0.9, ease: "expo.out" }, 38.6);
+      tl.to("#s13-pod", { y: -30, duration: 1.1, ease: "sine.inOut" }, 39.5);
+      tl.fromTo("#s13-t > div", { opacity: 0, y: 60, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out", stagger: 0.25 }, 38.8);
+
+      // ================= S14 end lockup (40.6–42.5) =================
+      tl.fromTo("#s14-pod", { x: -700, y: 120, rotation: -20 }, { x: 0, y: 0, rotation: 0, duration: 0.8, ease: "expo.out" }, 40.6);
+      tl.fromTo("#s14-word", { opacity: 0, scale: 1.3, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, 40.7);
+      blurIn("#s14-cta", 41.1, 0.5, 20);
+      tl.to("#s14-pod", { y: -16, duration: 0.9, ease: "sine.inOut" }, 41.4);
+
+      tl.set({}, {}, END);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Geist"; src: url("assets/Geist-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "GeistMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --bg: #0b0b10; --surface: #14141d; --red: #e8382d; --red-hot: #ff4b3e; --red-deep: #7e140d;
+        --cream: #f2efe6; --paper: #f7f6f2; --muted: #a3a1ad; --gold: #f5c51b; --ink: #121216;
+        --blue: #4f7cff; --violet: #8a5cff; --green: #2fd39a;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: "Geist", sans-serif; color: #fff; }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+      .full { position: absolute; inset: 0; }
+      .mono { font-family: "GeistMono", monospace; }
+      .grid { background-image: linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px); background-size: 96px 96px; background-position: 12px 0; }
+      .center-x { position: absolute; left: 0; right: 0; text-align: center; }
+      .pill { position: absolute; display: flex; align-items: center; gap: 22px; height: 112px; padding: 0 40px 0 22px; border-radius: 60px; background: #15151c; border: 2px solid rgba(255,255,255,0.12); box-shadow: 0 0 0 10px rgba(255,255,255,0.03), 0 30px 80px rgba(0,0,0,0.6); font-weight: 600; font-size: 54px; letter-spacing: -0.02em; white-space: nowrap; }
+      .badge { display: inline-flex; align-items: center; justify-content: center; font-family: "Silkscreen", monospace; color: var(--cream); background: var(--red); border-radius: 14px; box-shadow: 4px 4px 0 var(--red-deep); letter-spacing: 0.06em; }
+      .slot { display: inline-block; position: relative; height: 1.15em; overflow: hidden; vertical-align: bottom; }
+      .slot > div { height: 1.15em; line-height: 1.15em; }
+      .col { display: inline-block; height: 1em; overflow: hidden; vertical-align: top; line-height: 1em; }
+      .col > div { display: flex; flex-direction: column; }
+      .col > div > span { height: 1em; line-height: 1em; display: block; text-align: center; }
+      .chip { position: absolute; display: flex; align-items: center; gap: 14px; padding: 16px 28px; border-radius: 40px; background: rgba(21,21,28,0.92); border: 1.5px solid rgba(255,255,255,0.14); font-size: 34px; font-weight: 550; white-space: nowrap; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+      .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex: none; }
+      .tab { position: absolute; top: 150px; width: 280px; }
+      .tab .lab { font-size: 27px; color: var(--muted); display: flex; align-items: center; gap: 12px; font-weight: 500; }
+      .tab .lab i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+      .tab .val { font-size: 64px; font-weight: 650; letter-spacing: -0.03em; color: rgba(255,255,255,0.32); margin-top: 8px; white-space: nowrap; }
+      .tab .sub { font-size: 24px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+      .toast { position: absolute; left: 420px; width: 620px; height: 112px; border-radius: 22px; background: #1a1a22; border: 1.5px solid rgba(255,255,255,0.1); box-shadow: 0 24px 60px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 22px; padding: 0 26px; opacity: 0; }
+      .toast .ic { width: 62px; height: 62px; border-radius: 16px; display: flex; align-items: center; justify-content: center; flex: none; }
+      .toast .ic b { width: 22px; height: 22px; border-radius: 50%; display: block; }
+      .toast .tt { font-size: 32px; font-weight: 600; white-space: nowrap; }
+      .toast .ts { font-size: 22px; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+      .toast .now { margin-left: auto; font-size: 20px; color: rgba(255,255,255,0.35); }
+      .card { position: absolute; inset: 0; visibility: hidden; overflow: hidden; }
+      .card .word { position: absolute; left: 0; right: 0; top: 760px; text-align: center; font-weight: 720; font-size: 132px; letter-spacing: -0.045em; line-height: 1.02; white-space: nowrap; }
+      .chrome { position: absolute; font-family: "GeistMono", monospace; font-size: 22px; letter-spacing: 0.12em; text-transform: uppercase; }
+      .chrome.tl { left: 44px; top: 48px; display: flex; align-items: center; gap: 10px; }
+      .chrome.tr { right: 44px; top: 48px; }
+      .chrome.bl { left: 44px; bottom: 56px; }
+      .chrome.br { right: 44px; bottom: 66px; width: 160px; height: 2px; background: currentColor; opacity: 0.6; }
+      .chrome .mk { font-family: "Silkscreen", monospace; font-size: 16px; padding: 4px 6px 2px; border-radius: 5px; background: var(--red); color: var(--cream); letter-spacing: 0.04em; }
+      #caps { position: absolute; left: 0; right: 0; top: 1590px; height: 140px; z-index: 50; pointer-events: none; }
+      .cap { position: absolute; left: 50%; top: 0; transform: translateX(-50%); visibility: hidden; padding: 18px 34px 20px; border-radius: 26px; background: rgba(11,11,16,0.78); font-weight: 700; font-size: 58px; letter-spacing: -0.02em; white-space: nowrap; color: #fff; }
+      .cap span { display: inline-block; margin: 0 0.12em; }
+      svg { overflow: visible; }
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 60; pointer-events: none; }
+      #vig { position: absolute; inset: 0; z-index: 45; pointer-events: none; box-shadow: inset 0 0 220px rgba(0,0,0,0.55); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="35.5" data-width="1080" data-height="1920">
+      <!-- audio: reused VO (Bruno Torres, whiteboard-ad take), reused bed (robj3d3 showreel bed, spliced), library SFX + 2 new ElevenLabs SFX -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="32.68" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0.35" data-duration="34.85" data-track-index="11" data-volume="0.26"></audio>
+      <audio id="pad" src="assets/pad.mp3" data-start="32.5" data-duration="3.0" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="x-ty1" src="assets/type.mp3" data-start="0.25" data-duration="1.5" data-track-index="13" data-volume="0.3"></audio>
+      <audio id="x-ty2" src="assets/type.mp3" data-start="1.75" data-duration="1.5" data-track-index="14" data-volume="0.3"></audio>
+      <audio id="x-gl1" src="assets/glitch.mp3" data-start="3.3" data-duration="0.6" data-track-index="15" data-volume="0.35"></audio>
+      <audio id="x-sw1" src="assets/swoosh_in.mp3" data-start="3.4" data-duration="0.8" data-track-index="16" data-volume="0.4"></audio>
+      <audio id="x-im1" src="assets/impact.mp3" data-start="3.72" data-duration="1.6" data-track-index="17" data-volume="0.45"></audio>
+      <audio id="x-gl2" src="assets/glitch.mp3" data-start="5.55" data-duration="0.6" data-track-index="18" data-volume="0.3"></audio>
+      <audio id="x-ch1" src="assets/chime.mp3" data-start="5.93" data-duration="1.5" data-track-index="19" data-volume="0.35"></audio>
+      <audio id="x-wh1" src="assets/whoosh.mp3" data-start="7.2" data-duration="1.2" data-track-index="20" data-volume="0.35"></audio>
+      <audio id="x-od1" src="assets/odometer.mp3" data-start="7.5" data-duration="1.3" data-track-index="21" data-volume="0.45"></audio>
+      <audio id="x-p1" src="assets/pop.mp3" data-start="10.25" data-duration="0.5" data-track-index="22" data-volume="0.3"></audio>
+      <audio id="x-p2" src="assets/pop.mp3" data-start="10.75" data-duration="0.5" data-track-index="23" data-volume="0.3"></audio>
+      <audio id="x-p3" src="assets/pop.mp3" data-start="11.4" data-duration="0.5" data-track-index="24" data-volume="0.3"></audio>
+      <audio id="x-wh2" src="assets/whoosh.mp3" data-start="12.4" data-duration="1.2" data-track-index="25" data-volume="0.35"></audio>
+      <audio id="x-c1" src="assets/click.mp3" data-start="13.94" data-duration="0.5" data-track-index="26" data-volume="0.4"></audio>
+      <audio id="x-c2" src="assets/click.mp3" data-start="14.68" data-duration="0.5" data-track-index="27" data-volume="0.4"></audio>
+      <audio id="x-c3" src="assets/click.mp3" data-start="15.55" data-duration="0.5" data-track-index="28" data-volume="0.4"></audio>
+      <audio id="x-t1" src="assets/toast.mp3" data-start="16.41" data-duration="0.6" data-track-index="29" data-volume="0.5"></audio>
+      <audio id="x-t2" src="assets/toast.mp3" data-start="16.85" data-duration="0.6" data-track-index="30" data-volume="0.45"></audio>
+      <audio id="x-t3" src="assets/toast.mp3" data-start="17.3" data-duration="0.6" data-track-index="31" data-volume="0.45"></audio>
+      <audio id="x-wh3" src="assets/whoosh.mp3" data-start="18.0" data-duration="1.2" data-track-index="32" data-volume="0.35"></audio>
+      <audio id="x-b1" src="assets/blip.mp3" data-start="19.97" data-duration="0.5" data-track-index="33" data-volume="0.3"></audio>
+      <audio id="x-b2" src="assets/blip.mp3" data-start="20.17" data-duration="0.5" data-track-index="34" data-volume="0.3"></audio>
+      <audio id="x-b3" src="assets/blip.mp3" data-start="20.37" data-duration="0.5" data-track-index="35" data-volume="0.3"></audio>
+      <audio id="x-od2" src="assets/odometer.mp3" data-start="20.0" data-duration="1.0" data-track-index="36" data-volume="0.4"></audio>
+      <audio id="x-wh4" src="assets/whoosh.mp3" data-start="21.35" data-duration="1.2" data-track-index="37" data-volume="0.4"></audio>
+      <audio id="x-c4" src="assets/click.mp3" data-start="22.73" data-duration="0.5" data-track-index="38" data-volume="0.45"></audio>
+      <audio id="x-ty3" src="assets/type.mp3" data-start="23.85" data-duration="0.6" data-track-index="39" data-volume="0.35"></audio>
+      <audio id="x-sw2" src="assets/swoosh_in.mp3" data-start="25.1" data-duration="0.8" data-track-index="40" data-volume="0.4"></audio>
+      <audio id="x-dg" src="assets/ding.mp3" data-start="25.52" data-duration="1.0" data-track-index="41" data-volume="0.35"></audio>
+      <audio id="x-tk1" src="assets/tick.mp3" data-start="26.29" data-duration="0.5" data-track-index="42" data-volume="0.4"></audio>
+      <audio id="x-tk2" src="assets/tick.mp3" data-start="27.29" data-duration="0.5" data-track-index="43" data-volume="0.4"></audio>
+      <audio id="x-wh5" src="assets/whoosh.mp3" data-start="27.95" data-duration="1.2" data-track-index="44" data-volume="0.35"></audio>
+      <audio id="x-c5" src="assets/click.mp3" data-start="29.88" data-duration="0.5" data-track-index="45" data-volume="0.45"></audio>
+      <audio id="x-gl3" src="assets/glitch.mp3" data-start="30.78" data-duration="0.6" data-track-index="46" data-volume="0.3"></audio>
+      <audio id="x-c6" src="assets/click.mp3" data-start="31.55" data-duration="0.5" data-track-index="47" data-volume="0.45"></audio>
+      <audio id="x-im2" src="assets/impact.mp3" data-start="32.15" data-duration="2.0" data-track-index="48" data-volume="0.5"></audio>
+      <audio id="x-ch2" src="assets/chime.mp3" data-start="32.75" data-duration="1.5" data-track-index="49" data-volume="0.3"></audio>
+      <audio id="x-p4" src="assets/pop.mp3" data-start="33.55" data-duration="0.5" data-track-index="50" data-volume="0.35"></audio>
+      <audio id="x-c7" src="assets/click.mp3" data-start="34.25" data-duration="0.5" data-track-index="51" data-volume="0.45"></audio>
+
+      <!-- ============ S1 · the long landing URL types itself (YOUR LINKS, TODAY) ============ -->
+      <section id="s1" class="scene grid">
+        <div id="s1-head" class="center-x mono" style="top: 760px; font-size: 26px; letter-spacing: 0.24em; color: rgba(255,255,255,0.5);">TU LANDING, HOY · <span id="s1-n" style="color: var(--red-hot);">0 CARACTERES</span></div>
+        <div id="s1-mask" class="full" style="-webkit-mask-image: linear-gradient(90deg, transparent 40px, #000 260px, #000 940px, transparent 1060px); mask-image: linear-gradient(90deg, transparent 40px, #000 260px, #000 940px, transparent 1060px);">
+          <div id="s1-line" class="mono" style="position: absolute; left: 150px; top: 830px; font-size: 48px; white-space: nowrap; transform-origin: 390px 50%;"><span id="s1-dim" style="color: rgba(255,255,255,0.4);"></span><span id="s1-hot" style="color: #fff;"></span><span id="s1-car" style="display: inline-block; width: 4px; height: 58px; background: var(--red-hot); vertical-align: -12px; margin-left: 4px;"></span></div>
+        </div>
+        <div id="s1-sub" class="center-x mono" style="top: 960px; font-size: 26px; letter-spacing: 0.18em; color: rgba(255,255,255,0.3);">MISMA PÁGINA · PARA TODO EL MUNDO</div>
+        <div id="s1-streak" style="position: absolute; left: 0; right: 0; top: 856px; height: 6px; background: #fff; box-shadow: 0 0 40px 10px rgba(255,120,90,0.8); opacity: 0; transform: scaleX(0.02);"></div>
+      </section>
+
+      <!-- ============ S2 · collapses into one short pill; demo struck, quiz rolls in ============ -->
+      <section id="s2" class="scene grid">
+        <svg id="s2-rings" class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <circle id="s2-r1" cx="540" cy="840" r="170" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="3" />
+          <circle id="s2-r2" cx="540" cy="840" r="330" fill="none" stroke="var(--red)" stroke-width="3" />
+          <circle id="s2-r3" cx="540" cy="840" r="520" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2" />
+          <circle id="s2-r4" cx="540" cy="840" r="420" fill="none" stroke="var(--red-hot)" stroke-width="3" />
+        </svg>
+        <div id="s2-pill" class="pill" style="left: 175px; top: 784px; width: 730px; justify-content: center;">
+          <span class="badge" style="width: 74px; height: 66px; font-size: 26px;">IN</span>
+          <span>tusaas.com/<span class="slot" style="width: 150px;"><div id="s2-roll"><div style="color: #fff;">demo</div><div style="color: var(--red-hot);">quiz</div></div></span></span>
+        </div>
+        <div id="s2-btn" style="position: absolute; left: 290px; top: 1000px; width: 500px; height: 100px; border-radius: 22px; border: 2px dashed rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 550; color: rgba(255,255,255,0.75); opacity: 0;">Pedir una demo →</div>
+        <svg id="s2-strike" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"><path id="s2-sk" pathLength="1" d="M 268 1066 L 812 1034" stroke="var(--red-hot)" stroke-width="10" stroke-linecap="round" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" /></svg>
+        <div id="s2-title" class="center-x" style="top: 1010px; font-size: 150px; font-weight: 760; letter-spacing: -0.05em; opacity: 0;">Quiz <span style="background: linear-gradient(90deg, var(--red-hot), var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent;">Funnel.</span></div>
+        <div id="s2-kick" class="center-x mono" style="top: 680px; font-size: 26px; letter-spacing: 0.24em; color: rgba(255,255,255,0.5); opacity: 0;">EN VEZ DE PEDIR UNA DEMO</div>
+      </section>
+
+      <!-- ============ S3 · odometer over the planet: 5–8 preguntas, arcs land on the surface ============ -->
+      <section id="s3" class="scene">
+        <div id="s3-planet" style="position: absolute; left: -260px; top: 1150px; width: 1600px; height: 1600px;">
+          <div class="full" style="border-radius: 50%; background: radial-gradient(circle at 50% 0%, #3a120c 0%, #170a0b 30%, #0b0b10 62%); box-shadow: 0 -18px 90px rgba(232,56,45,0.5), inset 0 26px 70px rgba(255,75,62,0.45); border-top: 3px solid rgba(255,110,80,0.85);"></div>
+          <svg id="s3-dots" class="full" viewBox="0 0 1600 1600" width="1600" height="1600"></svg>
+        </div>
+        <div id="s3-pill" class="pill" style="left: 270px; top: 250px; height: 84px; font-size: 40px; padding: 0 32px 0 16px; gap: 16px;"><span class="badge" style="width: 56px; height: 50px; font-size: 20px;">IN</span><span>tusaas.com/<span style="color: var(--red-hot);">quiz</span></span></div>
+        <div id="s3-live" class="center-x mono" style="top: 400px; font-size: 26px; letter-spacing: 0.24em; color: rgba(255,255,255,0.55);"><span id="s3-ld" class="dot" style="background: var(--red-hot); margin-right: 14px; vertical-align: 2px;"></span>QUIZ · EN VIVO</div>
+        <div id="s3-odo" class="center-x" style="top: 470px; font-size: 300px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; height: 300px;"><span id="s3-c1" class="col"></span><span id="s3-dash" data-layout-ignore style="display: inline-block; color: rgba(255,255,255,0.35); margin: 0 10px;">–</span><span id="s3-c2" class="col"></span></div>
+        <div id="s3-lab" class="center-x mono" style="top: 800px; font-size: 40px; letter-spacing: 0.32em; color: var(--red-hot); opacity: 0;">PREGUNTAS</div>
+        <svg id="s3-arcs" class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s3-a1" pathLength="1" d="M 470 880 C 380 900, 260 980, 240 1206" fill="none" stroke="var(--red-hot)" stroke-width="5" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s3-a2" pathLength="1" d="M 600 880 C 700 900, 760 1000, 760 1180" fill="none" stroke="var(--red-hot)" stroke-width="5" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s3-a3" pathLength="1" d="M 540 880 C 560 1000, 420 1120, 470 1330" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <circle id="s3-h1" cx="240" cy="1206" r="26" fill="none" stroke="var(--red-hot)" stroke-width="4" opacity="0" />
+          <circle id="s3-h2" cx="760" cy="1180" r="26" fill="none" stroke="var(--red-hot)" stroke-width="4" opacity="0" />
+          <circle id="s3-h3" cx="470" cy="1330" r="26" fill="none" stroke="var(--gold)" stroke-width="4" opacity="0" />
+        </svg>
+        <div id="s3-q1" class="chip" style="left: 60px; top: 1060px; opacity: 0;"><span class="dot" style="background: var(--red-hot);"></span>¿Quién eres?</div>
+        <div id="s3-q2" class="chip" style="left: 560px; top: 1000px; opacity: 0;"><span class="dot" style="background: var(--red-hot);"></span>¿Qué quieres?</div>
+        <div id="s3-q3" class="chip" style="left: 290px; top: 1385px; opacity: 0;"><span class="dot" style="background: var(--gold);"></span>¿Tu mayor problema?</div>
+      </section>
+
+      <!-- ============ S4 · tilted quiz card, tabs cycle (case / data / tip), toasts stack ============ -->
+      <section id="s4" class="scene" style="perspective: 2000px; background: radial-gradient(ellipse 70% 50% at 50% 45%, #15151d, var(--bg) 70%);">
+        <div id="s4-card" style="position: absolute; left: 60px; top: 380px; width: 960px; height: 1000px; border-radius: 40px; background: linear-gradient(180deg, #18181f, #111117); border: 1.5px solid rgba(255,255,255,0.09); box-shadow: 0 60px 140px rgba(0,0,0,0.7); transform-style: preserve-3d; opacity: 0;">
+          <div style="position: absolute; left: 40px; top: 40px; display: flex; gap: 16px; align-items: center;">
+            <div style="padding: 14px 22px; border-radius: 16px; background: #22222b; font-size: 28px; font-weight: 600;"><span style="color: var(--red-hot);">↗</span> tusaas.com/quiz</div>
+            <div style="padding: 14px 22px; border-radius: 16px; border: 1.5px solid rgba(255,255,255,0.1); font-size: 28px; color: var(--muted);">Pregunta 3 / 8</div>
+            <div class="mono" style="padding: 10px 16px; border-radius: 12px; background: rgba(245,197,27,0.14); color: var(--gold); font-size: 20px; letter-spacing: 0.14em;">EJEMPLO</div>
+          </div>
+          <span class="badge" style="position: absolute; right: 40px; top: 46px; width: 58px; height: 52px; font-size: 20px;">IN</span>
+          <div class="tab" id="s4-tA" style="left: 40px;"><div class="lab"><i style="background: var(--blue);"></i>Caso real</div><div class="val">4 → 19</div><div class="sub">demos al mes</div></div>
+          <div class="tab" id="s4-tB" style="left: 345px;"><div class="lab"><i style="background: var(--violet);"></i>Dato</div><div class="val">+38%</div><div class="sub">conversión</div></div>
+          <div class="tab" id="s4-tC" style="left: 650px;"><div class="lab"><i style="background: var(--green);"></i>Consejo</div><div class="val">1 CTA</div><div class="sub">por pantalla</div></div>
+          <div style="position: absolute; left: 40px; right: 40px; top: 352px; height: 1.5px; background: rgba(255,255,255,0.08);"></div>
+          <div id="s4-bar" style="position: absolute; left: 30px; top: 348px; width: 290px; height: 6px; border-radius: 3px; background: var(--blue); box-shadow: 0 0 20px var(--blue);"></div>
+          <div id="s4-dA" class="s4d" style="position: absolute; left: 40px; top: 390px; font-size: 32px; color: rgba(255,255,255,0.8); opacity: 0;">Ana, SaaS B2B: de 4 a 19 demos al mes</div>
+          <div id="s4-dB" class="s4d" style="position: absolute; left: 40px; top: 390px; font-size: 32px; color: rgba(255,255,255,0.8); opacity: 0;">Un quiz convierte más que una landing genérica</div>
+          <div id="s4-dC" class="s4d" style="position: absolute; left: 40px; top: 390px; font-size: 32px; color: rgba(255,255,255,0.8); opacity: 0;">Una sola llamada a la acción por pantalla</div>
+          <svg id="s4-chart" style="position: absolute; left: 40px; top: 470px;" width="880" height="470" viewBox="0 0 880 470">
+            <defs>
+              <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f7cff" stop-opacity="0.45" /><stop offset="1" stop-color="#4f7cff" stop-opacity="0" /></linearGradient>
+              <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5cff" stop-opacity="0.45" /><stop offset="1" stop-color="#8a5cff" stop-opacity="0" /></linearGradient>
+              <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2fd39a" stop-opacity="0.45" /><stop offset="1" stop-color="#2fd39a" stop-opacity="0" /></linearGradient>
+            </defs>
+            <g id="s4-gA" opacity="0"><path id="s4-fA" fill="url(#gA)" opacity="0" /><path id="s4-lA" pathLength="1" fill="none" stroke="#4f7cff" stroke-width="5" stroke-linejoin="round" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 8px #4f7cff);" /></g>
+            <g id="s4-gB" opacity="0"><path id="s4-fB" fill="url(#gB)" opacity="0" /><path id="s4-lB" pathLength="1" fill="none" stroke="#8a5cff" stroke-width="5" stroke-linejoin="round" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 8px #8a5cff);" /></g>
+            <g id="s4-gC" opacity="0"><path id="s4-fC" fill="url(#gC)" opacity="0" /><path id="s4-lC" pathLength="1" fill="none" stroke="#2fd39a" stroke-width="5" stroke-linejoin="round" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 8px #2fd39a);" /></g>
+            <g id="s4-tip" opacity="0">
+              <line x1="470" y1="40" x2="470" y2="460" stroke="rgba(255,255,255,0.35)" stroke-width="2" />
+              <circle id="s4-tipdot" cx="470" cy="200" r="11" fill="#fff" stroke="#2fd39a" stroke-width="5" />
+              <rect x="300" y="70" width="150" height="92" rx="14" fill="#202029" stroke="rgba(255,255,255,0.12)" />
+              <text x="320" y="106" fill="#a3a1ad" font-size="22" font-family="Geist">Sem. 6</text>
+              <text x="320" y="145" fill="#fff" font-size="32" font-weight="700" font-family="Geist">19 demos</text>
+            </g>
+          </svg>
+        </div>
+        <div id="s4-to1" class="toast" style="top: 1130px;"><div class="ic" style="background: rgba(47,211,154,0.15);"><b style="background: var(--green);"></b></div><div><div class="tt">«Vale, esto tiene sentido»</div><div class="ts">respuesta 3 de 8 · sigue</div></div><div class="now">ahora</div></div>
+        <div id="s4-to2" class="toast" style="top: 1256px; left: 400px;"><div class="ic" style="background: rgba(138,92,255,0.18);"><b style="background: var(--violet);"></b></div><div><div class="tt">Nuevo lead</div><div class="ts">ana@ejemplo.com · quiz</div></div><div class="now">ahora</div></div>
+        <div id="s4-to3" class="toast" style="top: 1382px; left: 380px;"><div class="ic" style="background: rgba(232,56,45,0.18);"><b style="background: var(--red-hot);"></b></div><div><div class="tt">Interés alto</div><div class="ts">segmento: SaaS B2B</div></div><div class="now">ahora</div></div>
+      </section>
+
+      <!-- ============ S5 · network around the brand: answers become a personal result ============ -->
+      <section id="s5" class="scene" style="background: radial-gradient(circle at 50% 52%, #2a0f12 0%, #120b10 28%, var(--bg) 60%);">
+        <div id="s5-h" class="center-x" style="top: 250px; font-size: 104px; font-weight: 720; letter-spacing: -0.045em; line-height: 1.04;"><div id="s5-h1" style="opacity: 0;">Resultado</div><div id="s5-h2" style="opacity: 0; background: linear-gradient(90deg, var(--red-hot), #ff8a3d 55%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent;">personalizado.</div></div>
+        <div id="s5-net" class="full" style="transform-origin: 540px 1000px;">
+          <svg id="s5-lines" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+          <div id="s5-nodes" class="full"></div>
+          <div id="s5-core" style="position: absolute; left: 435px; top: 895px; width: 210px; height: 210px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 14px rgba(255,255,255,0.08), 0 0 120px 40px rgba(232,56,45,0.45); opacity: 0;"><span class="badge" style="width: 112px; height: 98px; font-size: 40px;">IN</span></div>
+        </div>
+        <div id="s5-chips"></div>
+        <div id="s5-cnt" class="center-x" style="top: 1388px; font-size: 92px; font-weight: 650; color: var(--green); letter-spacing: -0.02em; opacity: 0; line-height: 1; height: 92px;"><span id="s5-k1" class="col"></span><span id="s5-k2" class="col"></span>%</div>
+        <div id="s5-cl" class="center-x mono" style="top: 1500px; font-size: 22px; letter-spacing: 0.24em; color: rgba(255,255,255,0.45); opacity: 0;">ENCAJE CON TU PLAN · EJEMPLO</div>
+      </section>
+
+      <!-- ============ S6/S7 · rapid colour-block word cards (chrome: mark, index, bracket label) ============ -->
+      <section id="c1" class="card" style="background: var(--bg); color: #fff;">
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">06 / 14</div><div class="chrome bl">[ CLAVE ]</div><div class="chrome br"></div>
+        <div id="c1-w" class="word">Lo <span style="color: var(--red-hot);">importante.</span></div>
+      </section>
+      <section id="c2" class="card" style="background: var(--paper); color: var(--ink);">
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">07 / 14</div><div class="chrome bl">[ CARDS ]</div><div class="chrome br"></div>
+        <div id="c2-fan" style="position: absolute; left: 390px; top: 470px; width: 300px; height: 200px;">
+          <div id="c2-k1" style="position: absolute; inset: 0; border-radius: 24px; background: #fff; border: 2px solid #e2e0da; box-shadow: 0 20px 40px rgba(0,0,0,0.08); opacity: 0;"></div>
+          <div id="c2-k2" style="position: absolute; inset: 0; border-radius: 24px; background: #fff; border: 2px solid #e2e0da; box-shadow: 0 20px 40px rgba(0,0,0,0.08); opacity: 0;"></div>
+          <div id="c2-k3" style="position: absolute; inset: 0; border-radius: 24px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 650; opacity: 0;">tu producto →</div>
+        </div>
+        <div id="c2-w" class="word">Últimas cards.</div>
+      </section>
+      <section id="c3" class="card" style="background: var(--red); color: #1a0705;">
+        <div class="chrome tl"><span class="mk" style="background: #1a0705;">IN</span>saasinhouse</div><div class="chrome tr">08 / 14</div><div class="chrome bl">[ PRODUCTO ]</div><div class="chrome br"></div>
+        <div class="word" style="font-size: 150px;"><span id="c3-w"></span><span id="c3-car" style="display: inline-block; width: 8px; height: 130px; background: #1a0705; vertical-align: -14px; margin-left: 6px;"></span></div>
+      </section>
+      <section id="c4" class="card" style="background: #ffb347; color: var(--ink);">
+        <div id="c4-con" style="position: absolute; left: -500px; top: -100px; width: 2080px; height: 2080px; border-radius: 50%; background: conic-gradient(from 0deg, #ff4b3e, #f5c51b, #8affc1, #4f7cff, #8a5cff, #ff4b3e); filter: blur(30px);"></div>
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">09 / 14</div><div class="chrome bl">[ OFERTA ]</div><div class="chrome br"></div>
+        <div id="c4-w" class="word" style="font-size: 124px;">Oferta específica.</div>
+        <div id="c4-st" style="position: absolute; left: 700px; top: 470px; width: 250px; height: 250px; border-radius: 50%; background: var(--ink); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-12deg); opacity: 0;"><div style="font-size: 92px; font-weight: 760; letter-spacing: -0.04em;">−30%</div><div class="mono" style="font-size: 18px; letter-spacing: 0.2em; color: rgba(255,255,255,0.6);">EJEMPLO</div></div>
+      </section>
+      <section id="c5" class="card" style="background: #060608; color: #fff;">
+        <div id="c5-rain" class="full" data-layout-ignore></div>
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">10 / 14</div><div class="chrome bl">[ CONTADOR ]</div><div class="chrome br"></div>
+        <div id="c5-cd" class="center-x mono" style="top: 640px; font-size: 250px; font-weight: 600; color: var(--gold); text-shadow: 0 0 60px rgba(245,197,27,0.55); letter-spacing: -0.03em;">14:59</div>
+        <div id="c5-w" class="center-x" style="top: 960px; font-size: 112px; font-weight: 720; letter-spacing: -0.045em; opacity: 0;">Tiempo limitado.</div>
+      </section>
+      <section id="c6" class="card" style="background: var(--bg); color: #fff;">
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">11 / 14</div><div class="chrome bl">[ LEAD ]</div><div class="chrome br"></div>
+        <div id="c6-w" class="word" style="display: flex; justify-content: center; align-items: center; gap: 30px; font-size: 118px;"><span class="badge" style="width: 132px; height: 116px; font-size: 46px;">IN</span><span>Captas el lead.</span></div>
+      </section>
+      <section id="c7" class="card" style="background: #fff; color: var(--violet);">
+        <div class="chrome tl" style="color: var(--ink);"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr" style="color: var(--ink);">12 / 14</div><div class="chrome bl" style="color: var(--ink);">[ SEGMENTA ]</div><div class="chrome br" style="color: var(--violet);"></div>
+        <div id="c7-w" class="word" style="font-size: 150px;">Lo segmentas.</div>
+      </section>
+      <section id="c8" class="card" style="background: #000; color: #fff;">
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">13 / 14</div><div class="chrome bl">[ EDUCA ]</div><div class="chrome br"></div>
+        <div id="c8-w" class="word" style="font-size: 170px; color: transparent; -webkit-text-stroke: 3px #fff;">Lo educas.</div>
+      </section>
+      <section id="c9" class="card" style="background: #1a0605; color: #fff;">
+        <div id="c9-px" class="full"></div>
+        <div class="chrome tl"><span class="mk">IN</span>saasinhouse</div><div class="chrome tr">14 / 14</div><div class="chrome bl">[ COMPRA ]</div><div class="chrome br"></div>
+        <div id="c9-w" class="word" style="top: 700px; font-size: 142px; text-shadow: 0 10px 40px rgba(0,0,0,0.6);">Directo<br />a la compra.</div>
+      </section>
+
+      <!-- ============ S8 · logo iris → end card on a gradient bloom ============ -->
+      <section id="s8" class="scene" style="background: var(--paper); color: var(--ink);">
+        <div id="s8-blob" style="position: absolute; left: 90px; top: 1060px; width: 900px; height: 600px; filter: blur(90px); opacity: 0;">
+          <div id="s8-b1" style="position: absolute; left: 0; top: 80px; width: 460px; height: 380px; border-radius: 50%; background: #ff6a4d;"></div>
+          <div id="s8-b2" style="position: absolute; left: 300px; top: 0; width: 420px; height: 420px; border-radius: 50%; background: #f5c51b;"></div>
+          <div id="s8-b3" style="position: absolute; left: 520px; top: 160px; width: 380px; height: 360px; border-radius: 50%; background: #b48cff;"></div>
+        </div>
+        <div id="s8-iris" style="position: absolute; left: 540px; top: 760px; width: 3000px; height: 3000px; margin: -1500px 0 0 -1500px; border-radius: 50%; background: var(--red);"></div>
+        <div id="s8-lock" style="position: absolute; left: 0; right: 0; top: 690px; display: flex; justify-content: center; align-items: center; gap: 22px;">
+          <span id="s8-saas" style="font-family: Archivo; font-weight: 860; font-stretch: 112%; font-size: 84px; letter-spacing: -0.015em; clip-path: inset(0 0 0 100%);">SAAS</span>
+          <span id="s8-badge" class="badge" style="width: 124px; height: 106px; font-size: 44px; border-radius: 20px; box-shadow: 7px 7px 0 var(--red-deep);">IN</span>
+          <span id="s8-house" style="font-family: Archivo; font-weight: 860; font-stretch: 112%; font-size: 84px; letter-spacing: -0.015em; clip-path: inset(0 100% 0 0);">HOUSE</span>
+        </div>
+        <div id="s8-tag" class="center-x" style="top: 900px; font-size: 70px; font-weight: 600; letter-spacing: -0.03em;"></div>
+        <svg id="s8-ul" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"><path id="s8-ulp" pathLength="1" d="M 600 1000 C 680 992, 760 994, 840 1000" stroke="var(--red)" stroke-width="7" stroke-linecap="round" fill="none" style="stroke-dasharray: 1; stroke-dashoffset: 1;" /></svg>
+        <div id="s8-btns" style="position: absolute; left: 0; right: 0; top: 1080px; display: flex; justify-content: center; gap: 22px; opacity: 0;">
+          <div id="s8-cta" style="position: relative; padding: 30px 44px; border-radius: 22px; background: var(--ink); color: #fff; font-size: 46px; font-weight: 650;">Comenta «QUIZ» →</div>
+          <div style="padding: 30px 36px; border-radius: 22px; background: #fff; border: 2px solid #e1dfd8; font-size: 40px; font-weight: 550; color: #45434c;">saasinhouse.com</div>
+        </div>
+        <div id="s8-sub" class="center-x" style="top: 1250px; font-size: 38px; color: #6c6a73; opacity: 0;">y te paso cómo montarlo</div>
+        <div id="s8-rip" style="position: absolute; left: 330px; top: 1140px; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 4px solid var(--red); opacity: 0;"></div>
+      </section>
+
+      <div id="caps" data-layout-ignore></div>
+      <div id="vig" data-layout-ignore></div>
+      <div id="flash" data-layout-ignore></div>
+    </div>
+
+    <script>
+      const VO = 0.3; // word times are relative to assets/vo.mp3 (alignment shipped with the take, checked against silencedetect + local whisper)
+      const W = [["¿Quieres",0.0,0.302],["vender",0.337,0.592],["tu",0.65,0.731],["SaaS",0.778,1.057],["sin",1.138,1.277],["mandar",1.3,1.567],["a",1.614,1.637],["todo",1.683,1.834],["el",1.858,1.904],["mundo",1.939,2.171],["a",2.206,2.229],["la",2.252,2.31],["misma",2.357,2.601],["landing?",2.635,3.1],["Haz",3.42,3.594],["esto.",3.652,4.093],["En",4.413,4.541],["vez",4.576,4.68],["de",4.704,4.773],["pedir",4.82,5.04],["una",5.087,5.203],["demo,",5.249,5.563],["crea",5.632,5.876],["un",5.923,5.981],["Quiz",6.062,6.248],["Funnel.",6.306,6.805],["Primero,",7.125,7.601],["entre",7.647,7.926],["cinco",7.973,8.263],["y",8.332,8.356],["ocho",8.391,8.565],["preguntas,",8.611,9.192],["para",9.261,9.459],["saber",9.505,9.726],["quién",9.784,9.958],["es,",10.028,10.178],["qué",10.237,10.353],["quiere",10.411,10.701],["y",10.759,10.817],["cuál",10.887,11.049],["es",11.096,11.142],["su",11.165,11.258],["problema.",11.305,11.92],["Entre",12.24,12.541],["medias,",12.587,12.971],["cards",13.029,13.342],["con",13.412,13.574],["casos",13.644,13.876],["reales",13.934,14.248],["y",14.306,14.329],["datos,",14.375,14.689],["que",14.735,14.84],["le",14.886,14.944],["hagan",14.979,15.2],["pensar:",15.246,15.792],["vale,",16.112,16.426],["esto",16.484,16.704],["tiene",16.751,16.925],["sentido.",16.96,17.506],["Después,",17.826,18.256],["un",18.36,18.441],["resultado",18.499,18.952],["personalizado",18.999,19.625],["según",19.672,19.893],["sus",19.939,20.043],["respuestas.",20.078,20.821],["Y",21.141,21.211],["lo",21.281,21.339],["importante:",21.385,22.209],["las",22.43,22.558],["últimas",22.627,22.953],["cards",23.011,23.301],["lo",23.405,23.51],["llevan",23.545,23.777],["a",23.823,23.846],["tu",23.893,23.974],["producto,",24.021,24.543],["con",24.601,24.74],["una",24.775,24.868],["oferta",24.891,25.193],["específica",25.216,25.738],["y",25.797,25.82],["un",25.878,25.947],["contador",25.994,26.365],["de",26.423,26.493],["tiempo",26.528,26.772],["limitado.",26.807,27.376],["Así",27.724,28.072],["no",28.235,28.339],["solo",28.386,28.571],["captas",28.618,28.908],["el",28.966,29.024],["lead.",29.071,29.396],["Lo",29.581,29.698],["segmentas,",29.744,30.313],["lo",30.371,30.452],["educas",30.475,30.847],["y",31.033,31.091],["lo",31.149,31.218],["llevas",31.253,31.451],["directo",31.497,31.799],["a",31.822,31.845],["la",31.869,31.927],["compra.",31.973,32.646]];
+      const t = (i) => W[i][1] + VO;
+      const te = (i) => W[i][2] + VO;
+      const END = 35.5;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (id) => document.getElementById(id);
+      const mk = (tag, css, parent, html) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (html !== undefined) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+      const SVGNS = "http://www.w3.org/2000/svg";
+      const svg = (tag, attrs, parent) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+
+      // ---- scene windows (hard cuts) ----
+      const T2 = t(14), T3 = t(26), T4 = t(43), T5 = t(59), C1 = t(66), C2 = t(69), C3 = t(73), C4 = t(79), C5 = t(83), C6 = t(87), C7 = t(93), C8 = t(96), C9 = t(99), HIT = 32.15;
+      const SC = [["s1", 0, T2], ["s2", T2, T3], ["s3", T3, T4], ["s4", T4, T5], ["s5", T5, C1],
+                  ["c1", C1, C2], ["c2", C2, C3], ["c3", C3, C4], ["c4", C4, C5], ["c5", C5, C6],
+                  ["c6", C6, C7], ["c7", C7, C8], ["c8", C8, C9], ["c9", C9, HIT], ["s8", HIT, END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b); });
+      const blurIn = (sel, at, d = 0.28, from = {}) => tl.fromTo(sel, { opacity: 0, scale: 1.1, filter: "blur(18px)", ...from }, { opacity: 1, scale: 1, x: 0, y: 0, filter: "blur(0px)", duration: d, ease: "power3.out" }, at);
+      const draw = (sel, at, d, ease = "power2.inOut") => tl.to(sel, { strokeDashoffset: 0, duration: d, ease }, at);
+      const flash = (at, o = 0.85, d = 0.18) => { tl.set("#flash", { opacity: o }, at); tl.to("#flash", { opacity: 0, duration: d, ease: "power2.out" }, at + 0.02); };
+
+      // odometer column: stack 0-9 three times; roll(col, index, at, dur)
+      function odoCol(id, px) {
+        const c = $(id); c.style.height = px + "px";
+        const inner = mk("div", "", c);
+        for (let k = 0; k < 30; k++) mk("span", `height:${px}px;line-height:${px}px;`, inner, String(k % 10));
+        return inner;
+      }
+      const roll = (inner, px, idx, at, d, ease = "power3.out") => tl.to(inner, { y: -idx * px, duration: d, ease, filter: "blur(0px)" }, at);
+
+      // ---- captions (chunks of ≤3 words, active word in gold) ----
+      (function captions() {
+        const host = $("caps"); const chunks = []; let cur = [];
+        W.forEach((w, i) => {
+          if (cur.length && (cur.length >= 3 || /[.,?:!]$/.test(W[i - 1][0]) || w[1] - W[i - 1][2] > 0.3)) { chunks.push(cur); cur = []; }
+          cur.push(i);
+        });
+        chunks.push(cur);
+        chunks.forEach((ch, k) => {
+          const d = mk("div", "", host); d.className = "cap";
+          ch.forEach((i) => { const s = mk("span", "", d); s.textContent = W[i][0].replace(/[,:]$/, ""); s.id = "w" + i; });
+          const a = t(ch[0]); const b = k < chunks.length - 1 ? t(chunks[k + 1][0]) : te(ch[ch.length - 1]) + 0.35;
+          tl.set(d, { visibility: "visible" }, a); tl.set(d, { visibility: "hidden" }, b);
+          tl.fromTo(d, { y: 14, opacity: 0.4 }, { y: 0, opacity: 1, duration: 0.12, ease: "power2.out" }, a);
+          ch.forEach((i, j) => { tl.set("#w" + i, { color: "#f5c51b" }, t(i)); if (j < ch.length - 1) tl.set("#w" + i, { color: "#ffffff" }, t(ch[j + 1])); });
+        });
+      })();
+
+      // ================= S1 · typing =================
+      const URL_TXT = "https://tusaas.com/landing?utm_source=todos&utm_medium=misma_pagina&visitante=cualquiera&segmento=ninguno&objetivo=pedir_demo&resultado=igual_para_todos";
+      const CW = 28.9; // GeistMono advance at 48px
+      const typer = { n: 0 };
+      tl.to(typer, { n: URL_TXT.length, duration: 3.1, ease: "power1.in", onUpdate() {
+        const n = Math.round(typer.n); const s = URL_TXT.slice(0, n); const cut = Math.max(0, n - 22);
+        $("s1-dim").textContent = s.slice(0, cut); $("s1-hot").textContent = s.slice(cut);
+        $("s1-n").textContent = n + " CARACTERES";
+        $("s1-line").style.left = (150 + Math.min(0, 760 - n * CW)) + "px";
+      } }, 0.2);
+      for (let k = 0.2; k < 3.3; k += 0.5) tl.set("#s1-car", { opacity: 0.25 }, k + 0.25).set("#s1-car", { opacity: 1 }, k + 0.5);
+      tl.to("#s1-sub", { color: "rgba(255,75,62,0.85)", duration: 0.2 }, t(13));
+      tl.to("#s1-line", { scaleX: 0.03, filter: "blur(10px) brightness(3)", duration: 0.32, ease: "power3.in" }, T2 - 0.36);
+      tl.to(["#s1-head", "#s1-sub"], { opacity: 0, duration: 0.2 }, T2 - 0.36);
+      tl.to("#s1-streak", { opacity: 1, scaleX: 0.7, duration: 0.14, ease: "power2.out" }, T2 - 0.16);
+      tl.to("#s1-streak", { scaleX: 0.05, duration: 0.1, ease: "power2.in" }, T2 - 0.06);
+      flash(T2, 0.7, 0.2);
+
+      // ================= S2 · pill =================
+      blurIn("#s2-pill", T2, 0.4, { scale: 1.7 });
+      [["#s2-r1", 0], ["#s2-r2", 0.06], ["#s2-r4", 0.12], ["#s2-r3", 0.18]].forEach(([id, dl]) => {
+        tl.fromTo(id, { scale: 0.3, opacity: 0, transformOrigin: "540px 840px" }, { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" }, T2 + dl);
+        tl.to(id, { opacity: 0, scale: 1.25, duration: 0.7, ease: "power1.in" }, T2 + 0.9 + dl);
+        tl.fromTo(id, { scale: 0.3, opacity: 0 }, { scale: 1.1, opacity: 0.9, duration: 0.5, ease: "power3.out", immediateRender: false }, t(22) + dl);
+        tl.to(id, { opacity: 0, scale: 1.4, duration: 0.6, ease: "power1.in" }, t(22) + 0.55 + dl);
+      });
+      tl.to("#s2-kick", { opacity: 1, duration: 0.25 }, t(16));
+      tl.fromTo("#s2-btn", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, t(19));
+      draw("#s2-sk", t(21), 0.22, "power2.out");
+      tl.to("#s2-pill", { x: 12, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, t(21));
+      tl.to(["#s2-btn", "#s2-sk"], { opacity: 0, y: 60, filter: "blur(6px)", duration: 0.3, ease: "power2.in" }, t(22) - 0.05);
+      tl.to("#s2-roll", { y: -62, duration: 0.35, ease: "back.out(2)" }, t(22));
+      tl.to("#s2-kick", { opacity: 0, duration: 0.2 }, t(22));
+      tl.fromTo("#s2-title", { opacity: 0, y: 60, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "power3.out" }, t(24) - 0.05);
+      tl.to("#s2-pill", { y: -40, duration: 0.6, ease: "power2.inOut" }, t(24));
+      tl.to(["#s2-title", "#s2-pill"], { opacity: 0, y: -120, filter: "blur(10px)", duration: 0.32, ease: "power2.in" }, T3 - 0.32);
+
+      // ================= S3 · planet + odometer =================
+      (function dots() {
+        const g = $("s3-dots");
+        for (let k = 0; k < 420; k++) {
+          const a = -Math.PI / 2 + (rnd() - 0.5) * 2.2; const r = 800 * Math.sqrt(rnd());
+          const x = 800 + r * Math.cos(a), y = 800 + r * Math.sin(a);
+          if (y > 520) continue;
+          const right = x > 900 ? 1 : 0.45;
+          if (rnd() > right) continue;
+          svg("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: (2 + rnd() * 2.6).toFixed(1), fill: rnd() < 0.12 ? "#ff8a5c" : "rgba(255,120,90,0.55)" }, g);
+        }
+      })();
+      tl.fromTo("#s3-planet", { y: 520 }, { y: 0, duration: 0.8, ease: "power3.out" }, T3);
+      tl.fromTo("#s3-dots", { rotation: -4, transformOrigin: "800px 800px" }, { rotation: 6, duration: T4 - T3, ease: "none" }, T3);
+      blurIn("#s3-pill", T3, 0.35, { y: 120 });
+      tl.fromTo("#s3-live", { opacity: 0 }, { opacity: 1, duration: 0.3 }, T3 + 0.1);
+      for (let k = T3 + 0.3; k < T4; k += 0.6) tl.set("#s3-ld", { opacity: 0.2 }, k).set("#s3-ld", { opacity: 1 }, k + 0.3);
+      const O1 = odoCol("s3-c1", 300), O2 = odoCol("s3-c2", 300);
+      tl.fromTo("#s3-odo", { opacity: 0, filter: "blur(12px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3 }, T3 + 0.05);
+      tl.set([O1, O2], { filter: "blur(4px)" }, T3);
+      roll(O1, 300, 25, T3 + 0.05, t(28) - T3 + 0.05);
+      roll(O2, 300, 28, T3 + 0.05, t(30) - T3 + 0.1);
+      tl.to("#s3-lab", { opacity: 1, duration: 0.3 }, t(31));
+      tl.to("#s3-odo", { scale: 1.06, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.out" }, t(30));
+      [["a1", "h1", "q1", t(34)], ["a2", "h2", "q2", t(36)], ["a3", "h3", "q3", t(39)]].forEach(([a, h, q, at]) => {
+        draw("#s3-" + a, at, 0.32, "power2.in");
+        tl.fromTo("#s3-" + h, { attr: { r: 6 }, opacity: 1 }, { attr: { r: 60 }, opacity: 0, duration: 0.6, ease: "power2.out" }, at + 0.3);
+        tl.fromTo("#s3-" + q, { opacity: 0, scale: 0.6, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: "back.out(2)" }, at + 0.28);
+      });
+      tl.to("#s3-odo", { y: -30, duration: T4 - t(31), ease: "sine.inOut" }, t(31));
+
+      // ================= S4 · 3D card =================
+      function series(sd, rise) { seed = sd; const pts = []; let v = 0.25; for (let k = 0; k <= 44; k++) { v += (rnd() - 0.46) * 0.09 + rise; v = Math.max(0.08, Math.min(0.92, v)); pts.push([k * 20, 440 - v * 400]); } return pts; }
+      [["A", 31, 0.006], ["B", 57, 0.009], ["C", 83, 0.012]].forEach(([k, sd, rise]) => {
+        const p = series(sd, rise); const d = "M " + p.map((q) => q[0] + " " + q[1].toFixed(1)).join(" L ");
+        $("s4-l" + k).setAttribute("d", d); $("s4-f" + k).setAttribute("d", d + " L 880 470 L 0 470 Z");
+        if (k === "C") $("s4-tipdot").setAttribute("cy", p[23][1].toFixed(1)), $("s4-tipdot").setAttribute("cx", p[23][0]);
+      });
+      $("s4-tip").querySelector("line").setAttribute("x1", 460); $("s4-tip").querySelector("line").setAttribute("x2", 460);
+      tl.fromTo("#s4-card", { opacity: 0, rotationX: 38, rotationY: -26, rotationZ: 6, y: 260, z: -500 }, { opacity: 1, rotationX: 16, rotationY: -12, rotationZ: 2, y: 0, z: 0, duration: 0.85, ease: "power3.out" }, T4);
+      tl.to("#s4-card", { rotationX: 7, rotationY: -5, rotationZ: 0.5, duration: T5 - T4 - 0.85, ease: "sine.inOut" }, T4 + 0.85);
+      const TABS = [["A", "var(--blue)", 30, t(47)], ["B", "var(--violet)", 335, t(50)], ["C", "var(--green)", 640, t(54)]];
+      TABS.forEach(([k, col, x, at], j) => {
+        tl.to("#s4-bar", { x: x - 30, background: col, boxShadow: `0 0 20px ${col}`, duration: 0.3, ease: "power3.inOut" }, at - 0.05);
+        tl.to(`#s4-t${k} .val`, { color: "#fff", duration: 0.2 }, at);
+        tl.fromTo(`#s4-t${k} .val`, { yPercent: 60, filter: "blur(6px)" }, { yPercent: 0, filter: "blur(0px)", duration: 0.35, ease: "power3.out", immediateRender: false }, at);
+        tl.to("#s4-g" + k, { opacity: 1, duration: 0.15 }, at);
+        draw("#s4-l" + k, at, 0.7, "power2.out");
+        tl.to("#s4-f" + k, { opacity: 1, duration: 0.5 }, at + 0.3);
+        tl.to("#s4-d" + k, { opacity: 1, duration: 0.2 }, at + 0.1);
+        if (j > 0) {
+          const pk = TABS[j - 1][0];
+          tl.to(`#s4-t${pk} .val`, { color: "rgba(255,255,255,0.32)", duration: 0.2 }, at);
+          tl.to(["#s4-g" + pk, "#s4-d" + pk], { opacity: 0, duration: 0.2 }, at);
+        }
+      });
+      tl.to("#s4-tip", { opacity: 1, duration: 0.2 }, t(54) + 0.55);
+      [["#s4-to1", t(55)], ["#s4-to2", t(55) + 0.44], ["#s4-to3", t(55) + 0.89]].forEach(([id, at]) => tl.fromTo(id, { opacity: 0, x: 90, scale: 0.94 }, { opacity: 1, x: 0, scale: 1, duration: 0.38, ease: "back.out(1.6)" }, at));
+      tl.to("#s4-card", { opacity: 0.6, filter: "blur(2px)", duration: 0.4 }, t(55));
+      tl.to(["#s4-card", "#s4-to1", "#s4-to2", "#s4-to3"], { opacity: 0, y: -80, filter: "blur(12px)", duration: 0.3, ease: "power2.in" }, T5 - 0.3);
+
+      // ================= S5 · network =================
+      (function network() {
+        seed = 101;
+        const nodes = $("s5-nodes"), lines = $("s5-lines");
+        const rings = [[240, 26, 9, 66], [380, 300, 12, 58], [500, 140, 15, 50]];
+        const pal = [["#ff4b3e", "#3a1512"], ["#f5c51b", "#3a300c"], ["#4f7cff", "#121c3a"], ["#2fd39a", "#0c3326"], ["#8a5cff", "#21143d"]];
+        let n = 0;
+        rings.forEach(([R, off, count, sz], ri) => {
+          for (let k = 0; k < count; k++) {
+            const a = ((off + k * 360 / count + (rnd() - 0.5) * 14) * Math.PI) / 180;
+            const x = 540 + R * Math.cos(a) * 1.0, y = 1000 + R * Math.sin(a) * 0.78;
+            if (y < 560 || y > 1360) continue;
+            const s = sz + rnd() * 14; const [c, dk] = pal[Math.floor(rnd() * pal.length)];
+            const ln = svg("line", { x1: 540, y1: 1000, x2: x.toFixed(1), y2: y.toFixed(1), stroke: "rgba(255,140,120,0.22)", "stroke-width": 1.5, opacity: 0 }, lines);
+            const d = mk("div", `position:absolute;left:${(x - s / 2).toFixed(1)}px;top:${(y - s / 2).toFixed(1)}px;width:${s}px;height:${s}px;border-radius:50%;border:3px solid ${c};background:${dk};overflow:hidden;opacity:0;box-shadow:0 0 18px ${c}55;`, nodes,
+              `<svg viewBox="0 0 40 40" width="100%" height="100%"><circle cx="20" cy="16" r="7" fill="${c}" opacity="0.85"/><path d="M6 40 C8 27, 32 27, 34 40 Z" fill="${c}" opacity="0.85"/></svg>`);
+            d.id = "s5-n" + n; ln.id = "s5-l" + n;
+            const at = T5 + 0.15 + ri * 0.28 + rnd() * 0.25;
+            tl.fromTo(d, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, at);
+            tl.to(ln, { opacity: 1, duration: 0.3 }, at);
+            tl.to(d, { y: (rnd() - 0.5) * 24, duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 1 }, at + 0.35);
+            if (n % 3 === 0) {
+              const p = svg("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 5, fill: "#2fd39a", opacity: 0 }, lines);
+              const st = t(63) + rnd() * 0.8;
+              tl.set(p, { opacity: 1 }, st);
+              tl.to(p, { attr: { cx: 540, cy: 1000 }, duration: 0.55, ease: "power2.in" }, st);
+              tl.set(p, { opacity: 0 }, st + 0.55);
+            }
+            n++;
+          }
+        });
+        const CH = [["SaaS B2B", 90, 600, t(63)], ["Quiere más demos", 590, 650, t(63) + 0.2], ["10–50 personas", 70, 1290, t(64) + 0.1], ["Problema: no convierte", 470, 1300, t(65) + 0.05]];
+        CH.forEach(([txt, x, y, at], k) => {
+          const c = mk("div", `left:${x}px;top:${y}px;opacity:0;background:rgba(10,40,30,0.92);border-color:rgba(47,211,154,0.6);color:#bff5df;font-size:32px;padding:12px 24px;`, $("s5-chips"), `<span style="color:#2fd39a;font-weight:800;">+</span> ${txt}`);
+          c.className = "chip"; c.id = "s5-c" + k;
+          tl.fromTo(c, { opacity: 0, scale: 0.5, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "back.out(2.2)" }, at);
+        });
+      })();
+      tl.fromTo("#s5-core", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T5);
+      tl.fromTo("#s5-net", { scale: 0.9 }, { scale: 1.04, duration: C1 - T5, ease: "sine.out" }, T5);
+      blurIn("#s5-h1", t(61), 0.3, { y: 30 });
+      blurIn("#s5-h2", t(62), 0.3, { y: 30 });
+      const K1 = odoCol("s5-k1", 92), K2 = odoCol("s5-k2", 92);
+      tl.to(["#s5-cnt", "#s5-cl"], { opacity: 1, duration: 0.25 }, t(63) - 0.1);
+      roll(K1, 92, 19, t(63), 0.95); roll(K2, 92, 22, t(63), 1.05);
+      tl.to("#s5-core", { scale: 1.12, duration: 0.15, yoyo: true, repeat: 1 }, t(65));
+
+      // ================= cards =================
+      blurIn("#c1-w", C1, 0.3); flash(C1, 0.35, 0.12);
+      tl.to("#c1-w", { scale: 1.06, duration: C2 - C1, ease: "none" }, C1 + 0.3);
+      blurIn("#c2-w", C2, 0.25);
+      [["#c2-k1", -12, -70], ["#c2-k2", 10, 70], ["#c2-k3", -2, 0]].forEach(([id, r, x], k) => tl.fromTo(id, { opacity: 0, y: 140, rotation: 0 }, { opacity: 1, y: 0, x, rotation: r, duration: 0.35, ease: "back.out(1.8)" }, t(71) - 0.1 + k * 0.1));
+      const prod = { n: 0 }; const PROD = "Tu producto.";
+      tl.to(prod, { n: PROD.length, duration: 0.55, ease: "none", onUpdate() { $("c3-w").textContent = PROD.slice(0, Math.round(prod.n)); } }, C3);
+      for (let k = C3; k < C4; k += 0.4) tl.set("#c3-car", { opacity: 0 }, k + 0.2).set("#c3-car", { opacity: 1 }, k + 0.4);
+      tl.fromTo("#c4-con", { rotation: 0 }, { rotation: 140, duration: C5 - C4, ease: "none" }, C4);
+      blurIn("#c4-w", C4, 0.3);
+      tl.fromTo("#c4-st", { opacity: 0, scale: 2.2, rotation: -40 }, { opacity: 1, scale: 1, rotation: -12, duration: 0.35, ease: "back.out(2)" }, t(80));
+      (function rain() {
+        seed = 303;
+        for (let k = 0; k < 34; k++) {
+          const d = mk("div", `position:absolute;left:${(rnd() * 1040).toFixed(0)}px;top:-60px;font-family:GeistMono;font-size:${(22 + rnd() * 20).toFixed(0)}px;color:rgba(245,197,27,${(0.1 + rnd() * 0.2).toFixed(2)});`, $("c5-rain"), ["0:59", "14:5", ":", "59", "⏱"][k % 5]);
+          const st = C5 - rnd() * 1.4;
+          tl.fromTo(d, { y: rnd() * 400 }, { y: 2000, duration: 2.4 + rnd() * 1.2, ease: "none" }, st);
+        }
+      })();
+      blurIn("#c5-cd", C5, 0.25);
+      tl.set("#c5-cd", { textContent: "14:58" }, C5 + 1.0);
+      tl.to("#c5-cd", { scale: 1.04, duration: 0.08, yoyo: true, repeat: 1 }, C5 + 1.0);
+      blurIn("#c5-w", t(85), 0.3, { y: 40 });
+      tl.fromTo("#c6-w", { opacity: 0, color: "#55555c", filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, C6);
+      tl.to("#c6-w", { color: "#ffffff", duration: 0.15 }, t(90));
+      flash(t(92), 0.25, 0.12);
+      blurIn("#c7-w", C7, 0.25, { x: -80 });
+      tl.fromTo("#c8-w", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power3.out" }, C8);
+      tl.to("#c8-w", { webkitTextStrokeColor: "#ff4b3e", duration: 0.3 }, C8 + 0.4);
+      (function px() {
+        seed = 404; const host = $("c9-px");
+        for (let r = 0; r < 32; r++) for (let c = 0; c < 18; c++) {
+          if (rnd() < 0.45) continue;
+          const d = mk("div", `position:absolute;left:${c * 60}px;top:${r * 60}px;width:58px;height:58px;background:${rnd() < 0.3 ? "#e8382d" : rnd() < 0.5 ? "#7e140d" : "#3a0d0a"};opacity:0;`, host);
+          tl.to(d, { opacity: 1, duration: 0.01 }, C9 + rnd() * 0.25);
+          if (rnd() < 0.3) tl.to(d, { opacity: 0.2, duration: 0.01 }, C9 + 0.3 + rnd() * 0.25);
+        }
+      })();
+      blurIn("#c9-w", C9 + 0.05, 0.25);
+
+      // ================= S8 · end card =================
+      tl.fromTo("#s8-iris", { scale: 1 }, { scale: 0, duration: 0.55, ease: "power3.inOut" }, HIT);
+      tl.fromTo("#s8-badge", { scale: 3.2, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.6, ease: "power3.out" }, HIT);
+      tl.to("#s8-saas", { clipPath: "inset(0 0 0 0%)", duration: 0.45, ease: "power3.out" }, HIT + 0.5);
+      tl.to("#s8-house", { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out" }, HIT + 0.5);
+      tl.to("#s8-blob", { opacity: 0.85, duration: 0.8 }, HIT + 0.3);
+      tl.to("#s8-b1", { x: 120, y: -40, duration: END - HIT, ease: "sine.inOut" }, HIT);
+      tl.to("#s8-b3", { x: -110, y: 30, duration: END - HIT, ease: "sine.inOut" }, HIT);
+      (function tag() {
+        const words = ["Del", "lead", "a", "la", "compra."];
+        words.forEach((w, k) => {
+          const s = mk("span", "display:inline-block;margin:0 0.13em;opacity:0;" + (k === 4 ? "color:#e8382d;" : ""), $("s8-tag")); s.textContent = w;
+          tl.fromTo(s, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.22, ease: "power2.out" }, HIT + 0.6 + k * 0.1);
+        });
+      })();
+      draw("#s8-ulp", HIT + 1.15, 0.4);
+      tl.fromTo("#s8-btns", { opacity: 0, y: 30, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(2)" }, 33.55);
+      tl.to("#s8-sub", { opacity: 1, duration: 0.3 }, 33.9);
+      tl.to("#s8-cta", { scale: 0.95, duration: 0.08, yoyo: true, repeat: 1 }, 34.25);
+      tl.fromTo("#s8-rip", { opacity: 0.9, scale: 0.5 }, { opacity: 0, scale: 6, duration: 0.6, ease: "power2.out", immediateRender: false }, 34.25);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

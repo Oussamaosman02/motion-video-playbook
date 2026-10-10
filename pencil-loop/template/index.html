@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Caveat"; src: url("assets/Caveat.ttf") format("truetype"); font-weight: 400 700; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      :root { --paper: #f3efe7; --ink: #2b2723; --card: #fbf6e9; --red: #c94a3f; --green: #7d9c6f; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Caveat", cursive; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .cam { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; }
+      .bg { position: absolute; display: block; }
+      .spr { position: absolute; left: 0; top: 0; }
+      .spr img { display: block; width: 100%; height: auto; }
+      /* hand-drawn paper slip: irregular radii read as a wobbly pencil outline */
+      .slip { position: absolute; left: 70px; right: 70px; background: var(--card); border: 3.5px solid var(--ink);
+              border-radius: 255px 18px 225px 18px / 18px 225px 18px 255px; padding: 22px 38px 28px; font-size: 70px; font-weight: 600;
+              line-height: 1.02; text-align: center; box-shadow: 6px 8px 0 rgba(43, 39, 35, 0.12); }
+      .slip .w { display: inline-block; clip-path: inset(-20% 100% -20% 0); }
+      .note { position: absolute; left: 0; top: 0; background: var(--card); border: 3px solid var(--ink); font-size: 48px; font-weight: 700;
+              border-radius: 225px 14px 205px 14px / 14px 205px 14px 225px; padding: 10px 26px 14px; white-space: nowrap; line-height: 1; }
+      .note small { display: block; font-size: 30px; font-weight: 400; color: #6a625a; margin-top: 4px; }
+      .vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 220px rgba(80, 64, 40, 0.28); }
+      #root[data-b="0"] .boil { filter: url(#b0); }
+      #root[data-b="1"] .boil { filter: url(#b1); }
+      #root[data-b="2"] .boil { filter: url(#b2); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-b="0" data-composition-id="main" data-start="0" data-duration="52" data-width="1080" data-height="1920">
+      <svg width="0" height="0" style="position: absolute">
+        <filter id="b0"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="1" /><feDisplacementMap in="SourceGraphic" scale="3.5" /></filter>
+        <filter id="b1"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" /><feDisplacementMap in="SourceGraphic" scale="3.5" /></filter>
+        <filter id="b2"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="13" /><feDisplacementMap in="SourceGraphic" scale="3.5" /></filter>
+      </svg>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="52" data-track-index="11" data-volume="0.62"></audio>
+      <audio id="amb1" src="assets/birds.mp3" data-start="0" data-duration="8" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="amb2" src="assets/birds.mp3" data-start="44" data-duration="8" data-track-index="13" data-volume="0.35"></audio>
+      <div id="sfx"></div>
+
+      <!-- Scenes alternate tracks 1/2 so each can cross-fade over the previous one -->
+      <section id="s0" class="scene clip" data-start="0" data-duration="5.6" data-track-index="1"><div id="c0" class="cam"></div></section>
+      <section id="s1" class="scene clip" data-start="5" data-duration="6" data-track-index="2"><div id="c1" class="cam"></div></section>
+      <section id="s2" class="scene clip" data-start="10.4" data-duration="6.8" data-track-index="1"><div id="c2" class="cam"></div></section>
+      <section id="s3" class="scene clip" data-start="16.6" data-duration="9" data-track-index="2"><div id="c3" class="cam"></div></section>
+      <section id="s4" class="scene clip" data-start="25" data-duration="8" data-track-index="1"><div id="c4" class="cam"></div></section>
+      <section id="s5" class="scene clip" data-start="32.4" data-duration="14.8" data-track-index="2"><div id="c5" class="cam"></div></section>
+      <section id="s7" class="scene clip" data-start="46.6" data-duration="5.4" data-track-index="1"><div id="c7" class="cam"></div></section>
+      <div id="ui" class="scene" data-layout-ignore></div>
+      <div class="vig"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const END = 52;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      let uid = 0;
+      const IW = 1696, IH = 2528;
+      const SC = {}; // cam id -> image scale
+
+      // ---------- world helpers ----------
+      // background image, centred, at scale s (image px -> cam px)
+      function bg(cam, src, s) {
+        SC[cam] = s;
+        const i = document.createElement("img");
+        i.className = "bg"; i.src = "assets/" + src + ".jpg"; i.alt = "";
+        Object.assign(i.style, { width: IW * s + "px", height: IH * s + "px", left: 540 - (IW / 2) * s + "px", top: 960 - (IH / 2) * s + "px" });
+        $(cam).appendChild(i);
+      }
+      // (u, v) in 0..1 image coords -> cam-local px
+      const P = (cam, u, v) => [540 + (u - 0.5) * IW * SC[cam], 960 + (v - 0.5) * IH * SC[cam]];
+      // camera state that puts image point (u, v) at screen (cx, cy) with zoom z
+      function view(cam, z, u, v, cx = 540, cy = 960) { const [px, py] = P(cam, u, v); return { x: cx - z * px, y: cy - z * py, scale: z }; }
+      const camSet = (cam, z, u, v, at, cy) => tl.set($(cam), view(cam, z, u, v, 540, cy), at);
+      const camTo = (cam, z, u, v, at, dur, ease = "sine.inOut", cy) => tl.to($(cam), { ...view(cam, z, u, v, 540, cy), duration: dur, ease }, at);
+
+      // sprite centred on (u, v); w = width in cam px
+      function spr(cam, src, u, v, w, extra = {}) {
+        const d = document.createElement("div");
+        d.id = "e" + uid++; d.className = "spr boil";
+        d.innerHTML = `<img src="assets/${src}.png" alt="" />`;
+        d.style.width = w + "px";
+        $(cam).appendChild(d);
+        const [x, y] = P(cam, u, v);
+        tl.set(d, { x, y, xPercent: -50, yPercent: -50, opacity: 0, ...extra }, 0);
+        return d;
+      }
+      const at = (cam, u, v) => { const [x, y] = P(cam, u, v); return { x, y }; };
+      // inchworm along a list of (u, v) points; rotation follows the path (sprite head points "up" at rotation 0)
+      function crawl(d, cam, pts, t0, dur, axis = "scaleY") {
+        const segs = []; let total = 0;
+        for (let i = 1; i < pts.length; i++) { const a = P(cam, ...pts[i - 1]), b = P(cam, ...pts[i]); const L = Math.hypot(b[0] - a[0], b[1] - a[1]); segs.push([b, L, a]); total += L; }
+        let tt = t0;
+        segs.forEach(([b, L, a]) => {
+          const dd = (dur * L) / total;
+          const rot = (Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180) / Math.PI;
+          tl.to(d, { x: b[0], y: b[1], rotation: rot, duration: dd, ease: "none" }, tt);
+          tt += dd;
+        });
+        const n = Math.max(1, Math.round(dur / 0.45));
+        tl.to(d.firstChild, { [axis]: 0.86, duration: dur / n / 2, ease: "sine.inOut", yoyo: true, repeat: n * 2 - 1, transformOrigin: "50% 100%" }, t0);
+      }
+      const popIn = (d, t, from = {}) => tl.fromTo(d, { opacity: 0, scale: 0.5, ...from }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2.2)" }, t);
+      const fade = (d, t, dur = 0.35) => tl.to(d, { opacity: 0, duration: dur }, t);
+
+      // pinned note on a cam (moves with the world)
+      function note(cam, html, u, v, rot = -3) {
+        const d = document.createElement("div");
+        d.id = "e" + uid++; d.className = "note boil"; d.innerHTML = html;
+        $(cam).appendChild(d);
+        const [x, y] = cam === "ui" ? [u, v] : P(cam, u, v); // "ui" = screen px, fixed while the camera moves
+        tl.set(d, { x, y, xPercent: -50, yPercent: -50, rotation: rot, opacity: 0 }, 0);
+        return d;
+      }
+
+      // ---------- captions: handwritten words written left to right ----------
+      function caption(text, t0, t1, top = 230, size = 70, rot = -1.2) {
+        const d = document.createElement("div");
+        d.id = "e" + uid++; d.className = "slip boil";
+        d.style.top = top + "px"; d.style.fontSize = size + "px";
+        d.innerHTML = text.split(" ").map((w) => `<span class="w">${w}</span>`).join(" ");
+        $("ui").appendChild(d);
+        tl.set(d, { rotation: rot, opacity: 0 }, 0);
+        tl.fromTo(d, { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "power2.out" }, t0);
+        const ws = d.querySelectorAll(".w");
+        ws.forEach((w, i) => tl.to(w, { clipPath: "inset(-20% 0% -20% 0)", duration: 0.16, ease: "none" }, t0 + 0.12 + i * 0.075));
+        sfx("pencil.mp3", t0 + 0.05, 0.32);
+        if (t1) tl.to(d, { opacity: 0, y: -10, duration: 0.3 }, t1);
+        return d;
+      }
+
+      let sN = 0;
+      function sfx(file, t, vol = 0.45, dur = 1.2) {
+        const a = document.createElement("audio");
+        a.id = "sfx" + sN++;
+        a.src = "assets/" + file;
+        a.setAttribute("data-start", t.toFixed(2));
+        a.setAttribute("data-duration", String(dur));
+        a.setAttribute("data-track-index", String(20 + (sN % 6)));
+        a.setAttribute("data-volume", String(vol));
+        $("sfx").appendChild(a);
+      }
+      const xfade = (sec, t, d = 0.6) => tl.fromTo($(sec), { opacity: 0 }, { opacity: 1, duration: d, ease: "sine.inOut" }, t);
+
+      // ================= S0 · wide meadow (this frame is also the loop point) =================
+      bg("c0", "wide", 0.8);
+      camSet("c0", 1, 0.5, 0.5, 0);
+      caption("¿Quieres vender tu SaaS sin mandar a todo el mundo a la misma landing?", 0.5, 4.7, 230, 66);
+      camTo("c0", 3.4, 0.5, 0.74, 3.2, 2.4, "power2.in");
+
+      // ================= S1 · ground: everyone into the same hole =================
+      bg("c1", "ground", 0.85);
+      xfade("s1", 5.0);
+      camSet("c1", 1.35, 0.47, 0.6, 5.0);
+      camTo("c1", 1.0, 0.5, 0.55, 5.0, 2.2, "power2.out");
+      const HOLE = [0.47, 0.6];
+      const BPATH = [[0.2, 0.08], [0.32, 0.22], [0.26, 0.38], [0.38, 0.5], HOLE];
+      for (let i = 0; i < 7; i++) {
+        const b = spr("c1", "beetle", ...BPATH[0], 92);
+        const t0 = 5.2 + i * 0.55;
+        tl.set(b, { opacity: 1 }, t0);
+        crawl(b, "c1", BPATH, t0, 3.0, "scaleY");
+        tl.to(b, { scale: 0.2, opacity: 0, duration: 0.3, ease: "power2.in" }, t0 + 2.85);
+        if (i % 2 === 0) sfx("pop.mp3", t0 + 3.0, 0.14);
+      }
+      const lab = note("c1", "la misma landing", 0.7, 0.67, 4);
+      popIn(lab, 6.0); sfx("pop.mp3", 6.0, 0.3);
+      fade(lab, 9.6);
+      caption("Haz esto.", 7.6, 10.2, 300, 92, 1.5);
+      const w1 = spr("c1", "w_crawl", 0.62, 0.95, 230);
+      tl.set(w1, { opacity: 1, rotation: -72 }, 7.9);
+      tl.to(w1, { ...at("c1", 0.56, 0.82), duration: 2.0, ease: "sine.inOut" }, 7.9);
+      tl.to(w1.firstChild, { scaleX: 0.88, duration: 0.25, yoyo: true, repeat: 7, transformOrigin: "0% 50%" }, 7.9);
+      sfx("wiggle.mp3", 8.0, 0.35);
+      camTo("c1", 1.5, 0.56, 0.4, 9.6, 1.4, "power2.in");
+
+      // ================= S2 · climb the trunk =================
+      bg("c2", "trunk", 0.7595);
+      xfade("s2", 10.4);
+      camSet("c2", 1.5, 0.5, 0.86, 10.4, 1150);
+      camTo("c2", 1.5, 0.5, 0.2, 10.4, 6.4, "sine.inOut", 1150);
+      const w2 = spr("c2", "w_climb", 0.53, 0.97, 40);
+      tl.set(w2, { opacity: 1 }, 10.4);
+      crawl(w2, "c2", [[0.53, 0.97], [0.535, 0.6], [0.53, 0.12]], 10.4, 6.6);
+      caption("En lugar de pedir una demo directamente…", 10.6, 13.0, 230, 68);
+      caption("crea un <b>Quiz Funnel</b>.", 13.1, 16.6, 250, 84, 1.2);
+      const qf = note("c2", "QUIZ FUNNEL", 0.47, 0.42, -5);
+      popIn(qf, 13.4); sfx("chime.mp3", 13.4, 0.3);
+
+      // ================= S3 · the branches are the questions =================
+      bg("c3", "branches", 0.86);
+      xfade("s3", 16.6);
+      camSet("c3", 1.3, 0.42, 0.8, 16.6, 1000);
+      camTo("c3", 1.15, 0.55, 0.38, 16.6, 8.4, "sine.inOut", 1100);
+      const w3 = spr("c3", "w_climb", 0.36, 0.99, 46);
+      tl.set(w3, { opacity: 1 }, 16.6);
+      crawl(w3, "c3", [[0.36, 0.99], [0.43, 0.75], [0.49, 0.62], [0.57, 0.54], [0.64, 0.45], [0.7, 0.38], [0.71, 0.3], [0.7, 0.21]], 16.6, 7.4);
+      caption("Primero, entre 5 y 8 preguntas:", 16.8, 24.7, 220, 70);
+      const Q = [
+        ["¿Quién eres?<small>pregunta 1/8</small>", 300, 1330, -4, 18.6],
+        ["¿Qué quieres conseguir?<small>pregunta 2/8</small>", 700, 1040, 3, 20.4],
+        ["¿Tu mayor problema?<small>pregunta 3/8</small>", 330, 720, -3, 22.2],
+      ];
+      Q.forEach(([h, u, v, r, t0]) => { const n = note("ui", h, u, v, r); popIn(n, t0); sfx("pop.mp3", t0, 0.35); fade(n, 24.6); });
+
+      // ================= S4 · little cards between questions =================
+      bg("c4", "branches", 0.86);
+      xfade("s4", 25.0);
+      camSet("c4", 1.7, 0.3, 0.3, 25.0, 1080);
+      camTo("c4", 1.55, 0.36, 0.34, 25.0, 7.4, "sine.inOut", 1080);
+      caption("Pero no hagas solo preguntas.", 25.2, 27.0, 230, 72);
+      caption("Entre medias, pequeñas cards con casos reales, datos, resultados o consejos.", 27.1, 32.4, 210, 62);
+      const w4 = spr("c4", "w_crawl", 0.36, 0.43, 110);
+      tl.set(w4, { opacity: 1, rotation: -48 }, 25.0);
+      tl.to(w4.firstChild, { scaleX: 0.9, duration: 0.6, yoyo: true, repeat: 9, transformOrigin: "0% 50%" }, 25.0);
+      const CARDS = [
+        ["Caso real<small>«así lo resolvió Laura»</small>", 300, 600, -6, 27.8],
+        ["Dato<small>lo que funciona en tu sector</small>", 770, 760, 4, 28.6],
+        ["Resultado<small>antes → después</small>", 290, 1160, 3, 29.4],
+        ["Consejo<small>un truco que puedes usar hoy</small>", 740, 1370, -4, 30.2],
+      ];
+      CARDS.forEach(([h, u, v, r, t0]) => { const n = note("ui", h, u, v, r); popIn(n, t0); sfx("pop.mp3", t0, 0.32); fade(n, 32.2); });
+      const think = note("ui", "«vale, esto tiene sentido»", 540, 1620, -2);
+      fade(think, 32.2);
+      tl.set(think, { borderRadius: "60px" }, 0);
+      popIn(think, 31.0); sfx("chime.mp3", 31.0, 0.3);
+
+      // ================= S5+S6 · the apple: result, then the offer =================
+      bg("c5", "apple", 0.86);
+      xfade("s5", 32.4);
+      camSet("c5", 1.15, 0.38, 0.62, 32.4);
+      camTo("c5", 1.3, 0.5, 0.5, 32.4, 6.0, "sine.inOut");
+      const w5 = spr("c5", "w_climb", 0.12, 0.88, 46);
+      tl.set(w5, { opacity: 1 }, 32.4);
+      crawl(w5, "c5", [[0.12, 0.9], [0.315, 0.66], [0.47, 0.47]], 32.4, 5.2);
+      caption("Después, según sus respuestas, le muestras un resultado personalizado.", 32.6, 36.8, 220, 64);
+      const res = note("ui", "Tu resultado ✓<small>hecho para ti</small>", 760, 1380, 3);
+      popIn(res, 34.6); sfx("chime.mp3", 34.6, 0.4);
+      caption("Y aquí viene la parte importante.", 37.0, 39.6, 240, 74, 1.2);
+      fade(res, 39.4);
+      // offer: push in on the apple
+      camTo("c5", 1.75, 0.58, 0.5, 39.2, 1.6, "power2.inOut");
+      caption("Las últimas cards lo llevan hacia tu producto:", 39.8, 46.4, 200, 64);
+      const O = [
+        ["por qué encaja contigo", 330, 1330, -4, 41.0],
+        ["oferta específica −30%<small>ejemplo</small>", 720, 1490, 3, 42.3],
+      ];
+      O.forEach(([h, u, v, r, t0]) => { const n = note("ui", h, u, v, r); popIn(n, t0); sfx("pop.mp3", t0, 0.35); fade(n, 46.4); });
+      // countdown: stacked spans swapped with tl.set (deterministic when seeking)
+      const timer = note("ui", 'quedan <span id="tm"></span><small>tiempo limitado</small>', 400, 1660, -2);
+      fade(timer, 46.4);
+      const tm = $("tm");
+      const N = 9;
+      for (let k = 0; k < N; k++) { const s = document.createElement("span"); s.id = "tm" + k; s.textContent = `14:${String(59 - k).padStart(2, "0")}`; s.style.display = k ? "none" : "inline"; tm.appendChild(s); }
+      popIn(timer, 43.6); sfx("tick.mp3", 43.7, 0.45, 2.1);
+      for (let k = 1; k < N; k++) { tl.set($("tm" + (k - 1)), { display: "none" }, 43.6 + k * 0.33); tl.set($("tm" + k), { display: "inline" }, 43.6 + k * 0.33); }
+      const happy = spr("c5", "w_happy", 0.47, 0.42, 150);
+      tl.set(w5, { opacity: 0 }, 45.0);
+      popIn(happy, 45.0, { rotation: -10 });
+      sfx("bite.mp3", 45.0, 0.55);
+      const heart = document.createElement("div");
+      heart.className = "spr boil"; heart.id = "heart"; heart.textContent = "♥";
+      Object.assign(heart.style, { color: "#d4574c", fontSize: "60px", fontFamily: "Caveat" });
+      $("c5").appendChild(heart);
+      tl.set(heart, { ...at("c5", 0.45, 0.36), xPercent: -50, yPercent: -50, opacity: 0 }, 0);
+      tl.to(heart, { opacity: 1, y: "-=40", duration: 0.6, ease: "power1.out" }, 45.3);
+      sfx("chime.mp3", 45.3, 0.3);
+
+      // ================= S7 · pull back out to the exact first frame (loop) =================
+      bg("c7", "wide", 0.8);
+      xfade("s7", 46.6, 0.5);
+      camSet("c7", 4.2, 0.62, 0.456, 46.6);
+      camTo("c7", 1, 0.5, 0.5, 46.6, 3.2, "power3.inOut");
+      caption("Así no solo captas el lead.", 46.8, 48.3, 240, 74);
+      caption("Lo segmentas, lo educas y lo llevas directo a la compra.", 48.4, 51.2, 220, 66, 1.2);
+      const logo = document.createElement("div");
+      logo.id = "logo";
+      logo.innerHTML = '<span style="font-family:Archivo;font-weight:860;font-stretch:118%;font-size:62px;text-transform:uppercase">SaaS</span><span style="font-family:Silkscreen;font-size:26px;background:#e8382d;color:#f2efe6;padding:7px 10px 3px;border-radius:7px;box-shadow:4px 4px 0 #7e140d">IN</span><span style="font-family:Archivo;font-weight:860;font-stretch:118%;font-size:62px;text-transform:uppercase">House</span>';
+      Object.assign(logo.style, { position: "absolute", left: "0", right: "0", top: "1640px", display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", color: "#2b2723" });
+      $("ui").appendChild(logo);
+      tl.set(logo, { opacity: 0 }, 0);
+      popIn(logo, 49.4); sfx("pop.mp3", 49.4, 0.4);
+      fade(logo, 51.2, 0.5);
+
+      // ---------- line boil: swap displacement seeds at 8 fps ----------
+      for (let k = 0; k * 0.125 < END; k++) tl.set($("root"), { attr: { "data-b": String(k % 3) } }, k * 0.125);
+      tl.set({}, {}, END);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

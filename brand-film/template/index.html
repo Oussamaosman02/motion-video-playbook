@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --bg: #0b0b10; --surface: #14141d; --surface-2: #191925; --line: rgba(242, 239, 230, 0.12);
+        --red: #e8382d; --red-hot: #ff4b3e; --red-deep: #7e140d; --cream: #f2efe6; --muted: #a3a1ad; --gold: #f5c51b;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--cream); font-family: "Archivo", sans-serif; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.14em; text-transform: uppercase; }
+      .disp { font-weight: 860; font-stretch: 118%; text-transform: uppercase; line-height: 0.94; letter-spacing: -0.015em; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .full { position: absolute; inset: 0; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+      .grid-lines {
+        position: absolute; inset: 0;
+        background-image: linear-gradient(rgba(242, 239, 230, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(242, 239, 230, 0.035) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+      .cell { position: absolute; width: 60px; height: 60px; }
+      .vignette { position: absolute; inset: 0; box-shadow: inset 0 0 320px 140px rgba(0, 0, 0, 0.7); }
+      .glow-red { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 40% at 50% 45%, rgba(232, 56, 45, 0.22), transparent 70%); }
+      .w { display: inline-block; }
+      .coin { position: absolute; }
+      .coin img { width: 100%; height: 100%; display: block; }
+      /* dotted giant text (Backable "EARLY") */
+      .dots-text {
+        font-weight: 900; font-stretch: 125%; text-transform: uppercase; line-height: 0.85; color: transparent;
+        background-image: radial-gradient(circle, rgba(232, 56, 45, 0.55) 3px, transparent 3.6px);
+        background-size: 11px 11px; -webkit-background-clip: text; background-clip: text;
+      }
+      /* cards */
+      .card-light { position: absolute; background: #fff; color: #111; border-radius: 26px; box-shadow: 0 40px 90px rgba(20, 10, 10, 0.18), 0 2px 0 rgba(0,0,0,0.04); }
+      .card-dark { position: absolute; background: var(--surface); border: 1px solid var(--line); border-radius: 26px; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6); }
+      .opt { height: 92px; border: 2px solid #e6e1d6; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; font-size: 38px; font-weight: 700; margin-top: 16px; position: relative; overflow: hidden; }
+      .opt .sel { position: absolute; inset: 0; background: var(--red); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; color: var(--cream); }
+      .bar { height: 12px; border-radius: 8px; background: #efebe2; overflow: hidden; }
+      .bar i { display: block; height: 100%; background: var(--red); transform-origin: left center; }
+      .stat .k { font-size: 24px; color: #8b8790; font-weight: 600; }
+      .stat .v { font-size: 64px; font-weight: 800; font-stretch: 112%; letter-spacing: -0.02em; }
+      .chip { display: inline-block; padding: 8px 16px; border-radius: 999px; font-size: 22px; }
+      .row-res { display: flex; align-items: baseline; gap: 22px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+      .row-res .k { width: 220px; color: var(--muted); font-size: 22px; }
+      .row-res .v { font-size: 44px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; }
+      .panel { position: absolute; border-radius: 22px; overflow: hidden; }
+      .btn { display: inline-flex; align-items: center; justify-content: center; background: var(--red); color: var(--cream); border-radius: 14px; box-shadow: 8px 8px 0 var(--red-deep); }
+      .neon text { fill: transparent; stroke: var(--cream); stroke-width: 3; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="28.6" data-width="1080" data-height="1920">
+      <!-- audio -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.35" data-duration="26.1" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="28.6" data-track-index="11" data-volume="0.32"></audio>
+      <audio id="sfx-type" src="assets/type.mp3" data-start="0.3" data-duration="1.5" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="sfx-wh1" src="assets/whoosh.mp3" data-start="4.0" data-duration="1.2" data-track-index="13" data-volume="0.6"></audio>
+      <audio id="sfx-t1" src="assets/tick.mp3" data-start="6.5" data-duration="0.5" data-track-index="14" data-volume="0.7"></audio>
+      <audio id="sfx-t2" src="assets/tick.mp3" data-start="7.05" data-duration="0.5" data-track-index="15" data-volume="0.7"></audio>
+      <audio id="sfx-t3" src="assets/tick.mp3" data-start="7.85" data-duration="0.5" data-track-index="16" data-volume="0.7"></audio>
+      <audio id="sfx-wh2" src="assets/whoosh.mp3" data-start="8.5" data-duration="1.2" data-track-index="17" data-volume="0.5"></audio>
+      <audio id="sfx-gl1" src="assets/glitch.mp3" data-start="13.7" data-duration="1.2" data-track-index="18" data-volume="0.55"></audio>
+      <audio id="sfx-wh3" src="assets/whoosh.mp3" data-start="20.6" data-duration="1.2" data-track-index="19" data-volume="0.7"></audio>
+      <audio id="sfx-gl2" src="assets/glitch.mp3" data-start="21.0" data-duration="1.2" data-track-index="20" data-volume="0.4"></audio>
+      <audio id="sfx-gl3" src="assets/glitch.mp3" data-start="22.5" data-duration="1.2" data-track-index="21" data-volume="0.4"></audio>
+      <audio id="sfx-imp" src="assets/impact.mp3" data-start="23.7" data-duration="2" data-track-index="22" data-volume="0.85"></audio>
+
+      <!-- ============ S1 · black, typed hook ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="4.15" data-track-index="1">
+        <div class="grid-lines"></div>
+        <div id="s1-cells" class="full"></div>
+        <div class="glow-red"></div>
+        <div class="center" style="top: 560px;"><div id="s1-big" data-layout-ignore class="disp" style="font-size: 430px; color: transparent; -webkit-text-stroke: 3px rgba(232,56,45,0.28);">QUIZ</div></div>
+        <div class="center" style="top: 610px;"><div id="s1-coin" class="coin" style="position: relative; width: 150px; height: 158px; filter: drop-shadow(0 0 30px rgba(255,75,62,0.55));"><img src="assets/coin_q.png" alt="" /></div></div>
+        <div class="center" style="top: 860px;">
+          <div id="s1-l1" style="text-align: center; font-size: 64px; font-weight: 400; line-height: 1.22; width: 900px;">
+            <div><span class="w" id="w0">Tu</span> <span class="w" id="w1">próximo</span> <span class="w" id="w2">cliente</span></div>
+            <div><span class="w" id="w3">no</span> <span class="w" id="w4">llega</span> <span class="w" id="w5">por</span> <span class="w" id="w6">la</span> <span class="w" id="w7">landing.</span><span id="s1-cur" class="w" style="width: 16px; height: 58px; background: var(--red-hot); margin-left: 10px; vertical-align: -6px;"></span></div>
+          </div>
+        </div>
+        <div class="center" style="top: 1110px;">
+          <div id="s1-l2" class="disp" style="font-size: 104px; text-align: center;"><span class="w" id="w8">Llega</span> <span class="w" id="w9">por</span> <span class="w" id="w10">un</span> <span class="w" id="w11" style="color: var(--red-hot);">quiz.</span></div>
+        </div>
+        <div class="vignette" data-layout-ignore></div>
+      </section>
+
+      <!-- ============ S2 · cream, quiz card + orbiting coins ============ -->
+      <section id="s2" class="scene clip" data-start="4.15" data-duration="4.25" data-track-index="1" style="background: var(--cream);">
+        <div id="s2-cells" class="full"></div>
+        <div class="center" style="top: 290px;"><div id="s2-dots" data-layout-ignore class="dots-text" style="font-size: 420px; white-space: nowrap;">5–8</div></div>
+        <div class="center" style="top: 205px;"><div id="s2-lbl" class="px" style="color: var(--red); font-size: 30px;">preguntas · 1 minuto</div></div>
+        <div id="s2-orbit" class="full" style="perspective: 1400px;">
+          <div class="coin" id="c1" style="left: 70px; top: 520px; width: 190px; height: 200px;"><img src="assets/coin_q.png" alt="" /></div>
+          <div class="coin" id="c2" style="left: 830px; top: 480px; width: 170px; height: 180px;"><img src="assets/coin_target.png" alt="" /></div>
+          <div class="coin" id="c3" style="left: 40px; top: 1390px; width: 210px; height: 222px; filter: blur(3px);"><img src="assets/coin_bolt.png" alt="" /></div>
+          <div class="coin" id="c4" style="left: 850px; top: 1350px; width: 180px; height: 190px;"><img src="assets/coin_clock.png" alt="" /></div>
+          <div class="coin" id="c5" style="left: 300px; top: 380px; width: 110px; height: 116px; filter: blur(5px);"><img src="assets/coin_euro.png" alt="" /></div>
+          <div class="coin" id="c6" style="left: 700px; top: 1600px; width: 150px; height: 158px; filter: blur(2px);"><img src="assets/coin_rocket.png" alt="" /></div>
+        </div>
+        <div id="s2-card" class="card-light" style="left: 150px; top: 760px; width: 780px; height: 560px; padding: 40px 44px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="px" style="font-size: 22px; color: #c42a20;">Quiz · SaaS</div>
+            <div class="px" style="font-size: 22px; color: #6f6b75;">pregunta <span id="s2-n">1</span>/8</div>
+          </div>
+          <div class="bar" style="margin-top: 18px;"><i id="s2-bar"></i></div>
+          <div id="s2-q" style="position: relative; height: 420px; margin-top: 26px;">
+            <div id="q1" class="full">
+              <div style="font-size: 50px; font-weight: 800; font-stretch: 110%;">¿Quién eres?</div>
+              <div class="opt">Founder SaaS<div class="sel" id="q1s"><span>Founder SaaS</span><span>✓</span></div></div>
+              <div class="opt">Agencia</div>
+              <div class="opt">Freelance</div>
+            </div>
+            <div id="q2" class="full">
+              <div style="font-size: 50px; font-weight: 800; font-stretch: 110%;">¿Qué quieres conseguir?</div>
+              <div class="opt">Más demos<div class="sel" id="q2s"><span>Más demos</span><span>✓</span></div></div>
+              <div class="opt">Menos churn</div>
+              <div class="opt">Subir precios</div>
+            </div>
+            <div id="q3" class="full">
+              <div style="font-size: 50px; font-weight: 800; font-stretch: 110%;">¿Qué te duele más?</div>
+              <div class="opt">Leads fríos<div class="sel" id="q3s"><span>Leads fríos</span><span>✓</span></div></div>
+              <div class="opt">Pocas visitas</div>
+              <div class="opt">Ventas lentas</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S3 · cream, tilted case card + dato + "esto tiene sentido" ============ -->
+      <section id="s3" class="scene clip" data-start="8.4" data-duration="5.05" data-track-index="1" style="background: var(--cream);">
+        <div id="s3-cells" class="full"></div>
+        <div id="s3-bokeh" class="full">
+          <div class="coin" style="left: 40px; top: 300px; width: 230px; height: 242px; filter: blur(16px); opacity: 0.8;"><img src="assets/coin_target.png" alt="" /></div>
+          <div class="coin" style="left: 820px; top: 640px; width: 200px; height: 210px; filter: blur(18px); opacity: 0.8;"><img src="assets/coin_q.png" alt="" /></div>
+          <div class="coin" style="left: 110px; top: 1480px; width: 240px; height: 252px; filter: blur(20px); opacity: 0.75;"><img src="assets/coin_clock.png" alt="" /></div>
+          <div class="coin" style="left: 780px; top: 1500px; width: 180px; height: 190px; filter: blur(14px); opacity: 0.8;"><img src="assets/coin_rocket.png" alt="" /></div>
+        </div>
+        <div class="full" style="perspective: 1600px;">
+          <div id="s3-case" class="card-light" style="left: 150px; top: 640px; width: 780px; height: 620px; overflow: hidden;">
+            <div id="s3-head" style="height: 190px; background: var(--red); position: relative; overflow: hidden;"></div>
+            <div style="padding: 0 44px;">
+              <div style="display: flex; align-items: center; gap: 18px; margin-top: -46px; position: relative;">
+                <div style="width: 92px; height: 97px;"><img src="assets/coin_rocket.png" alt="" style="width: 100%; height: 100%;" /></div>
+                <div style="margin-top: 44px;"><div style="font-size: 38px; font-weight: 800;">Caso real</div><div style="font-size: 22px; color: #8b8790;">SaaS B2B · quiz de 6 preguntas · ejemplo</div></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 46px;">
+                <div class="stat"><div class="k">Demos / semana</div><div class="v"><span id="s3-demos">4</span></div></div>
+                <div class="stat"><div class="k">Conversión</div><div class="v"><span id="s3-conv">2,1</span>%</div></div>
+                <div class="stat"><div class="k">Coste / lead</div><div class="v" style="color: var(--red);"><span id="s3-cpl">0</span>%</div></div>
+              </div>
+              <div class="bar" style="margin-top: 40px; height: 16px;"><i id="s3-bar"></i></div>
+            </div>
+          </div>
+          <div id="s3-dato" class="card-dark" style="left: 560px; top: 330px; width: 440px; height: 300px; padding: 34px 36px;">
+            <div class="px chip" style="background: var(--gold); color: #111;">dato</div>
+            <div class="disp" style="font-size: 96px; margin-top: 18px;">7 de 10</div>
+            <div style="font-size: 28px; color: var(--muted); margin-top: 6px;">no vuelven a tu landing</div>
+          </div>
+        </div>
+        <div class="center" style="top: 1390px;">
+          <div id="s3-think" style="background: #111; color: var(--cream); border-radius: 22px; padding: 30px 44px; display: flex; align-items: center; gap: 26px; box-shadow: 10px 10px 0 var(--red);">
+            <div class="px" style="width: 64px; height: 64px; background: var(--red); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px;">✓</div>
+            <div style="font-size: 54px; font-weight: 800; font-stretch: 112%;">“Esto tiene sentido.”</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S4 · dark, personalised result ============ -->
+      <section id="s4" class="scene clip" data-start="13.45" data-duration="2.5" data-track-index="1">
+        <div class="grid-lines"></div>
+        <div id="s4-cells" class="full"></div>
+        <div class="center" style="top: 380px;"><div id="s4-big" data-layout-ignore class="disp" style="font-size: 200px; white-space: nowrap; color: transparent; -webkit-text-stroke: 3px rgba(232,56,45,0.3);">PARA TI</div></div>
+        <div id="s4-card" class="card-dark" style="left: 120px; top: 700px; width: 840px; height: 560px; padding: 44px 52px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="px" style="color: var(--red-hot); font-size: 26px;">tu resultado</div>
+            <div id="s4-chip" class="px chip" style="background: var(--gold); color: #111;">personalizado</div>
+          </div>
+          <div class="row-res" style="margin-top: 20px;"><div class="k px">perfil</div><div class="v">Founder SaaS B2B</div></div>
+          <div class="row-res"><div class="k px">objetivo</div><div class="v">Más demos</div></div>
+          <div class="row-res" style="border-bottom: none;"><div class="k px">problema</div><div class="v" style="color: var(--red-hot);">Leads fríos</div></div>
+        </div>
+        <div class="vignette" data-layout-ignore></div>
+      </section>
+
+      <!-- ============ S5 · dark UI window, offer + countdown, pull back to collage, zoom through ============ -->
+      <section id="s5" class="scene clip" data-start="15.95" data-duration="4.75" data-track-index="1">
+        <div class="grid-lines"></div>
+        <div id="s5-cells" class="full"></div>
+        <div id="s5-cam" class="full" style="perspective: 1800px;">
+          <div id="s5-stage" class="full" data-layout-allow-occlusion data-layout-allow-overlap>
+            <!-- collage panels (revealed by the pull-back) -->
+            <div class="panel" data-layout-ignore style="left: -60px; top: 120px; width: 420px; height: 330px; background: linear-gradient(135deg, #f5c51b, #b88a00); padding: 30px;">
+              <div class="px" style="color: #111; font-size: 22px;">comunidad</div><div class="disp" style="color: #111; font-size: 100px; margin-top: 20px; line-height: 1.05;">+218</div><div style="color: #111; font-size: 26px; font-weight: 700;">fundadores dentro</div>
+            </div>
+            <div class="panel" data-layout-ignore style="left: 410px; top: 60px; width: 300px; height: 240px; background: #fff; color: #111; padding: 26px;">
+              <div class="px" style="font-size: 18px; color: var(--red);">pregunta 4/8</div><div style="font-size: 30px; font-weight: 800; margin-top: 12px;">¿Qué te duele más?</div>
+              <div style="height: 46px; border-radius: 10px; background: var(--red); margin-top: 16px;"></div><div style="height: 46px; border-radius: 10px; border: 2px solid #e6e1d6; margin-top: 10px;"></div>
+            </div>
+            <div class="panel" data-layout-ignore style="left: 760px; top: 140px; width: 380px; height: 300px; background: #1d1d28; border: 1px solid var(--line); padding: 26px;">
+              <div class="px" style="font-size: 18px; color: var(--muted);">mrr del mentor</div><div class="disp" style="font-size: 96px; margin-top: 22px; color: var(--red-hot);">78K€</div>
+            </div>
+            <div class="panel" data-layout-ignore style="left: -80px; top: 1500px; width: 400px; height: 300px; background: #fff; color: #111; padding: 28px;">
+              <div class="px" style="font-size: 18px; color: #8b8790;">pago</div><div style="font-size: 40px; font-weight: 800; margin-top: 18px;">Completado ✓</div><div style="font-size: 26px; color: #8b8790;">Plan anual · −30%</div>
+            </div>
+            <div class="panel" data-layout-ignore style="left: 370px; top: 1620px; width: 360px; height: 260px; background: #1d1d28; border: 1px solid var(--line); padding: 26px;">
+              <div class="px" style="font-size: 18px; color: var(--muted);">leads cualificados</div>
+              <div style="display: flex; align-items: flex-end; gap: 14px; height: 140px; margin-top: 24px;"><i style="width: 40px; height: 40px; background: #3a3a4a;"></i><i style="width: 40px; height: 60px; background: #3a3a4a;"></i><i style="width: 40px; height: 82px; background: #5a3a3a;"></i><i style="width: 40px; height: 108px; background: var(--red);"></i><i style="width: 40px; height: 136px; background: var(--red-hot);"></i></div>
+            </div>
+            <div class="panel" data-layout-ignore style="left: 780px; top: 1480px; width: 360px; height: 360px; background: radial-gradient(circle at 50% 45%, #3a1a10, #120a0a 70%); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;">
+              <div style="width: 220px; height: 232px; filter: drop-shadow(0 0 40px rgba(245,197,27,0.5));"><img src="assets/coin_euro.png" alt="" style="width: 100%; height: 100%;" /></div>
+            </div>
+            <!-- main window -->
+            <div id="s5-win" data-layout-allow-occlusion class="card-dark" style="left: 150px; top: 500px; width: 780px; height: 940px; border-radius: 24px; overflow: hidden;">
+              <div style="height: 64px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; padding: 0 24px;">
+                <i style="width: 16px; height: 16px; border-radius: 50%; background: #3a3a48;"></i><i style="width: 16px; height: 16px; border-radius: 50%; background: #3a3a48;"></i><i style="width: 16px; height: 16px; border-radius: 50%; background: #3a3a48;"></i>
+                <div style="margin-left: 120px; width: 300px; height: 14px; border-radius: 7px; background: #262634;"></div>
+              </div>
+              <div style="display: flex; height: 876px;">
+                <div style="width: 96px; border-right: 1px solid var(--line); padding: 26px 22px;">
+                  <div style="width: 50px; height: 50px; border-radius: 12px; background: #262634; margin-bottom: 22px;"></div><div style="width: 50px; height: 50px; border-radius: 12px; background: #262634; margin-bottom: 22px;"></div><div style="width: 50px; height: 50px; border-radius: 12px; background: var(--red-deep); margin-bottom: 22px;"></div><div style="width: 50px; height: 50px; border-radius: 12px; background: #262634;"></div>
+                </div>
+                <div style="flex: 1; padding: 46px 44px; position: relative;">
+                  <div class="px" style="color: var(--gold); font-size: 24px;">oferta para tu perfil</div>
+                  <div id="s5-pct" class="disp" style="font-size: 190px; margin-top: 28px; color: var(--cream); text-shadow: 0 0 60px rgba(245,197,27,0.45);">−30%</div>
+                  <div style="font-size: 34px; color: var(--muted); margin-top: 10px;">3 primeros meses · solo hoy</div>
+                  <div style="margin-top: 60px; padding: 30px 32px; border: 1px solid var(--line); border-radius: 18px; background: #101018;">
+                    <div class="px" style="font-size: 20px; color: var(--muted);">caduca en</div>
+                    <div id="s5-clock" class="px" style="font-size: 104px; color: var(--red-hot); margin-top: 10px; letter-spacing: 0.06em;">14:59</div>
+                  </div>
+                  <div id="s5-btn" class="btn px" style="margin-top: 50px; width: 100%; height: 108px; font-size: 34px;">canjear oferta</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="center" style="top: 1520px;"><div id="s5-line" data-layout-allow-overlap class="disp" style="font-size: 64px; white-space: nowrap; background: var(--bg); padding: 18px 30px; border-radius: 14px; border: 1px solid var(--line);">No solo captas el lead.</div></div>
+        <div id="s5-flash" data-layout-ignore class="full" style="background: radial-gradient(circle at 50% 50%, rgba(255,75,62,0.95), rgba(232,56,45,0.35) 25%, transparent 55%);"></div>
+        <div class="vignette" data-layout-ignore></div>
+      </section>
+
+      <!-- ============ S6 · three glitch words ============ -->
+      <section id="s6" class="scene clip" data-start="20.7" data-duration="2.75" data-track-index="1">
+        <div class="grid-lines"></div>
+        <div id="s6-cells" class="full"></div>
+        <div class="glow-red"></div>
+        <div id="s6-words" class="full" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 30px;">
+          <div id="s6-a" class="disp" style="font-size: 96px; white-space: nowrap; position: relative;">Lo segmentas,</div>
+          <div id="s6-b" class="disp" style="font-size: 96px; white-space: nowrap; position: relative;">lo educas</div>
+          <div id="s6-c" class="disp" style="font-size: 96px; white-space: nowrap; position: relative; color: var(--red-hot); text-align: center; line-height: 1.05;"><div>y lo llevas</div><div>a la compra.</div></div>
+        </div>
+        <div class="vignette" data-layout-ignore></div>
+      </section>
+
+      <!-- ============ S7 · neon logo lockup + CTA ============ -->
+      <section id="s7" class="scene clip" data-start="23.45" data-duration="5.15" data-track-index="1">
+        <div class="grid-lines"></div>
+        <div id="s7-cells" class="full"></div>
+        <div class="glow-red"></div>
+        <div id="s7-echo" class="full" data-layout-ignore></div>
+        <svg id="s7-neon" data-layout-ignore class="neon" style="position: absolute; left: 0; top: 700px;" width="1080" height="300" viewBox="0 0 1080 300">
+          <text id="s7-t1" x="540" y="150" text-anchor="middle" style="font-family: Archivo; font-weight: 900; font-stretch: 118%; font-size: 168px;">SAAS</text>
+          <text id="s7-t2" x="540" y="290" text-anchor="middle" style="font-family: Archivo; font-weight: 900; font-stretch: 118%; font-size: 120px;">IN HOUSE</text>
+        </svg>
+        <div id="s7-lock" class="full">
+          <div class="center" style="top: 720px;"><div class="disp" style="font-size: 168px; line-height: 1;">SaaS</div></div>
+          <div class="center" style="top: 900px;">
+            <div style="display: flex; align-items: center; gap: 22px;">
+              <div id="s7-chip" class="px" style="font-size: 56px; background: var(--red); padding: 14px 20px 8px; border-radius: 14px; box-shadow: 7px 7px 0 var(--red-deep);">IN</div>
+              <div class="disp" style="font-size: 120px; line-height: 1;">House</div>
+            </div>
+          </div>
+        </div>
+        <div class="center" style="top: 1180px;">
+          <div id="s7-cta" class="btn px" style="height: 120px; padding: 0 56px; font-size: 44px;">comenta «quiz»</div>
+        </div>
+        <div class="center" style="top: 1350px;"><div id="s7-sub" style="font-size: 38px; color: var(--muted);">y te enseño cómo montarlo</div></div>
+        <div class="center" style="top: 1700px;"><div id="s7-foot" class="px" style="font-size: 22px; color: var(--muted);">comunidad de fundadores saas en español</div></div>
+        <div class="vignette" data-layout-ignore></div>
+      </section>
+    </div>
+
+    <script>
+      const VO = 0.35; // voiceover offset; word times below are relative to the voice file
+      const WORDS = [["Tu",0.0,0.17],["próximo",0.19,0.53],["cliente",0.57,0.99],["no",1.06,1.18],["llega",1.21,1.43],["por",1.47,1.62],["la",1.66,1.74],["landing.",1.78,2.4],["Llega",2.62,2.9],["por",2.95,3.08],["un",3.12,3.2],["quiz.",3.24,3.7]];
+      const t = (s) => s + VO;
+      const END = 28.6;
+      const tl = gsap.timeline({ paused: true });
+
+      // seeded RNG for deterministic pixel flicker
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      // pixel cells: a few squares of the 60px grid light up and flicker
+      function cells(id, color, n, t0, t1) {
+        const host = document.getElementById(id);
+        for (let i = 0; i < n; i++) {
+          const c = document.createElement("div");
+          c.className = "cell";
+          c.id = `${id}-${i}`;
+          c.style.left = Math.floor(rnd() * 18) * 60 + "px";
+          c.style.top = Math.floor(rnd() * 32) * 60 + "px";
+          c.style.background = color;
+          host.appendChild(c);
+          tl.set(c, { opacity: 0 }, t0);
+          for (let k = t0 + rnd() * 0.6; k < t1; k += 0.35 + rnd() * 0.9) tl.set(c, { opacity: rnd() < 0.5 ? 0 : 0.15 + rnd() * 0.5 }, k);
+        }
+      }
+      cells("s1-cells", "rgba(232,56,45,0.35)", 40, 0, 4.15);
+      cells("s2-cells", "rgba(232,56,45,0.10)", 50, 4.15, 8.4);
+      cells("s3-cells", "rgba(232,56,45,0.10)", 50, 8.4, 13.45);
+      cells("s4-cells", "rgba(232,56,45,0.30)", 40, 13.45, 15.95);
+      cells("s5-cells", "rgba(232,56,45,0.25)", 30, 15.95, 20.7);
+      cells("s6-cells", "rgba(232,56,45,0.35)", 50, 20.7, 23.45);
+      cells("s7-cells", "rgba(232,56,45,0.30)", 60, 23.45, END);
+
+      /* ---------- S1 ---------- */
+      tl.fromTo("#s1-big", { scale: 1.18, opacity: 0 }, { scale: 1, opacity: 1, duration: 3.8, ease: "power2.out" }, 0);
+      WORDS.forEach((w, i) => {
+        tl.fromTo("#w" + i, { opacity: 0, y: 14, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, t(w[1]));
+      });
+      tl.fromTo("#s1-cur", { opacity: 0 }, { opacity: 1, duration: 0.01 }, t(0.2));
+      for (let k = t(0.6); k < t(2.5); k += 0.5) tl.set("#s1-cur", { opacity: 0 }, k).set("#s1-cur", { opacity: 1 }, k + 0.25);
+      tl.to("#s1-cur", { opacity: 0, duration: 0.05 }, t(2.5));
+      tl.to("#s1-l1", { y: -60, opacity: 0.35, duration: 0.45, ease: "power3.inOut" }, t(2.5));
+      tl.fromTo("#s1-coin", { opacity: 0, scale: 0.4, rotation: -30 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(2)" }, t(3.2));
+      tl.to("#s1-coin", { scaleX: -1, duration: 0.5, ease: "power2.inOut", yoyo: true, repeat: 1 }, t(3.3));
+      tl.to("#s1-big", { scale: 1.5, opacity: 0, duration: 0.3, ease: "power2.in" }, 3.85);
+
+      /* ---------- S2 ---------- */
+      tl.fromTo("#s2-dots", { scale: 1.25, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.2, ease: "power3.out" }, 4.15);
+      tl.fromTo("#s2-lbl", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, t(4.6));
+      // coins burst from the center cluster to their orbit spots
+      ["#c1", "#c2", "#c3", "#c4", "#c5", "#c6"].forEach((id, i) => {
+        const el = document.querySelector(id);
+        const cx = 540 - (parseFloat(el.style.left) + parseFloat(el.style.width) / 2);
+        const cy = 1000 - (parseFloat(el.style.top) + parseFloat(el.style.height) / 2);
+        tl.fromTo(id, { x: cx, y: cy, scale: 0.3, opacity: 0, rotation: -40 + i * 15 }, { x: 0, y: 0, scale: 1, opacity: 1, rotation: 0, duration: 0.9, ease: "expo.out" }, 4.2 + i * 0.05);
+        tl.to(id, { yPercent: i % 2 ? 6 : -6, duration: 1.3 + i * 0.15, ease: "sine.inOut", yoyo: true, repeat: 3 }, 5.1);
+      });
+      tl.to("#c2", { scaleX: -1, duration: 0.6, ease: "power2.inOut", yoyo: true, repeat: 3 }, 5.4);
+      tl.to("#c4", { scaleX: -1, duration: 0.7, ease: "power2.inOut", yoyo: true, repeat: 2 }, 5.8);
+      tl.fromTo("#s2-card", { opacity: 0, scale: 0.9, y: 60, filter: "blur(12px)" }, { opacity: 1, scale: 1, y: 0, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, t(4.3));
+      // questions: 1 → 2 → 3, each answer gets picked
+      tl.set("#q2, #q3", { opacity: 0 }, 4.15).set("#q1s, #q2s, #q3s", { opacity: 0 }, 4.15);
+      tl.fromTo("#s2-bar", { scaleX: 0 }, { scaleX: 1 / 8, duration: 0.4 }, t(4.84));
+      const pick = (q, s, n, at) => {
+        tl.fromTo(s, { opacity: 0, scaleX: 0.92 }, { opacity: 1, scaleX: 1, duration: 0.18, ease: "power2.out" }, at);
+        tl.to("#s2-bar", { scaleX: (n + 1) / 8, duration: 0.3, ease: "power2.out" }, at + 0.1);
+        tl.set("#s2-n", { textContent: String(n + 1) }, at + 0.2);
+      };
+      pick("#q1", "#q1s", 1, t(6.1));
+      tl.to("#q1", { opacity: 0, x: -60, duration: 0.2 }, t(6.3)).fromTo("#q2", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, t(6.35));
+      pick("#q2", "#q2s", 2, t(6.7));
+      tl.to("#q2", { opacity: 0, x: -60, duration: 0.2 }, t(7.0)).fromTo("#q3", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, t(7.05));
+      pick("#q3", "#q3s", 3, t(7.5));
+      // focus pull out
+      tl.to("#s2-card, #s2-orbit", { filter: "blur(14px)", duration: 0.35, ease: "power2.in" }, 8.05);
+
+      /* ---------- S3 ---------- */
+      // red header pixel pattern
+      const head = document.getElementById("s3-head");
+      for (let i = 0; i < 60; i++) {
+        const p = document.createElement("i");
+        p.style.cssText = `position:absolute;width:26px;height:26px;background:rgba(242,239,230,${(0.15 + rnd() * 0.5).toFixed(2)});left:${440 + Math.floor(rnd() * 13) * 26}px;top:${Math.floor(rnd() * 7) * 26}px;`;
+        head.appendChild(p);
+      }
+      tl.fromTo("#s3-bokeh", { opacity: 0, scale: 1.1 }, { opacity: 1, scale: 1, duration: 0.6 }, 8.4);
+      tl.fromTo("#s3-case", { y: 900, rotationX: 38, rotationZ: -14, rotationY: -18, opacity: 0 },
+        { y: 0, rotationX: 16, rotationZ: -7, rotationY: -10, opacity: 1, duration: 0.95, ease: "expo.out" }, 8.42);
+      tl.to("#s3-case", { rotationX: 10, rotationZ: -4, rotationY: -4, y: -20, duration: 3.6, ease: "sine.inOut" }, 9.4);
+      const num = (id, from, to, dec, at, dur, sign = "") => {
+        const o = { v: from };
+        tl.fromTo(o, { v: from }, { v: to, duration: dur, ease: "power2.out",
+          onUpdate: () => (document.getElementById(id).textContent = sign + o.v.toFixed(dec).replace(".", ",")) }, at);
+      };
+      num("s3-demos", 4, 19, 0, t(9.65), 1.6);
+      num("s3-conv", 2.1, 6.8, 1, t(9.65), 1.6);
+      num("s3-cpl", 0, 42, 0, t(9.98), 1.4, "−");
+      tl.fromTo("#s3-bar", { scaleX: 0.08 }, { scaleX: 0.86, duration: 1.8, ease: "power2.out" }, t(9.65));
+      tl.fromTo("#s3-dato", { opacity: 0, y: -80, rotation: 8, scale: 0.9 }, { opacity: 1, y: 0, rotation: 4, scale: 1, duration: 0.6, ease: "back.out(1.8)" }, t(10.55));
+      tl.to("#s3-case, #s3-dato", { filter: "blur(6px)", opacity: 0.55, duration: 0.35 }, t(12.15));
+      tl.fromTo("#s3-think", { opacity: 0, scale: 0.7, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(2.2)" }, t(12.2));
+
+      /* ---------- S4 ---------- */
+      tl.fromTo("#s4-big", { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1, duration: 2.4, ease: "power2.out" }, 13.45);
+      // glitch-in of the result card
+      tl.fromTo("#s4-card", { opacity: 0, x: -40, skewX: 12 }, { opacity: 1, x: 0, skewX: 0, duration: 0.3, ease: "steps(4)" }, 13.5);
+      tl.fromTo("#s4-card .row-res", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.3, stagger: 0.28, ease: "power3.out" }, t(14.3));
+      tl.fromTo("#s4-chip", { opacity: 0, scale: 1.8, rotation: -8 }, { opacity: 1, scale: 1, rotation: -3, duration: 0.35, ease: "back.out(3)" }, t(14.9));
+
+      /* ---------- S5 ---------- */
+      tl.fromTo("#s5-stage", { scale: 1.3 }, { scale: 1.3, duration: 0.01 }, 15.95);
+      tl.fromTo("#s5-win", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 15.95);
+      tl.fromTo("#s5-pct", { opacity: 0, scale: 1.3, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, t(16.2));
+      const clk = { v: 899.99 };
+      tl.fromTo(clk, { v: 899.99 }, { v: 896, duration: 4, ease: "none",
+        onUpdate: () => { const s = Math.ceil(clk.v); document.getElementById("s5-clock").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; } }, t(17.4));
+      tl.fromTo("#s5-btn", { scale: 1 }, { scale: 1.04, duration: 0.15, yoyo: true, repeat: 1 }, t(18.1));
+      // camera pulls back to reveal the collage, with a slight tilt
+      tl.to("#s5-stage", { scale: 0.88, rotationX: 10, rotationZ: -3, duration: 2.0, ease: "power3.inOut" }, t(18.4));
+      tl.fromTo("#s5-line", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, t(19.1));
+      // zoom through into the red light
+      tl.to("#s5-stage", { scale: 5, rotationZ: 8, filter: "blur(18px)", duration: 0.45, ease: "power3.in" }, 20.25);
+      tl.to("#s5-line", { opacity: 0, duration: 0.15 }, 20.25);
+      tl.fromTo("#s5-flash", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1.4, duration: 0.45, ease: "power3.in" }, 20.25);
+
+      /* ---------- S6 ---------- */
+      const glitchIn = (id, at) => {
+        tl.fromTo(id, { opacity: 0, x: -30, skewX: 20, filter: "blur(6px)" }, { opacity: 1, x: 0, skewX: 0, filter: "blur(0px)", duration: 0.22, ease: "steps(5)" }, at);
+        tl.to(id, { x: 8, duration: 0.04, yoyo: true, repeat: 3, ease: "none" }, at + 0.25);
+      };
+      tl.set("#s6-a, #s6-b, #s6-c", { opacity: 0 }, 20.7);
+      glitchIn("#s6-a", t(20.4));
+      glitchIn("#s6-b", t(21.22));
+      glitchIn("#s6-c", t(21.95));
+      tl.to("#s6-words", { scale: 1.06, duration: 2.6, ease: "none" }, 20.7);
+
+      /* ---------- S7 ---------- */
+      const t1 = document.getElementById("s7-t1"), t2 = document.getElementById("s7-t2");
+      [t1, t2].forEach((el) => { const L = 2600; el.style.strokeDasharray = L; el.style.strokeDashoffset = L; });
+      tl.to("#s7-t1", { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut" }, 23.5);
+      tl.to("#s7-t2", { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut" }, 23.75);
+      tl.fromTo("#s7-neon", { filter: "drop-shadow(0 0 0px #fff)" }, { filter: "drop-shadow(0 0 18px rgba(255,255,255,0.9)) drop-shadow(0 0 40px rgba(255,75,62,0.7))", duration: 0.6 }, 23.6);
+      // echo outlines flying out (Backable-style extrusion)
+      const echo = document.getElementById("s7-echo");
+      for (let i = 0; i < 4; i++) {
+        const c = document.getElementById("s7-neon").cloneNode(true);
+        c.removeAttribute("id");
+        c.querySelectorAll("text").forEach((x) => { x.removeAttribute("id"); x.style.strokeDashoffset = 0; x.style.strokeDasharray = "none"; });
+        c.id = "s7-e" + i;
+        echo.appendChild(c);
+        tl.fromTo(c, { opacity: 0.0, scale: 1 }, { opacity: 0, scale: 1 + 0.25 * (i + 1), duration: 0.9, ease: "power2.out" }, 24.35 + i * 0.06);
+        tl.set(c, { opacity: 0.5 - i * 0.1 }, 24.35 + i * 0.06);
+        tl.to(c, { opacity: 0, duration: 0.7 }, 24.4 + i * 0.06);
+      }
+      // neon settles into the solid brand lockup
+      tl.set("#s7-lock", { opacity: 0 }, 23.45);
+      tl.to("#s7-neon", { opacity: 0, duration: 0.35 }, 24.75);
+      tl.fromTo("#s7-lock", { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, 24.7);
+      tl.fromTo("#s7-chip", { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.4, ease: "back.out(3)" }, 24.85);
+      tl.fromTo("#s7-cta", { opacity: 0, y: 40, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(2)" }, t(23.8));
+      tl.to("#s7-cta", { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1 }, t(24.3));
+      tl.fromTo("#s7-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, t(24.5));
+      tl.fromTo("#s7-foot", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 26.4);
+      tl.to("#s7-cta", { scale: 1.04, duration: 0.6, yoyo: true, repeat: 2, ease: "sine.inOut" }, 26.2);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

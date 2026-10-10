@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "JBM"; src: url("assets/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; }
+      :root {
+        --ink: #111114; --night: #0b0b10; --cream: #f2efe6; --red: #e8382d; --red-hot: #ff4b3e; --red-deep: #7e140d;
+        --grey: #8d8b94; --panel: #1d1d23;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Archivo", sans-serif; }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+      .cnt { position: absolute; inset: 0; }
+      .dark { background: radial-gradient(ellipse 85% 60% at 50% 46%, #1a1a20, var(--night) 72%); color: var(--cream); }
+      .light { background: radial-gradient(ellipse 70% 52% at 50% 46%, #ffffff 30%, #f1f0ec 62%, #d9d8d4); color: var(--ink); }
+      .red { background: radial-gradient(ellipse 80% 60% at 40% 46%, var(--red-hot), var(--red) 55%, #b9241b); color: var(--cream); }
+      .mono { font-family: "JBM", monospace; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600; }
+      .disp { font-weight: 900; letter-spacing: -0.035em; line-height: 0.92; text-transform: uppercase; }
+      .abs { position: absolute; }
+      .ctr { position: absolute; left: 0; right: 0; text-align: center; }
+      .tag { font-size: 22px; opacity: 0.75; }
+      /* HUD */
+      #hud { position: absolute; inset: 0; color: rgba(242, 239, 230, 0.9); pointer-events: none; }
+      .brk { position: absolute; width: 46px; height: 46px; border: 0 solid currentColor; opacity: 0.85; }
+      .hud-t { position: absolute; font-size: 20px; display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+      .logo { display: inline-flex; align-items: center; justify-content: center; background: var(--red); color: var(--cream); font-family: "Archivo"; font-weight: 900; letter-spacing: 0; }
+      #bar { position: absolute; left: 300px; top: 1838px; width: 420px; height: 4px; display: flex; gap: 6px; }
+      #bar .seg { position: relative; height: 4px; background: currentColor; opacity: 0.25; }
+      #barfill { position: absolute; left: 300px; top: 1838px; width: 420px; height: 4px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); }
+      #playhead { position: absolute; left: 300px; top: 1832px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 14px rgba(232, 56, 45, 0.8); }
+      #cap { position: absolute; left: 70px; right: 70px; top: 1548px; text-align: center; font-size: 44px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+      #cap .w { opacity: 0.32; }
+      #cap .k { display: none; }
+      #vig { position: absolute; inset: 0; box-shadow: inset 0 0 240px rgba(0, 0, 0, 0.35); pointer-events: none; }
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+      #fade { position: absolute; inset: 0; background: #000; opacity: 0; }
+      /* shared bits */
+      .dot { position: absolute; border-radius: 50%; }
+      .card { position: absolute; background: #fff; color: var(--ink); border-radius: 26px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35); }
+      .chip { display: inline-block; padding: 12px 22px; border-radius: 999px; border: 2px solid rgba(17, 17, 20, 0.18); font-size: 26px; font-weight: 600; margin-right: 10px; }
+      .tile { position: absolute; border-radius: 14px; background: var(--red); overflow: hidden; }
+      .mini { position: absolute; width: 250px; height: 168px; border-radius: 16px; background: #f6f4ee; color: var(--ink); padding: 18px; overflow: hidden; }
+      .mini .mono { font-size: 15px; color: var(--red); }
+      .mini b { display: block; font-size: 27px; line-height: 1.08; margin-top: 10px; letter-spacing: -0.02em; }
+      .mini.dk { background: #24242b; color: var(--cream); }
+      .mini.rd { background: var(--red); color: var(--cream); }
+      .mini.rd .mono { color: var(--cream); }
+      .ann { position: absolute; font-size: 19px; line-height: 1.55; white-space: pre; }
+      svg { overflow: visible; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="36" data-width="1080" data-height="1920">
+      <!-- audio: reused VO (whiteboard-ad, Bruno) + reused bed (ui-launch-reel), library SFX + 2 ElevenLabs SFX -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.4" data-duration="32.7" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="36" data-track-index="11" data-volume="0.3"></audio>
+      <!--SFX-->
+
+      <!-- S1 · playhead → everyone to the same landing -->
+      <div id="s1" class="scene dark"><div class="cnt" id="s1-c">
+        <div id="s1-track" class="abs" style="left: 140px; top: 1000px; width: 800px; height: 4px; display: flex; gap: 8px;">
+          <i style="flex: 1; background: rgba(242,239,230,0.22);"></i><i style="flex: 1; background: rgba(242,239,230,0.22);"></i><i style="flex: 1; background: rgba(242,239,230,0.22);"></i><i style="flex: 1; background: rgba(242,239,230,0.22);"></i><i style="flex: 1; background: rgba(242,239,230,0.22);"></i><i style="flex: 1; background: rgba(242,239,230,0.22);"></i>
+        </div>
+        <div id="s1-fill" class="abs" style="left: 140px; top: 1000px; width: 800px; height: 4px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); box-shadow: 0 0 12px rgba(232,56,45,0.7);"></div>
+        <div id="s1-crowd"></div>
+        <div id="s1-land" class="abs" style="left: 330px; top: 620px; width: 420px; height: 280px; border-radius: 22px; border: 3px solid var(--cream); opacity: 0;">
+          <div style="height: 46px; border-bottom: 3px solid var(--cream); display: flex; align-items: center; gap: 10px; padding-left: 18px;"><i style="width: 12px; height: 12px; border-radius: 50%; background: var(--red);"></i><i style="width: 12px; height: 12px; border-radius: 50%; background: rgba(242,239,230,0.4);"></i><span class="mono" style="font-size: 16px; margin-left: 12px; opacity: 0.8;">tu-saas.com/landing</span></div>
+          <div class="disp" style="font-size: 64px; text-align: center; margin-top: 54px;">LANDING</div>
+          <div class="mono" style="font-size: 16px; text-align: center; margin-top: 18px; opacity: 0.7;">misma página · para todos</div>
+        </div>
+        <div id="s1-dot" class="dot" style="left: 140px; top: 1002px; width: 30px; height: 30px; margin: -15px 0 0 -15px; background: var(--red); box-shadow: 0 0 24px rgba(255,75,62,0.9);"></div>
+        <div id="s1-ann" class="abs" style="left: 140px; top: 1002px;">
+          <svg width="1" height="1" class="abs" style="left: 0; top: 0;"><path d="M 10 -14 L 70 -120" stroke="rgba(242,239,230,0.6)" stroke-width="2" fill="none"/></svg>
+          <div id="s1-ann-t" class="ann mono" style="left: 80px; top: -190px; border-left: 2px solid rgba(242,239,230,0.6); padding-left: 12px;">POS   140.0  1002.0
+SCL   100%   100%
+VEL   0 PX/S</div>
+        </div>
+        <div id="s1-stat" class="ctr mono" style="top: 940px; font-size: 22px; opacity: 0; color: var(--red-hot);">tráfico 100% → 1 página</div>
+      </div></div>
+
+      <!-- S2 · HAZ ESTO -->
+      <div id="s2" class="scene light"><div class="cnt" id="s2-c">
+        <div id="s2-a" class="ctr disp" style="top: 640px; font-size: 270px;">HAZ</div>
+        <div id="s2-b" class="ctr disp" style="top: 900px; font-size: 270px;">ESTO<span style="color: var(--red);">.</span></div>
+        <div class="ctr mono tag" style="top: 1230px;">02 · el giro</div>
+      </div></div>
+
+      <!-- S3 · search bar: pedir una demo → quiz funnel -->
+      <div id="s3" class="scene light"><div class="cnt" id="s3-c">
+        <div id="s3-bar" class="abs" style="left: 70px; top: 820px; width: 940px; height: 116px; border-radius: 58px; background: #fff; box-shadow: 0 18px 50px rgba(0,0,0,0.12), 0 0 0 2px rgba(17,17,20,0.08); display: flex; align-items: center; padding: 0 30px;">
+          <span class="logo" style="width: 54px; height: 54px; border-radius: 14px; font-size: 32px;">S</span>
+          <span id="s3-txt" style="margin-left: 26px; font-size: 44px; font-weight: 500; position: relative; white-space: nowrap;"></span><span id="s3-cur" style="display: inline-block; width: 3px; height: 50px; background: var(--ink); margin-left: 4px;"></span>
+          <svg class="abs" style="right: 44px; top: 34px;" width="46" height="46" viewBox="0 0 46 46"><circle cx="19" cy="19" r="14" stroke="#111114" stroke-width="5" fill="none"/><path d="M30 30 L42 42" stroke="#111114" stroke-width="6" stroke-linecap="round"/></svg>
+        </div>
+        <div id="s3-strike" class="abs" style="left: 180px; top: 878px; width: 330px; height: 6px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0);"></div>
+        <div id="s3-drop" class="abs" style="left: 70px; top: 950px; width: 940px; border-radius: 26px; background: #fff; box-shadow: 0 18px 50px rgba(0,0,0,0.12); padding: 16px 0; opacity: 0;">
+          <div style="padding: 18px 40px; font-size: 36px; background: #f1f0ec;">⌕&nbsp; <b>quiz funnel</b> para saas</div>
+          <div style="padding: 18px 40px; font-size: 36px;">⌕&nbsp; <b>quiz funnel</b> ejemplos</div>
+          <div style="padding: 18px 40px; font-size: 36px;">⌕&nbsp; <b>quiz funnel</b> vs landing</div>
+        </div>
+        <svg id="s3-ptr" class="abs" style="left: 700px; top: 1300px;" width="44" height="60" viewBox="0 0 44 60"><path d="M2 2 L2 48 L14 37 L23 57 L31 53 L22 34 L38 34 Z" fill="#111114" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>
+      </div></div>
+
+      <!-- S4 · QUIZ / FUNNEL + tiled words -->
+      <div id="s4" class="scene light"><div class="cnt" id="s4-c">
+        <div id="s4-dk" class="abs dark" style="inset: 0; opacity: 0;"></div>
+        <div id="s4-tiles" class="abs" style="left: -500px; top: -300px; width: 2100px; height: 2600px; transform: rotate(-14deg); opacity: 0;"></div>
+        <div id="s4-a" class="ctr disp" style="top: 700px; font-size: 300px;">QUIZ</div>
+        <div id="s4-b" class="ctr disp" style="top: 990px; font-size: 220px; color: var(--cream); opacity: 0;">FUNNEL</div>
+      </div></div>
+
+      <!-- S5 · particle 5–8 -->
+      <div id="s5" class="scene dark"><div class="cnt" id="s5-c">
+        <div id="s5-glow" class="abs" style="left: 140px; top: 560px; width: 800px; height: 640px; border-radius: 50%; background: radial-gradient(closest-side, rgba(232,56,45,0.28), transparent); opacity: 0;"></div>
+        <div id="s5-p" class="abs" style="left: 0; top: 600px; width: 1080px; height: 560px;"></div>
+        <div id="s5-lbl" class="ctr mono" style="top: 1200px; font-size: 34px; letter-spacing: 0.4em; opacity: 0;">preguntas</div>
+        <div class="ann mono" style="left: 740px; top: 330px; opacity: 0.7;">PARTICLES  597
+SEED       0x5F
+STATE      ASSEMBLE</div>
+      </div></div>
+
+      <!-- S6 · red tile grid + question cards -->
+      <div id="s6" class="scene dark"><div class="cnt" id="s6-c">
+        <div id="s6-grid" class="abs" style="inset: 0;"></div>
+        <div id="s6-q1" class="card" style="left: 110px; top: 470px; width: 860px; height: 270px; padding: 34px 40px; opacity: 0;">
+          <div class="mono" style="font-size: 20px; color: var(--red);">pregunta 1 / 6</div>
+          <div style="font-size: 58px; font-weight: 800; letter-spacing: -0.02em; margin: 12px 0 22px;">¿Quién eres?</div>
+          <span class="chip">Fundador</span><span class="chip">Marketing</span><span class="chip">Ventas</span>
+        </div>
+        <div id="s6-q2" class="card" style="left: 110px; top: 790px; width: 860px; height: 270px; padding: 34px 40px; opacity: 0;">
+          <div class="mono" style="font-size: 20px; color: var(--red);">pregunta 2 / 6</div>
+          <div style="font-size: 58px; font-weight: 800; letter-spacing: -0.02em; margin: 12px 0 22px;">¿Qué quieres conseguir?</div>
+          <span class="chip">Más demos</span><span class="chip">Menos churn</span><span class="chip">Escalar</span>
+        </div>
+        <div id="s6-q3" class="card" style="left: 110px; top: 1110px; width: 860px; height: 270px; padding: 34px 40px; opacity: 0;">
+          <div class="mono" style="font-size: 20px; color: var(--red);">pregunta 3 / 6</div>
+          <div style="font-size: 58px; font-weight: 800; letter-spacing: -0.02em; margin: 12px 0 22px;">¿Tu mayor problema?</div>
+          <span class="chip" style="background: var(--ink); color: #fff; border-color: var(--ink);">Leads fríos</span><span class="chip">Tiempo</span><span class="chip">Precio</span>
+        </div>
+        <div class="ann mono" style="left: 80px; top: 230px; opacity: 0.7;">GRID   4 × 8
+CARDS  5–8
+MODE   SEGMENT</div>
+      </div></div>
+
+      <!-- S7 · card wall -->
+      <div id="s7" class="scene dark"><div class="cnt" id="s7-c">
+        <div id="s7-plane" class="abs" style="left: -120px; top: 120px; width: 1320px; height: 1700px; transform: perspective(1600px) rotateX(18deg) rotateZ(-9deg);"></div>
+        <div id="s7-dim" class="abs" style="inset: 0; background: rgba(11,11,16,0.6); opacity: 0;"></div>
+        <div id="s7-hero1" class="card" style="left: 120px; top: 640px; width: 840px; height: 420px; padding: 44px 50px; opacity: 0;">
+          <div class="mono" style="font-size: 22px; color: var(--red);">● caso real · ejemplo</div>
+          <div style="font-size: 62px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.04; margin-top: 22px;">Academia online:<br>1 de cada 3 que acaban el quiz pide demo</div>
+        </div>
+        <div id="s7-hero2" class="card" style="left: 120px; top: 640px; width: 840px; height: 420px; padding: 44px 50px; opacity: 0; background: var(--red); color: var(--cream);">
+          <div class="mono" style="font-size: 22px;">● dato · ejemplo</div>
+          <div class="disp" style="font-size: 190px; margin-top: 26px;">×3</div>
+          <div style="font-size: 40px; font-weight: 700; margin-top: 8px;">más demos que con la landing</div>
+        </div>
+      </div></div>
+
+      <!-- S8 · tiene sentido (pill + ring + click) -->
+      <div id="s8" class="scene dark"><div class="cnt" id="s8-c">
+        <div id="s8-glow" class="abs" style="left: 140px; top: 560px; width: 800px; height: 800px; border-radius: 50%; background: radial-gradient(closest-side, rgba(232,56,45,0.35), transparent); opacity: 0;"></div>
+        <svg class="abs" style="left: 540px; top: 960px;" width="1" height="1"><circle id="s8-ring" cx="0" cy="0" r="330" stroke="rgba(242,239,230,0.35)" stroke-width="22" fill="none" stroke-dasharray="2074" stroke-dashoffset="2074" transform="rotate(-90)"/></svg>
+        <div id="s8-burst"></div>
+        <div id="s8-pill" class="abs" style="left: 150px; top: 880px; width: 780px; height: 160px; border-radius: 80px; background: #2a2a31; display: flex; align-items: center; padding: 0 44px; gap: 26px;">
+          <div id="s8-chk" style="width: 84px; height: 84px; border-radius: 50%; border: 5px solid var(--cream); display: flex; align-items: center; justify-content: center;"><svg width="44" height="44" viewBox="0 0 44 44"><path id="s8-tick" d="M8 23 L18 33 L37 11" stroke="#f2efe6" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div style="font-size: 54px; font-weight: 800; letter-spacing: -0.02em;">Tiene sentido</div>
+          <div style="width: 3px; height: 74px; background: rgba(242,239,230,0.25); margin-left: auto;"></div>
+          <div id="s8-n" class="mono" style="font-size: 34px; letter-spacing: 0.04em; width: 120px; text-align: right;">2.4K</div>
+        </div>
+        <svg id="s8-ptr" class="abs" style="left: 900px; top: 1400px;" width="44" height="60" viewBox="0 0 44 60"><path d="M2 2 L2 48 L14 37 L23 57 L31 53 L22 34 L38 34 Z" fill="#f2efe6" stroke="#111114" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div class="ctr mono tag" style="top: 1350px;">04 · confianza</div>
+      </div></div>
+
+      <!-- S9 · 3D result badge + result card -->
+      <div id="s9" class="scene dark"><div class="cnt" id="s9-c">
+        <div id="s9-glow" class="abs" style="left: 90px; top: 220px; width: 900px; height: 900px; border-radius: 50%; background: radial-gradient(closest-side, rgba(232,56,45,0.4), transparent);"></div>
+        <div id="s9-obj" class="abs" style="left: 290px; top: 420px; width: 500px; height: 550px;">
+          <img id="s9-red" src="assets/badge_red.png" class="abs" style="left: 0; top: 0; width: 500px; height: 550px; object-fit: contain;" />
+          <img id="s9-chr" src="assets/badge_chrome.png" class="abs" style="left: 0; top: 0; width: 500px; height: 550px; object-fit: contain; opacity: 0;" />
+        </div>
+        <div id="s9-ann" class="abs" style="left: 70px; top: 300px;">
+          <div id="s9-ann-t" class="ann mono" style="left: 0; top: 0; border-left: 2px solid rgba(242,239,230,0.6); padding-left: 12px;">OBJECT   RESULT_BADGE
+TYPE     PERSONALIZADO
+MATCH    94%</div>
+        </div>
+        <div id="s9-card" class="abs" style="left: 90px; top: 1010px; width: 900px; height: 440px; border-radius: 28px; background: rgba(36,36,43,0.92); border: 2px solid rgba(242,239,230,0.14); padding: 36px 44px; opacity: 0;">
+          <div class="mono" style="font-size: 21px; color: var(--red-hot);">tu resultado</div>
+          <div style="font-size: 50px; font-weight: 800; letter-spacing: -0.02em; margin-top: 10px;">Fundador en fase de tracción</div>
+          <div style="margin-top: 30px; display: grid; grid-template-columns: 220px 1fr 80px; row-gap: 22px; align-items: center; font-size: 28px; font-weight: 600;">
+            <span>Captación</span><i style="height: 14px; border-radius: 7px; background: rgba(242,239,230,0.12); position: relative;"><b id="s9-b1" style="position: absolute; inset: 0; border-radius: 7px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); width: 82%;"></b></i><span class="mono" style="font-size: 22px; text-align: right;">82%</span>
+            <span>Activación</span><i style="height: 14px; border-radius: 7px; background: rgba(242,239,230,0.12); position: relative;"><b id="s9-b2" style="position: absolute; inset: 0; border-radius: 7px; background: var(--cream); transform-origin: 0 50%; transform: scaleX(0); width: 41%;"></b></i><span class="mono" style="font-size: 22px; text-align: right;">41%</span>
+          </div>
+          <div style="margin-top: 30px;" id="s9-ans">
+            <span class="chip s9a" style="border-color: rgba(242,239,230,0.3); font-size: 22px;">P1 · B2B</span><span class="chip s9a" style="border-color: rgba(242,239,230,0.3); font-size: 22px;">P3 · leads fríos</span><span class="chip s9a" style="border-color: rgba(242,239,230,0.3); font-size: 22px;">P5 · sin equipo</span>
+          </div>
+        </div>
+      </div></div>
+
+      <!-- S10 · LO IMPORTANTE -->
+      <div id="s10" class="scene red"><div class="cnt" id="s10-c">
+        <div id="s10-live" class="abs mono" style="left: 90px; top: 690px; font-size: 28px; padding: 10px 18px; border-radius: 8px; background: var(--cream); color: var(--red); font-weight: 800;">● ahora</div>
+        <div id="s10-a" class="abs disp" style="left: 80px; top: 790px; font-size: 230px;">LO</div>
+        <div id="s10-b" class="abs disp" style="left: 80px; top: 1000px; font-size: 158px;">IMPORTANTE</div>
+      </div></div>
+
+      <!-- S11 · cards → product → offer button -->
+      <div id="s11" class="scene light"><div class="cnt" id="s11-c">
+        <div id="s11-k1" class="mini" style="left: 40px; top: 440px; background: #fff; box-shadow: 0 14px 40px rgba(0,0,0,0.12);"><div class="mono">card 6</div><b>Por qué encaja contigo</b></div>
+        <div id="s11-k2" class="mini" style="left: 415px; top: 440px; background: #fff; box-shadow: 0 14px 40px rgba(0,0,0,0.12);"><div class="mono">card 7</div><b>Tu plan recomendado</b></div>
+        <div id="s11-k3" class="mini rd" style="left: 790px; top: 440px; box-shadow: 0 14px 40px rgba(0,0,0,0.12);"><div class="mono">card 8</div><b>Oferta para ti</b></div>
+        <div id="s11-prod" class="ctr" style="top: 760px; display: flex; justify-content: center; align-items: center; gap: 22px;">
+          <span class="logo" style="width: 112px; height: 112px; border-radius: 28px; font-size: 70px;">S</span>
+          <span style="font-size: 64px; font-weight: 800; letter-spacing: -0.03em;">Tu producto</span>
+          <svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#8d8b94"/><path d="M11 21 L17 27 L29 14" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div id="s11-btn" class="abs" style="left: 190px; top: 950px; width: 700px; height: 150px; border-radius: 75px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 56px; font-weight: 700; letter-spacing: -0.01em; opacity: 0;">
+          <span id="s11-bt1">Activar oferta −30%</span><span id="s11-bt2" style="position: absolute; opacity: 0;">✓ Oferta activada</span>
+        </div>
+        <div id="s11-state" class="ctr mono" style="top: 1140px; font-size: 21px; opacity: 0;">estado: activada · plan: pro · −30%</div>
+        <svg id="s11-ptr" class="abs" style="left: 900px; top: 1420px;" width="44" height="60" viewBox="0 0 44 60"><path d="M2 2 L2 48 L14 37 L23 57 L31 53 L22 34 L38 34 Z" fill="#111114" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>
+      </div></div>
+
+      <!-- S12 · countdown -->
+      <div id="s12" class="scene red"><div class="cnt" id="s12-c">
+        <div class="abs" style="left: 520px; top: 520px; width: 900px; height: 900px; border-radius: 50%; background: rgba(255,255,255,0.08);"></div>
+        <div class="abs mono" style="left: 90px; top: 690px; font-size: 26px; font-weight: 800;">● contador · oferta</div>
+        <div id="s12-n" class="abs disp" style="left: 70px; top: 770px; font-size: 300px; letter-spacing: -0.04em; font-variant-numeric: tabular-nums;">14:59</div>
+        <div class="abs" style="left: 90px; top: 1100px; width: 900px; height: 14px; border-radius: 7px; background: rgba(242,239,230,0.25);"><i id="s12-bar" style="position: absolute; inset: 0; border-radius: 7px; background: var(--cream); transform-origin: 0 50%;"></i></div>
+        <div class="abs mono" style="left: 90px; top: 1150px; font-size: 26px;">▶▶ tiempo limitado</div>
+      </div></div>
+
+      <!-- S13 · captas el lead -->
+      <div id="s13" class="scene dark"><div class="cnt" id="s13-c">
+        <div id="s13-no" class="ctr disp" style="top: 470px; font-size: 120px; color: var(--grey);"><span style="position: relative;">NO SOLO<i id="s13-st" style="position: absolute; left: -10px; right: -10px; top: 46%; height: 12px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0);"></i></span></div>
+        <div id="s13-tgt" class="abs" style="left: 390px; top: 700px; width: 300px; height: 300px;">
+          <i class="brk" style="left: 0; top: 0; border-top-width: 6px; border-left-width: 6px; color: var(--cream);"></i><i class="brk" style="right: 0; top: 0; border-top-width: 6px; border-right-width: 6px; color: var(--cream);"></i>
+          <i class="brk" style="left: 0; bottom: 0; border-bottom-width: 6px; border-left-width: 6px; color: var(--cream);"></i><i class="brk" style="right: 0; bottom: 0; border-bottom-width: 6px; border-right-width: 6px; color: var(--cream);"></i>
+        </div>
+        <div id="s13-dot" class="dot" style="left: 540px; top: 850px; width: 56px; height: 56px; margin: -28px 0 0 -28px; background: var(--red); box-shadow: 0 0 40px rgba(255,75,62,0.9);"></div>
+        <div id="s13-lbl" class="abs mono" style="left: 600px; top: 760px; font-size: 20px; opacity: 0.8;">lead #2481</div>
+        <div id="s13-ok" class="ctr mono" style="top: 1030px; font-size: 26px; color: var(--red-hot); opacity: 0;">✓ captado</div>
+        <div id="s13-big" class="ctr disp" style="top: 1120px; font-size: 128px;">CAPTAS<br>EL LEAD</div>
+      </div></div>
+
+      <!-- S14 · segmentas / educas / compra -->
+      <div id="s14a" class="scene light"><div class="cnt" id="s14a-c">
+        <div id="s14a-cols" class="abs" style="inset: 0;"></div>
+        <div class="ctr disp" style="top: 1020px; font-size: 150px;">SEGMENTAS</div>
+      </div></div>
+      <div id="s14b" class="scene dark"><div class="cnt" id="s14b-c">
+        <div class="mini" id="s14b-m1" style="left: 130px; top: 560px; transform: rotate(-8deg);"><div class="mono">consejo</div><b>Pregunta el problema primero</b></div>
+        <div class="mini rd" id="s14b-m2" style="left: 415px; top: 520px;"><div class="mono">dato</div><b>×3 demos</b></div>
+        <div class="mini" id="s14b-m3" style="left: 700px; top: 560px; transform: rotate(8deg);"><div class="mono">caso</div><b>Academia online</b></div>
+        <div class="ctr disp" style="top: 900px; font-size: 220px;">EDUCAS</div>
+      </div></div>
+      <div id="s14c" class="scene red"><div class="cnt" id="s14c-c">
+        <div id="s14c-a" class="ctr disp" style="top: 640px; font-size: 110px;">Y LO LLEVAS</div>
+        <div id="s14c-b" class="ctr disp" style="top: 790px; font-size: 110px; opacity: 0;">DIRECTO A LA</div>
+        <div id="s14c-c2" class="ctr disp" style="top: 940px; font-size: 230px; opacity: 0;">COMPRA</div>
+        <div id="s14c-pay" class="abs" style="left: 290px; top: 1210px; width: 500px; height: 120px; border-radius: 60px; background: var(--cream); color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 46px; font-weight: 800; opacity: 0;">Pagar ✓</div>
+      </div></div>
+
+      <!-- S15 · lockup + CTA -->
+      <div id="s15" class="scene dark"><div class="cnt" id="s15-c">
+        <div id="s15-lock" class="ctr" style="top: 640px; display: flex; justify-content: center; align-items: center; gap: 30px;">
+          <span id="s15-logo" class="logo" style="width: 150px; height: 150px; border-radius: 38px; font-size: 96px; box-shadow: 0 0 60px rgba(232,56,45,0.45);">S</span>
+          <span id="s15-wm" style="font-size: 118px; font-weight: 800; letter-spacing: -0.045em; clip-path: inset(0 100% 0 0);">SaaS in House</span>
+        </div>
+        <div id="s15-rule" class="abs" style="left: 90px; top: 860px; width: 900px; height: 2px; background: rgba(242,239,230,0.35); transform-origin: 0 50%; transform: scaleX(0);"></div>
+        <div id="s15-l" class="abs mono" style="left: 90px; top: 884px; font-size: 22px; opacity: 0;">quiz funnel</div>
+        <div id="s15-r" class="abs mono" style="right: 90px; top: 884px; font-size: 22px; opacity: 0;">reel 2026</div>
+        <div id="s15-cta" class="ctr" style="top: 1060px; font-size: 104px; font-weight: 800; letter-spacing: -0.035em; opacity: 0;">Comenta <span style="background: var(--red); padding: 0 26px; border-radius: 22px;">QUIZ</span></div>
+        <div id="s15-sub" class="ctr" style="top: 1220px; font-size: 42px; font-weight: 600; color: rgba(242,239,230,0.75); opacity: 0;">y te enseño cómo montarlo</div>
+      </div></div>
+
+      <div id="vig"></div>
+      <div id="cap"></div>
+
+      <!-- persistent player HUD -->
+      <div id="hud">
+        <i class="brk" style="left: 36px; top: 36px; border-top-width: 3px; border-left-width: 3px;"></i>
+        <i class="brk" style="right: 36px; top: 36px; border-top-width: 3px; border-right-width: 3px;"></i>
+        <i class="brk" style="left: 36px; bottom: 36px; border-bottom-width: 3px; border-left-width: 3px;"></i>
+        <i class="brk" style="right: 36px; bottom: 36px; border-bottom-width: 3px; border-right-width: 3px;"></i>
+        <div class="hud-t mono" style="left: 80px; top: 76px;"><span class="logo" style="width: 30px; height: 30px; border-radius: 8px; font-size: 19px;">S</span>saas in house&nbsp;&nbsp;/&nbsp;&nbsp;quiz reel</div>
+        <div class="hud-t mono" style="right: 80px; top: 80px;"><i style="width: 10px; height: 10px; border-radius: 50%; background: var(--red);"></i>1080p60&nbsp;·&nbsp;117 bpm</div>
+        <div id="tc" class="hud-t" style="left: 80px; top: 1826px; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums;">0:00 / 0:36</div>
+        <div id="bar"></div>
+        <div id="barfill"></div>
+        <div id="playhead"></div>
+        <div id="chap" class="hud-t mono" style="right: 80px; top: 1828px;">01 · landing ›</div>
+      </div>
+      <div id="flash"></div>
+      <div id="fade"></div>
+    </div>
+
+    <script>
+      const VO = 0.4; // voiceover offset; word times = playbook/whiteboard-ad/template/words.json (relative to assets/vo.mp3)
+      const W = /*W*/;
+      const PTS = /*PTS*/;
+      const t = (i) => W[i][1] + VO;
+      const END = 36;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 23;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (id) => document.getElementById(id);
+      const mk = (parent, cls, style, html) => { const d = document.createElement("div"); if (cls) d.className = cls; Object.assign(d.style, style || {}); if (html) d.innerHTML = html; $(parent).appendChild(d); return d; };
+
+      /* ---------- scene windows (hard cuts on words, like the reference's beat cuts) ---------- */
+      const S15 = 32.95;
+      const SC = [
+        ["s1", 0, t(14) - 0.05, "dark"], ["s2", t(14) - 0.05, t(16) - 0.05, "light"], ["s3", t(16) - 0.05, t(24) - 0.1, "light"],
+        ["s4", t(24) - 0.1, t(26) - 0.05, "light"], ["s5", t(26) - 0.05, t(32) - 0.05, "dark"], ["s6", t(32) - 0.05, t(43) - 0.1, "dark"],
+        ["s7", t(43) - 0.1, t(55) - 0.1, "dark"], ["s8", t(55) - 0.1, t(59) - 0.05, "dark"], ["s9", t(59) - 0.05, t(66) - 0.05, "dark"],
+        ["s10", t(66) - 0.05, t(69) - 0.05, "red"], ["s11", t(69) - 0.05, t(83) - 0.1, "light"], ["s12", t(83) - 0.1, t(87) - 0.05, "red"],
+        ["s13", t(87) - 0.05, t(93) - 0.05, "dark"], ["s14a", t(93) - 0.05, t(95) - 0.05, "light"], ["s14b", t(95) - 0.05, t(97) - 0.05, "dark"],
+        ["s14c", t(97) - 0.05, S15, "red"], ["s15", S15, END, "dark"],
+      ];
+      const HUDC = { dark: "rgba(242,239,230,0.9)", light: "rgba(17,17,20,0.88)", red: "rgba(242,239,230,0.95)" };
+      SC.forEach(([id, a, b, th]) => {
+        tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b);
+        tl.set("#hud, #cap", { color: HUDC[th] }, a);
+        // punch-in on every cut
+        tl.fromTo("#" + id + "-c", { scale: 1.06 }, { scale: 1, duration: 0.4, ease: "expo.out" }, a);
+      });
+      // short white flash on the big section changes
+      [t(14) - 0.05, t(26) - 0.05, t(59) - 0.05, t(66) - 0.05, t(87) - 0.05, S15].forEach((a) => {
+        tl.fromTo("#flash", { opacity: 0.55 }, { opacity: 0, duration: 0.18, ease: "power2.out" }, a);
+      });
+
+      /* ---------- HUD: chapters, progress, timecode ---------- */
+      const CH = [[0, "landing"], [t(14) - 0.05, "el giro"], [t(26) - 0.05, "preguntas"], [t(43) - 0.1, "cards"], [t(59) - 0.05, "resultado"], [t(66) - 0.05, "oferta"], [t(87) - 0.05, "lead"], [S15, "comenta"]];
+      CH.forEach(([a, name], i) => {
+        const b = i + 1 < CH.length ? CH[i + 1][0] : END;
+        mk("bar", "seg", { flex: String(b - a) });
+        tl.set("#chap", { textContent: `0${i + 1} · ${name} ›` }, a);
+      });
+      tl.fromTo("#barfill", { scaleX: 0 }, { scaleX: 1, duration: END, ease: "none" }, 0);
+      tl.fromTo("#playhead", { x: 0 }, { x: 420, duration: END, ease: "none" }, 0);
+      for (let s = 0; s <= 36; s++) tl.set("#tc", { textContent: `0:${String(s).padStart(2, "0")} / 0:36` }, s === 0 ? 0 : s);
+
+      /* ---------- captions: phrase chunks, karaoke word fill (matches the VO exactly) ---------- */
+      const CHUNKS = [[0, 5], [6, 13], [14, 15], [16, 21], [22, 25], [26, 31], [32, 35], [36, 42], [43, 48], [49, 54], [55, 58], [59, 62], [63, 65], [66, 68], [69, 76], [77, 80], [81, 86], [87, 92], [93, 96], [97, 103]];
+      CHUNKS.forEach(([a, b], ci) => {
+        const box = mk("cap", "k", {}); box.id = "cap" + ci;
+        for (let i = a; i <= b; i++) {
+          const s = document.createElement("span"); s.className = "w"; s.textContent = W[i][0] + (i < b ? " " : "");
+          box.appendChild(s);
+          tl.to(s, { opacity: 1, duration: 0.08 }, t(i));
+        }
+        const on = t(a) - 0.06;
+        const nxt = ci + 1 < CHUNKS.length ? t(CHUNKS[ci + 1][0]) - 0.06 : 33.0;
+        const off = Math.min(nxt, W[b][2] + VO + 0.7);
+        tl.set(box, { display: "block" }, on); tl.set(box, { display: "none" }, off);
+      });
+
+      /* ---------- S1 · playhead → crowd → one landing ---------- */
+      tl.fromTo("#s1-dot", { x: 0 }, { x: 420, duration: t(7) - 0.2, ease: "power1.inOut" }, 0.1);
+      tl.fromTo("#s1-ann", { x: 0 }, { x: 420, duration: t(7) - 0.2, ease: "power1.inOut" }, 0.1);
+      tl.fromTo("#s1-fill", { scaleX: 0 }, { scaleX: 420 / 800, duration: t(7) - 0.2, ease: "power1.inOut" }, 0.1);
+      [[0.6, "POS   268.4  1002.0\nSCL   100%   100%\nVEL   612 PX/S"], [1.2, "POS   431.9  1002.0\nSCL   100%   108%\nVEL   1058 PX/S"], [1.8, "POS   560.0  1002.0\nSCL   112%   112%\nVEL   240 PX/S"]]
+        .forEach(([a, s]) => tl.set("#s1-ann-t", { textContent: s }, a));
+      tl.to("#s1-ann", { opacity: 0, duration: 0.1 }, t(7));
+      // the dot splits into a crowd ("a todo el mundo")
+      const crowd = [];
+      for (let i = 0; i < 46; i++) {
+        const sz = 12 + rnd() * 14;
+        const d = mk("s1-crowd", "dot", { left: "560px", top: "1002px", width: sz + "px", height: sz + "px", margin: `${-sz / 2}px 0 0 ${-sz / 2}px`, background: i % 5 === 0 ? "#e8382d" : "#f2efe6", opacity: 0 });
+        const ang = rnd() * Math.PI * 2, rad = 160 + rnd() * 380;
+        const tx = Math.cos(ang) * rad * 1.05, ty = Math.sin(ang) * rad * 0.9 + 120;
+        tl.set(d, { opacity: 0.9 }, t(7));
+        tl.to(d, { x: tx, y: ty, duration: 0.55, ease: "expo.out" }, t(7) + rnd() * 0.12);
+        tl.to(d, { x: tx + (rnd() - 0.5) * 40, y: ty + (rnd() - 0.5) * 40, duration: 0.6, ease: "sine.inOut" }, t(7) + 0.6);
+        // all into the same landing ("a la misma landing")
+        tl.to(d, { x: -20 + rnd() * 40, y: -240 + rnd() * 60, scale: 0.4, duration: 0.42, ease: "power3.in" }, t(12) + 0.05 + rnd() * 0.25);
+        tl.to(d, { opacity: 0, duration: 0.05 }, t(12) + 0.5 + 0.25);
+        crowd.push(d);
+      }
+      tl.to("#s1-dot", { scale: 0, duration: 0.15 }, t(7));
+      tl.fromTo("#s1-land", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, t(12) - 0.15);
+      tl.to("#s1-land", { x: 10, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, t(13));
+      tl.to("#s1-land", { borderColor: "#ff4b3e", color: "#ff4b3e", duration: 0.1 }, t(13));
+      tl.fromTo("#s1-stat", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.2 }, t(13) + 0.1);
+      tl.to("#s1-track, #s1-fill", { opacity: 0.25, duration: 0.3 }, t(12));
+
+      /* ---------- S2 · HAZ ESTO ---------- */
+      tl.fromTo("#s2-a", { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.22, ease: "expo.out" }, t(14));
+      tl.fromTo("#s2-b", { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.22, ease: "expo.out" }, t(15));
+
+      /* ---------- S3 · search bar ---------- */
+      const typeIn = (el, str, a, b) => { const n = str.length; for (let k = 0; k <= n; k++) tl.set(el, { textContent: str.slice(0, k) }, a + (b - a) * (k / n)); };
+      typeIn("#s3-txt", "pedir una demo", t(16) - 0.02, t(21) + 0.25);
+      tl.fromTo("#s3-strike", { scaleX: 0 }, { scaleX: 1, duration: 0.18, ease: "power2.out" }, t(21) + 0.3);
+      tl.to("#s3-txt", { color: "#e8382d", duration: 0.1 }, t(21) + 0.3);
+      tl.set("#s3-strike", { scaleX: 0 }, t(22));
+      tl.set("#s3-txt", { color: "#111114", textContent: "" }, t(22));
+      typeIn("#s3-txt", "quiz funnel", t(22) + 0.02, t(24) - 0.25);
+      tl.fromTo("#s3-drop", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.15 }, t(23) + 0.1);
+      tl.fromTo("#s3-ptr", { x: 0, y: 0 }, { x: 190, y: -440, duration: 0.6, ease: "power3.inOut" }, t(22) + 0.4);
+      tl.to("#s3-ptr", { scale: 0.85, duration: 0.06, yoyo: true, repeat: 1 }, t(24) - 0.2);
+      tl.to("#s3-bar", { scale: 0.98, duration: 0.06, yoyo: true, repeat: 1 }, t(24) - 0.2);
+      blink("s3-cur", t(16), t(24));
+
+      /* ---------- S4 · QUIZ / FUNNEL, tiled words ---------- */
+      tl.fromTo("#s4-a", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.22, ease: "expo.out" }, t(24) - 0.08);
+      for (let r = 0; r < 16; r++) {
+        const row = mk("s4-tiles", "disp", { position: "absolute", left: "0", top: r * 165 + "px", fontSize: "150px", whiteSpace: "nowrap", color: r % 4 === 1 ? "rgba(232,56,45,0.75)" : "rgba(242,239,230,0.09)" });
+        row.textContent = "QUIZ FUNNEL · ".repeat(8);
+        tl.fromTo(row, { x: r % 2 ? -600 : -200 }, { x: r % 2 ? -300 : -500, duration: 1.4, ease: "none" }, t(25) - 0.05);
+      }
+      tl.set("#s4-dk", { opacity: 1 }, t(25) - 0.05);
+      tl.set("#s4-tiles", { opacity: 1 }, t(25) - 0.05);
+      tl.set("#s4-a", { color: "#f2efe6" }, t(25) - 0.05);
+      tl.set("#hud, #cap", { color: HUDC.dark }, t(25) - 0.05);
+      tl.fromTo("#s4-b", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.22, ease: "expo.out" }, t(25) - 0.05);
+      tl.fromTo("#s4-c", { scale: 1.08 }, { scale: 1, duration: 0.5, ease: "expo.out" }, t(25) - 0.05);
+
+      /* ---------- S5 · particle dust forms 5–8 ---------- */
+      const S5 = t(26) - 0.05;
+      tl.to("#s5-glow", { opacity: 1, duration: 0.8 }, S5);
+      PTS.forEach(([px, py], i) => {
+        const sz = 6 + rnd() * 7;
+        const hue = rnd();
+        const d = mk("s5-p", "dot", { left: px + "px", top: py + "px", width: sz + "px", height: sz + "px", background: hue < 0.62 ? "#e8382d" : hue < 0.9 ? "#ff7a6e" : "#f2efe6" });
+        const ang = rnd() * Math.PI * 2, rad = 120 + rnd() * 520;
+        const sx = 540 + Math.cos(ang) * rad * 1.1 - px, sy = 280 + Math.sin(ang) * rad * 0.7 - py;
+        const startAt = S5 + 0.15 + (px / 1080) * 1.05 + rnd() * 0.15; // "5" on cinco, "8" on ocho
+        tl.fromTo(d, { x: sx, y: sy, opacity: 0.25 + rnd() * 0.4, scale: 0.6 }, { x: 0, y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out", immediateRender: true }, startAt);
+        tl.to(d, { x: (rnd() - 0.5) * 8, y: (rnd() - 0.5) * 8, duration: 0.5, ease: "sine.inOut" }, startAt + 0.62);
+      });
+      tl.fromTo("#s5-lbl", { opacity: 0, letterSpacing: "0.8em" }, { opacity: 1, letterSpacing: "0.4em", duration: 0.4 }, t(31));
+
+      /* ---------- S6 · red tile grid + 3 question cards ---------- */
+      const S6 = t(32) - 0.05;
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 4; c++) {
+        const d = mk("s6-grid", "tile", { left: 70 + c * 240 + "px", top: 300 + r * 165 + "px", width: "220px", height: "148px", opacity: 0 });
+        d.innerHTML = `<span class="mono" style="position:absolute;left:14px;top:12px;font-size:14px;color:rgba(242,239,230,0.75)">Q${r * 4 + c + 1}</span><span style="position:absolute;right:18px;bottom:2px;font-size:90px;font-weight:900;color:rgba(242,239,230,0.18)">?</span>`;
+        const dist = Math.abs(r - 3.5) + Math.abs(c - 1.5);
+        tl.fromTo(d, { opacity: 0, scale: 0.6 }, { opacity: 0.35 + rnd() * 0.65, scale: 1, duration: 0.25, ease: "back.out(2)" }, S6 + dist * 0.06);
+      }
+      tl.to("#s6-grid", { opacity: 0.35, duration: 0.3 }, t(34) - 0.1);
+      [["#s6-q1", t(34) - 0.08], ["#s6-q2", t(36) - 0.08], ["#s6-q3", t(39) - 0.08]].forEach(([id, a]) => {
+        tl.fromTo(id, { opacity: 0, y: 60, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, a);
+      });
+
+      /* ---------- S7 · card wall (reference: thumbnail wall) ---------- */
+      const S7 = t(43) - 0.1;
+      const KINDS = [
+        ["caso real", "Clínica: +42% citas", ""], ["dato", "68% acaba el quiz", "rd"], ["consejo", "Pregunta el problema antes del precio", "dk"],
+        ["resultado", "CAC −28%", ""], ["caso real", "Agencia B2B: 3× demos", "dk"], ["dato", "2 min de media", ""],
+        ["consejo", "Una card cada 2 preguntas", "rd"], ["caso real", "SaaS RRHH: lead cualificado", ""], ["resultado", "+19% cierre", "dk"],
+      ];
+      for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++) {
+        const k = KINDS[(r * 5 + c * 2) % KINDS.length];
+        const x = c * 266, y = r * 184;
+        const tile = mk("s7-plane", "tile", { left: x + "px", top: y + "px", width: "250px", height: "168px" });
+        const m = mk("s7-plane", "mini " + k[2], { left: x + "px", top: y + "px", opacity: 0 }, `<div class="mono">${k[0]}</div><b>${k[1]}</b>`);
+        const at = S7 + 0.25 + (r + c) * 0.07 + (t(45) - S7 - 0.3) * 0.5;
+        tl.to(m, { opacity: 1, duration: 0.12 }, at);
+        tl.to(tile, { opacity: 0, duration: 0.12 }, at + 0.05);
+      }
+      tl.fromTo("#s7-plane", { y: 80 }, { y: -260, duration: t(55) - S7, ease: "none" }, S7);
+      tl.to("#s7-dim", { opacity: 1, duration: 0.2 }, t(47) - 0.1);
+      tl.fromTo("#s7-hero1", { opacity: 0, scale: 0.7, rotation: -4 }, { opacity: 1, scale: 1, rotation: -2, duration: 0.35, ease: "back.out(1.7)" }, t(47) - 0.1);
+      tl.to("#s7-hero1", { opacity: 0, x: -200, duration: 0.2, ease: "power2.in" }, t(50) - 0.15);
+      tl.fromTo("#s7-hero2", { opacity: 0, scale: 0.7, rotation: 4 }, { opacity: 1, scale: 1, rotation: 2, duration: 0.35, ease: "back.out(1.7)" }, t(50) - 0.05);
+      tl.to("#s7-plane", { filter: "blur(6px)", duration: 0.4 }, t(54));
+
+      /* ---------- S8 · "vale, esto tiene sentido" ---------- */
+      const S8 = t(55) - 0.1;
+      tl.to("#s8-ring", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, S8);
+      tl.fromTo("#s8-pill", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)" }, S8);
+      tl.fromTo("#s8-ptr", { x: 0, y: 0 }, { x: -720, y: -470, duration: 0.45, ease: "power3.out" }, S8 + 0.05);
+      const CL = t(56) - 0.05; // click on "esto"
+      tl.to("#s8-ptr", { scale: 0.82, duration: 0.07, yoyo: true, repeat: 1 }, CL);
+      tl.to("#s8-chk", { background: "#e8382d", borderColor: "#e8382d", scale: 1.18, duration: 0.12 }, CL);
+      tl.to("#s8-chk", { scale: 1, duration: 0.3, ease: "back.out(3)" }, CL + 0.12);
+      tl.to("#s8-pill", { scale: 1.05, duration: 0.1, yoyo: true, repeat: 1 }, CL);
+      tl.to("#s8-glow", { opacity: 1, duration: 0.25 }, CL);
+      tl.to("#s8-ring", { stroke: "rgba(232,56,45,0.8)", duration: 0.15 }, CL);
+      tl.fromTo("#s8-ring", { scale: 1, transformOrigin: "50% 50%" }, { scale: 1.08, duration: 0.5, ease: "expo.out" }, CL);
+      ["2.4K", "2.4K", "2.5K", "2.6K", "2.8K", "3.1K"].forEach((s, i) => tl.set("#s8-n", { textContent: s }, CL + i * 0.12));
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        const d = mk("s8-burst", "dot", { left: "277px", top: "960px", width: "12px", height: "12px", margin: "-6px", background: i % 2 ? "#e8382d" : "#f2efe6", opacity: 0 });
+        tl.fromTo(d, { x: 0, y: 0, opacity: 1 }, { x: Math.cos(a) * 130, y: Math.sin(a) * 130, opacity: 0, duration: 0.5, ease: "expo.out" }, CL);
+      }
+
+      /* ---------- S9 · 3D badge hero + result ---------- */
+      const S9 = t(59) - 0.05;
+      tl.fromTo("#s9-obj", { scale: 0.3, rotation: -25, y: 300, opacity: 0 }, { scale: 1, rotation: 0, y: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, S9);
+      tl.to("#s9-obj", { rotation: 4, duration: 3, ease: "sine.inOut" }, S9 + 0.6);
+      tl.fromTo("#s9-ann", { opacity: 0, x: -20 }, { opacity: 0.85, x: 0, duration: 0.3 }, S9 + 0.35);
+      tl.to("#s9-obj", { scale: 0.72, y: -150, duration: 0.5, ease: "power3.inOut" }, t(61) - 0.1);
+      tl.to("#s9-ann", { y: -60, duration: 0.5, ease: "power3.inOut" }, t(61) - 0.1);
+      tl.to("#s9-glow", { y: -150, scale: 0.8, duration: 0.5, ease: "power3.inOut" }, t(61) - 0.1);
+      tl.fromTo("#s9-card", { opacity: 0, y: 120 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, t(61) + 0.05);
+      // personalizado: red → chrome swap with a flash
+      tl.to("#s9-chr", { opacity: 1, duration: 0.12 }, t(62));
+      tl.to("#s9-red", { opacity: 0, duration: 0.12 }, t(62));
+      tl.fromTo("#s9-obj", { filter: "brightness(2.2)" }, { filter: "brightness(1)", duration: 0.4 }, t(62));
+      tl.set("#s9-ann-t", { textContent: "OBJECT   RESULT_BADGE\nTYPE     PERSONALIZADO\nMATCH    97%\nMATERIAL CHROME" }, t(62));
+      tl.to("#s9-b1", { scaleX: 1, duration: 0.6, ease: "power3.out" }, t(62) + 0.1);
+      tl.to("#s9-b2", { scaleX: 1, duration: 0.6, ease: "power3.out" }, t(62) + 0.25);
+      gsap.utils.toArray(".s9a").forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.2, ease: "back.out(2)" }, t(63) + i * 0.22));
+
+      /* ---------- S10 · LO IMPORTANTE ---------- */
+      tl.fromTo("#s10-live", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.2 }, t(66));
+      tl.fromTo("#s10-a", { scale: 1.6, opacity: 0, transformOrigin: "0% 50%" }, { scale: 1, opacity: 1, duration: 0.2, ease: "expo.out" }, t(67));
+      tl.fromTo("#s10-b", { scale: 1.4, opacity: 0, transformOrigin: "0% 50%" }, { scale: 1, opacity: 1, duration: 0.22, ease: "expo.out" }, t(68));
+      for (let k = 0; k < 4; k++) tl.set("#s10-b", { x: k % 2 ? -8 : 8 }, t(68) + 0.25 + k * 0.04);
+      tl.set("#s10-b", { x: 0 }, t(68) + 0.42);
+      blinkEl("#s10-live", t(66) + 0.3, t(69) - 0.05);
+
+      /* ---------- S11 · cards → product → offer ---------- */
+      const S11 = t(69) - 0.05;
+      ["#s11-k1", "#s11-k2", "#s11-k3"].forEach((id, i) => {
+        tl.fromTo(id, { opacity: 0, y: 80, rotation: -6 + i * 6 }, { opacity: 1, y: 0, rotation: -3 + i * 3, duration: 0.3, ease: "back.out(1.8)" }, S11 + 0.05 + i * 0.12);
+        tl.to(id, { x: 375 - i * 375, y: 330, scale: 0.3, opacity: 0, duration: 0.4, ease: "power3.in" }, t(73) + i * 0.05);
+      });
+      tl.fromTo("#s11-prod", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, t(73) + 0.35);
+      tl.fromTo("#s11-btn", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.28, ease: "back.out(2)" }, t(79) - 0.05);
+      tl.fromTo("#s11-ptr", { x: 0, y: 0 }, { x: -320, y: -380, duration: 0.5, ease: "power3.out" }, t(79) + 0.05);
+      const C11 = t(80) + 0.15;
+      tl.to("#s11-ptr", { scale: 0.82, duration: 0.07, yoyo: true, repeat: 1 }, C11);
+      tl.to("#s11-btn", { scale: 0.95, duration: 0.07, yoyo: true, repeat: 1 }, C11);
+      tl.to("#s11-btn", { background: "#e8382d", duration: 0.12 }, C11 + 0.08);
+      tl.set("#s11-bt1", { opacity: 0 }, C11 + 0.08); tl.set("#s11-bt2", { opacity: 1 }, C11 + 0.08);
+      tl.fromTo("#s11-state", { opacity: 0 }, { opacity: 0.8, duration: 0.2 }, C11 + 0.15);
+
+      /* ---------- S12 · countdown ---------- */
+      const S12 = t(83) - 0.1;
+      tl.fromTo("#s12-n", { scale: 1.3, opacity: 0, transformOrigin: "0% 50%" }, { scale: 1, opacity: 1, duration: 0.22, ease: "expo.out" }, S12);
+      ["14:59", "14:58", "14:57", "14:56"].forEach((s, i) => tl.set("#s12-n", { textContent: s }, S12 + i * 0.5));
+      tl.fromTo("#s12-bar", { scaleX: 1 }, { scaleX: 0.86, duration: t(87) - S12, ease: "none" }, S12);
+      tl.to("#s12-n", { scale: 1.05, duration: 0.08, yoyo: true, repeat: 1 }, t(86));
+
+      /* ---------- S13 · captas el lead ---------- */
+      const S13 = t(87) - 0.05;
+      tl.fromTo("#s13-no", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25 }, S13);
+      tl.to("#s13-st", { scaleX: 1, duration: 0.2, ease: "power2.out" }, t(89) + 0.05);
+      tl.fromTo("#s13-dot", { x: -300, y: 120 }, { x: 0, y: 0, duration: 0.7, ease: "power2.out" }, S13);
+      tl.fromTo("#s13-lbl", { x: -300, y: 120 }, { x: 0, y: 0, duration: 0.7, ease: "power2.out" }, S13);
+      tl.fromTo("#s13-tgt", { scale: 1.8, opacity: 0, rotation: 45 }, { scale: 1, opacity: 1, rotation: 0, duration: 0.35, ease: "expo.out" }, t(90) - 0.15);
+      tl.to("#s13-tgt", { scale: 0.62, duration: 0.18, ease: "power3.in" }, t(90) + 0.25);
+      tl.fromTo("#s13-ok", { opacity: 0 }, { opacity: 1, duration: 0.12 }, t(90) + 0.4);
+      tl.fromTo("#s13-big", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out" }, t(90));
+
+      /* ---------- S14 · segmentas / educas / compra ---------- */
+      const S14 = t(93) - 0.05;
+      const COLS = ["#e8382d", "#111114", "#8d8b94"];
+      for (let i = 0; i < 24; i++) {
+        const col = i % 3;
+        const d = mk("s14a-cols", "dot", { left: 540 + "px", top: "620px", width: "30px", height: "30px", margin: "-15px", background: COLS[col] });
+        const sx = (rnd() - 0.5) * 800, sy = (rnd() - 0.5) * 360;
+        tl.fromTo(d, { x: sx, y: sy }, { x: (col - 1) * 260 + ((i / 3) % 2 ? 22 : -22), y: -260 + Math.floor(i / 6) * 70, duration: 0.45, ease: "power3.inOut", immediateRender: true }, S14 + 0.1 + rnd() * 0.12);
+      }
+      ["#s14b-m1", "#s14b-m2", "#s14b-m3"].forEach((id, i) => tl.fromTo(id, { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.2, ease: "back.out(2)" }, t(95) + i * 0.1));
+      tl.fromTo("#s14c-a", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.15 }, t(97) - 0.05);
+      tl.fromTo("#s14c-b", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.15 }, t(100) - 0.05);
+      tl.fromTo("#s14c-c2", { opacity: 0, scale: 1.5 }, { opacity: 1, scale: 1, duration: 0.22, ease: "expo.out" }, t(103) - 0.04);
+      tl.fromTo("#s14c-pay", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.25, ease: "back.out(2)" }, t(103) + 0.2);
+
+      /* ---------- S15 · lockup + CTA ---------- */
+      tl.fromTo("#s15-logo", { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(1.8)" }, S15 + 0.05);
+      tl.to("#s15-wm", { clipPath: "inset(0 0% 0 0)", duration: 0.5, ease: "power3.out" }, S15 + 0.3);
+      tl.to("#s15-rule", { scaleX: 1, duration: 0.6, ease: "power3.inOut" }, S15 + 0.5);
+      tl.to("#s15-l, #s15-r", { opacity: 0.8, duration: 0.3 }, S15 + 0.8);
+      tl.fromTo("#s15-cta", { opacity: 0, y: 30, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, S15 + 0.9);
+      tl.fromTo("#s15-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.3 }, S15 + 1.25);
+      tl.to("#s15-logo", { boxShadow: "0 0 110px rgba(232,56,45,0.8)", duration: 0.6, yoyo: true, repeat: 1, ease: "sine.inOut" }, S15 + 1.4);
+      tl.to("#hud", { opacity: 0, duration: 0.5 }, END - 0.9);
+      tl.to("#fade", { opacity: 1, duration: 0.5 }, END - 0.5);
+
+      function blink(id, a, b) {
+        tl.set("#" + id, { opacity: 1 }, a);
+        for (let k = a + 0.3; k < b; k += 0.5) tl.set("#" + id, { opacity: 0 }, k).set("#" + id, { opacity: 1 }, k + 0.25);
+      }
+      function blinkEl(sel, a, b) {
+        for (let k = a; k < b; k += 0.4) tl.set(sel, { opacity: 0.35 }, k).set(sel, { opacity: 1 }, k + 0.2);
+      }
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

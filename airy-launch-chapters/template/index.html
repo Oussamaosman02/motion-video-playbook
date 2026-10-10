@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      :root {
+        /* Manus-style soft grey canvas + SaaS in House accents (saas-in-house-website global.css) */
+        --paper: #f3f3f1; --white: #fcfcfb; --ink: #1f1f24; --ink-2: #4a4852; --muted: #8d8a94; --line: #e6e4df;
+        --red: #e8382d; --red-deep: #7e140d; --red-text: #c42a20; --gold: #f5c51b; --sky: #4f8fdc; --coral: #ff7a59; --teal: #2bb3a3; --brown: #b0682f; --grey: #9a979f;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Archivo", sans-serif; }
+      .scene { position: absolute; inset: 0; overflow: hidden; background: var(--paper); }
+      .full { position: absolute; inset: 0; }
+      .photo { width: 1080px; height: 1920px; display: block; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+      .h { font-weight: 560; letter-spacing: -0.025em; line-height: 1.1; text-align: center; }
+      .l { display: inline-block; white-space: pre; }
+      .acc { color: var(--red-text); }
+      .wt { color: #fff; text-shadow: 0 2px 30px rgba(20, 40, 60, 0.35); }
+      /* chapter card: line icon + label, centred (Manus "Create videos" / "Automations") */
+      .chap { display: flex; align-items: center; gap: 22px; font-size: 64px; font-weight: 520; letter-spacing: -0.02em; }
+      .chap svg { width: 70px; height: 70px; }
+      /* frosted glass card over the landscape */
+      .glass { position: absolute; background: rgba(255, 255, 255, 0.56); backdrop-filter: blur(24px) saturate(1.35); -webkit-backdrop-filter: blur(24px) saturate(1.35); border: 1.5px solid rgba(255, 255, 255, 0.75); border-radius: 34px; box-shadow: 0 30px 80px rgba(30, 60, 80, 0.18); padding: 34px 38px; color: var(--ink); }
+      .glass .k { font-size: 26px; color: var(--ink-2); display: flex; align-items: center; gap: 12px; }
+      .chip { display: inline-block; padding: 7px 14px 5px; border-radius: 999px; font-size: 19px; font-weight: 600; }
+      .ej { background: rgba(31, 31, 36, 0.08); color: var(--ink-2); }
+      .bar { height: 22px; border-radius: 11px; background: rgba(31, 31, 36, 0.08); position: relative; overflow: hidden; margin-top: 10px; }
+      .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 11px; transform-origin: 0 50%; }
+      /* dock of question tiles (Manus "Unlock" row) */
+      .tile { position: absolute; width: 92px; height: 92px; border-radius: 26px; background: #ebeae6; box-shadow: 0 10px 22px rgba(0, 0, 0, 0.07), inset 0 0 0 1px rgba(0, 0, 0, 0.03); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 600; color: #b7b4ad; }
+      .tile.on { background: #fff; color: var(--ink); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12); }
+      .win { position: absolute; background: #fff; border-radius: 34px; box-shadow: 0 40px 100px rgba(20, 20, 30, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04); overflow: hidden; }
+      .qv { position: absolute; left: 50px; right: 50px; top: 46px; }
+      .qv .q { font-size: 46px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 18px; }
+      .opt { height: 92px; border: 2px solid var(--line); border-radius: 22px; display: flex; align-items: center; padding: 0 30px; font-size: 36px; font-weight: 520; margin-top: 16px; position: relative; overflow: hidden; }
+      .opt .sel { position: absolute; inset: 0; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+      .pill { background: var(--ink); color: #fff; border-radius: 999px; padding: 24px 46px; font-size: 52px; font-weight: 600; white-space: nowrap; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
+      .mas { position: absolute; }
+      .mas svg { width: 100%; height: 100%; display: block; overflow: visible; }
+      .res { position: absolute; left: 90px; right: 90px; height: 190px; background: #fff; border-radius: 32px; box-shadow: 0 24px 60px rgba(20, 20, 30, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04); display: flex; align-items: center; gap: 30px; padding: 0 34px; }
+      .res .m { width: 120px; height: 120px; flex: none; }
+      .res .t { font-size: 27px; color: var(--muted); }
+      .res .v { font-size: 42px; font-weight: 600; letter-spacing: -0.02em; margin-top: 4px; }
+      .tk { position: absolute; left: 0; width: 1080px; text-align: center; font-size: 92px; font-weight: 560; letter-spacing: -0.03em; white-space: nowrap; color: #fff; }
+      .phone { position: absolute; background: #fff; border-radius: 70px; box-shadow: 0 50px 120px rgba(20, 40, 60, 0.28), 0 0 0 10px rgba(255, 255, 255, 0.6); overflow: hidden; }
+      .row { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; border-bottom: 1px solid var(--line); font-size: 32px; }
+      .row .ic { width: 44px; height: 44px; border-radius: 12px; background: #eef3fb; color: var(--sky); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-right: 18px; font-weight: 700; }
+      .row .ok { color: var(--teal); font-weight: 700; }
+      .btn { display: flex; align-items: center; justify-content: center; background: var(--red); color: #fff; border-radius: 24px; font-weight: 650; }
+      .cur { position: absolute; width: 64px; height: 64px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="46" data-width="1080" data-height="1920">
+      <!-- audio: music bed (drop at 8.0s, 116 bpm, fades from 41.5s) + SFX; no narration, like the reference -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="46" data-track-index="10" data-volume="0.85"></audio>
+      <audio id="sx-p0" src="assets/pop.mp3" data-start="0.3" data-duration="0.52" data-track-index="11" data-volume="0.45"></audio>
+      <audio id="sx-w1" src="assets/whoosh.mp3" data-start="7.45" data-duration="1.22" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="sx-p1" src="assets/pop.mp3" data-start="9.6" data-duration="0.52" data-track-index="13" data-volume="0.5"></audio>
+      <audio id="sx-w2" src="assets/whoosh.mp3" data-start="12.3" data-duration="1.22" data-track-index="14" data-volume="0.4"></audio>
+      <audio id="sx-t1" src="assets/tick.mp3" data-start="14.7" data-duration="0.52" data-track-index="15" data-volume="0.5"></audio>
+      <audio id="sx-t2" src="assets/tick.mp3" data-start="16.1" data-duration="0.52" data-track-index="16" data-volume="0.5"></audio>
+      <audio id="sx-t3" src="assets/tick.mp3" data-start="17.5" data-duration="0.52" data-track-index="17" data-volume="0.5"></audio>
+      <audio id="sx-w3" src="assets/whoosh.mp3" data-start="20.1" data-duration="1.22" data-track-index="18" data-volume="0.45"></audio>
+      <audio id="sx-p2" src="assets/pop.mp3" data-start="21.6" data-duration="0.52" data-track-index="19" data-volume="0.45"></audio>
+      <audio id="sx-p3" src="assets/pop.mp3" data-start="22.4" data-duration="0.52" data-track-index="20" data-volume="0.45"></audio>
+      <audio id="sx-p4" src="assets/pop.mp3" data-start="23.2" data-duration="0.52" data-track-index="21" data-volume="0.45"></audio>
+      <audio id="sx-c1" src="assets/chime.mp3" data-start="24.4" data-duration="1.22" data-track-index="22" data-volume="0.3"></audio>
+      <audio id="sx-p5" src="assets/pop.mp3" data-start="26.05" data-duration="0.52" data-track-index="23" data-volume="0.55"></audio>
+      <audio id="sx-p6" src="assets/pop.mp3" data-start="26.9" data-duration="0.52" data-track-index="24" data-volume="0.5"></audio>
+      <audio id="sx-w4" src="assets/whoosh.mp3" data-start="28.2" data-duration="1.22" data-track-index="25" data-volume="0.45"></audio>
+      <audio id="sx-w5" src="assets/whoosh.mp3" data-start="30.4" data-duration="1.22" data-track-index="26" data-volume="0.45"></audio>
+      <audio id="sx-t4" src="assets/tick.mp3" data-start="32.3" data-duration="0.52" data-track-index="27" data-volume="0.45"></audio>
+      <audio id="sx-t5" src="assets/tick.mp3" data-start="32.85" data-duration="0.52" data-track-index="28" data-volume="0.45"></audio>
+      <audio id="sx-t6" src="assets/tick.mp3" data-start="33.4" data-duration="0.52" data-track-index="29" data-volume="0.45"></audio>
+      <audio id="sx-w6" src="assets/whoosh.mp3" data-start="34.2" data-duration="1.22" data-track-index="30" data-volume="0.45"></audio>
+      <audio id="sx-t7" src="assets/tick.mp3" data-start="38.55" data-duration="0.52" data-track-index="31" data-volume="0.6"></audio>
+      <audio id="sx-c2" src="assets/chime.mp3" data-start="38.75" data-duration="1.22" data-track-index="32" data-volume="0.35"></audio>
+      <audio id="sx-c3" src="assets/chime.mp3" data-start="43.5" data-duration="1.22" data-track-index="33" data-volume="0.45"></audio>
+
+      <!-- ============ S1 · 0–8 · "Introducing" badge → hook lines → "Haz esto." ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="8.1" data-track-index="1">
+        <div class="center" style="top: 860px;">
+          <div id="s1-wm" style="display: flex; align-items: center; gap: 18px; font-size: 64px; font-weight: 560; letter-spacing: -0.02em;">
+            <span id="s1-in" class="px" style="font-size: 34px; background: var(--red); color: #fff; padding: 12px 14px 8px; border-radius: 12px; box-shadow: 4px 4px 0 var(--red-deep);">IN</span>
+            <span id="s1-intro">Presentamos el Quiz Funnel</span>
+          </div>
+        </div>
+        <div class="center" style="top: 640px;"><div id="s1-a" class="h" style="font-size: 82px;">¿Quieres vender tu SaaS</div></div>
+        <div class="center" style="top: 750px;"><div id="s1-b" class="h" style="font-size: 82px; color: var(--ink-2);">sin mandar a todo el mundo</div></div>
+        <div class="center" style="top: 860px;"><div id="s1-c" class="h" style="font-size: 82px; color: var(--muted);">a la misma <span class="acc">landing?</span></div></div>
+        <!-- every visitor (tiles) → the same landing -->
+        <div id="s1-dock"></div>
+        <div id="s1-land" class="win" style="left: 290px; top: 1290px; width: 500px; height: 300px;">
+          <div style="height: 58px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 22px;"><i style="width: 12px; height: 12px; border-radius: 50%; background: #e3e1dc;"></i><i style="width: 12px; height: 12px; border-radius: 50%; background: #e3e1dc;"></i><span style="font-size: 20px; color: var(--muted); margin-left: 10px;">tusaas.com</span></div>
+          <div style="padding: 34px 34px 0; font-size: 36px; font-weight: 600;">La misma landing</div>
+          <div style="margin: 26px 34px 0; height: 76px; border-radius: 18px; background: #ebeae6; display: flex; align-items: center; justify-content: center; font-size: 30px; color: var(--ink-2); font-weight: 600;">Pide una demo</div>
+        </div>
+        <div class="center" style="top: 880px;"><div id="s1-d" class="h" style="font-size: 150px; letter-spacing: -0.045em;">Haz esto.</div></div>
+      </section>
+
+      <!-- ============ S2 · 8–12.6 · landscape + frosted comparison card ============ -->
+      <section id="s2" class="scene clip" data-start="8" data-duration="4.6" data-track-index="1">
+        <div id="s2-ph" class="full"><img id="s2-img" class="photo" src="assets/cascade.jpg" alt="" /></div>
+        <div class="center" style="top: 330px;"><div id="s2-a" class="h" style="font-size: 60px; font-weight: 500; color: var(--ink-2);">En lugar de pedir una demo,</div></div>
+        <div class="center" style="top: 410px;"><div id="s2-b" class="h" style="font-size: 104px; color: var(--ink);">crea un Quiz Funnel.</div></div>
+        <div id="s2-card" class="glass" style="left: 170px; top: 640px; width: 740px;">
+          <div class="k"><span style="font-size: 30px;">✿</span> Quiz Funnel vs. demo directa <span class="chip ej" style="margin-left: auto;">ejemplo</span></div>
+          <div style="font-size: 118px; font-weight: 600; letter-spacing: -0.04em; margin-top: 12px;"><span id="s2-num">+0</span>%</div>
+          <div style="font-size: 26px; color: var(--ink-2); margin-top: -4px;">leads cualificados</div>
+          <div style="margin-top: 26px; font-size: 24px; color: var(--ink-2); display: flex; justify-content: space-between;"><span>Quiz Funnel</span><b>212</b></div>
+          <div class="bar"><i id="s2-b1" style="width: 100%; background: var(--sky);"></i></div>
+          <div style="margin-top: 18px; font-size: 24px; color: var(--ink-2); display: flex; justify-content: space-between;"><span>Pedir una demo</span><b>78</b></div>
+          <div class="bar"><i id="s2-b2" style="width: 37%; background: var(--grey);"></i></div>
+        </div>
+      </section>
+
+      <!-- ============ S3 · 12.6–18.2 · chapter "Preguntas" → dock + quiz window ============ -->
+      <section id="s3" class="scene clip" data-start="12.6" data-duration="5.6" data-track-index="1">
+        <div class="center" style="top: 900px;">
+          <div id="s3-chap" class="chap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e8382d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5" /><path d="M12 16.5h.01" /></svg>
+            <span>Preguntas</span>
+          </div>
+        </div>
+        <div class="center" style="top: 300px;"><div id="s3-h" class="h" style="font-size: 84px;">Entre 5 y 8 preguntas</div></div>
+        <div class="center" style="top: 410px;"><div id="s3-s" class="h" style="font-size: 38px; color: var(--muted); font-weight: 500;">quién es · qué quiere · cuál es su problema</div></div>
+        <div id="s3-dock"></div>
+        <div id="s3-line" style="position: absolute; left: 110px; width: 860px; top: 690px; height: 2px; background: var(--line);"></div>
+        <div id="s3-win" class="win" style="left: 110px; top: 760px; width: 860px; height: 620px;">
+          <div id="q1" class="qv"><div class="q">¿Quién eres?</div><div class="opt">Founder<div class="sel" id="q1s">Founder <span>✓</span></div></div><div class="opt">Marketing</div><div class="opt">Ventas</div></div>
+          <div id="q2" class="qv"><div class="q">¿Qué quieres conseguir?</div><div class="opt">Más ventas</div><div class="opt">Más demos<div class="sel" id="q2s">Más demos <span>✓</span></div></div><div class="opt">Menos churn</div></div>
+          <div id="q3" class="qv"><div class="q">¿Tu principal problema?</div><div class="opt">Poco tráfico</div><div class="opt">Leads que no convierten<div class="sel" id="q3s">Leads que no convierten <span>✓</span></div></div><div class="opt">Ciclos de venta largos</div></div>
+        </div>
+        <svg id="s3-cur" class="cur" viewBox="0 0 24 24" style="left: 0; top: 0;"><path d="M4 2 L4 20 L9 15.5 L12.5 22 L15.5 20.5 L12 14 L19 14 Z" fill="#1f1f24" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" /></svg>
+      </section>
+
+      <!-- ============ S4 · 18.2–20.4 · chapter "Cards de valor" + "Pero no hagas solo preguntas." ============ -->
+      <section id="s4" class="scene clip" data-start="18.2" data-duration="2.3" data-track-index="1">
+        <div class="center" style="top: 820px;">
+          <div id="s4-chap" class="chap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e8382d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="13" rx="2.5" /><path d="M8 4h10.5A2.5 2.5 0 0 1 21 6.5V17" /></svg>
+            <span>Cards de valor</span>
+          </div>
+        </div>
+        <div class="center" style="top: 960px;"><div id="s4-a" class="h" style="font-size: 62px; color: var(--muted); font-weight: 500;">Pero no hagas solo preguntas.</div></div>
+      </section>
+
+      <!-- ============ S5 · 20.4–26 · salt flat + frosted value cards + quote ============ -->
+      <section id="s5" class="scene clip" data-start="20.4" data-duration="5.7" data-track-index="1">
+        <div id="s5-ph" class="full"><img id="s5-img" class="photo" src="assets/salt.jpg" alt="" /></div>
+        <div class="center" style="top: 250px;"><div id="s5-a" class="h" style="font-size: 72px; color: var(--ink);">Entre medias, pequeñas cards</div></div>
+        <div id="s5-c1" class="glass" style="left: 90px; top: 470px; width: 600px;">
+          <div class="k">◆ Caso real <span class="chip ej" style="margin-left: auto;">ejemplo</span></div>
+          <div style="font-size: 76px; font-weight: 600; letter-spacing: -0.03em; margin-top: 8px;">4 → 19</div>
+          <div style="font-size: 27px; color: var(--ink-2);">demos al mes con un quiz</div>
+        </div>
+        <div id="s5-c2" class="glass" style="left: 390px; top: 780px; width: 600px;">
+          <div class="k">▲ Dato <span class="chip ej" style="margin-left: auto;">ejemplo</span></div>
+          <div style="font-size: 76px; font-weight: 600; letter-spacing: -0.03em; margin-top: 8px;">7 de 10</div>
+          <div style="font-size: 27px; color: var(--ink-2);">prefieren un resultado a un formulario</div>
+        </div>
+        <div id="s5-c3" class="glass" style="left: 130px; top: 1090px; width: 640px;">
+          <div class="k">● Consejo</div>
+          <div style="font-size: 40px; font-weight: 560; letter-spacing: -0.02em; margin-top: 12px; line-height: 1.2;">Pregunta el problema antes que el presupuesto.</div>
+        </div>
+        <div id="s5-scrim" class="full" style="background: radial-gradient(ellipse 80% 30% at 50% 50%, rgba(20, 40, 60, 0.42), transparent 100%); opacity: 0;"></div>
+        <div class="center" style="top: 880px;"><div id="s5-q" class="h wt" style="font-size: 92px;">“Vale, esto<br />tiene sentido.”</div></div>
+      </section>
+
+      <!-- ============ S6 · 26–30.6 · mascot crowd + black pill → three personalised results ============ -->
+      <section id="s6" class="scene clip" data-start="26" data-duration="4.7" data-track-index="1">
+        <div id="s6-crowd" class="full"></div>
+        <div class="center" style="top: 900px;"><div id="s6-pill" class="pill">Tu resultado</div></div>
+        <div class="center" style="top: 300px;"><div id="s6-a" class="h" style="font-size: 68px; color: var(--ink-2); font-weight: 500;">Según sus respuestas,</div></div>
+        <div class="center" style="top: 390px;"><div id="s6-b" class="h" style="font-size: 88px;">un resultado <span class="acc">personalizado</span></div></div>
+        <div id="s6-r1" class="res" style="top: 640px;"><div class="m" id="s6-m1"></div><div><div class="t">Founder · leads fríos</div><div class="v">Plan Starter + guía de nurturing</div></div></div>
+        <div id="s6-r2" class="res" style="top: 870px;"><div class="m" id="s6-m2"></div><div><div class="t">Marketing · más demos</div><div class="v">Plan Growth + quiz por sector</div></div></div>
+        <div id="s6-r3" class="res" style="top: 1100px;"><div class="m" id="s6-m3"></div><div><div class="t">Ventas · ciclos largos</div><div class="v">Plan Team + scoring de leads</div></div></div>
+      </section>
+
+      <!-- ============ S7 · 30.6–34.4 · black: statement + vertical word ticker ============ -->
+      <section id="s7" class="scene clip" data-start="30.6" data-duration="3.9" data-track-index="1" style="background: #0b0b0d;">
+        <div class="center" style="top: 860px;"><div id="s7-a" class="h" style="font-size: 76px; color: #fff;">Y aquí viene la parte importante.</div></div>
+        <div class="center" style="top: 620px;"><div id="s7-b" class="h" style="font-size: 56px; color: #8f8d96; font-weight: 500;">Las últimas cards llevan a tu producto:</div></div>
+        <div id="s7-tk" class="full"></div>
+      </section>
+
+      <!-- ============ S8 · 34.4–39.6 · phone over the landscape: offer + countdown + click ============ -->
+      <section id="s8" class="scene clip" data-start="34.4" data-duration="5.3" data-track-index="1">
+        <div id="s8-ph" class="full"><img id="s8-img" class="photo" src="assets/cascade.jpg" alt="" style="filter: blur(3px);" /></div>
+        <div class="center" style="top: 190px;"><div id="s8-h" class="h" style="font-size: 66px; color: var(--ink);">Llévalo hacia tu producto</div></div>
+        <div id="s8-phone" class="phone" style="left: 200px; top: 330px; width: 680px; height: 1320px;">
+          <div style="display: flex; justify-content: space-between; padding: 40px 50px 0; font-size: 26px; color: var(--muted);"><span>‹</span><span>···</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px;">
+            <div id="s8-m" style="width: 130px; height: 130px;"></div>
+            <div style="font-size: 44px; font-weight: 600; margin-top: 16px;">Plan Growth</div>
+            <span class="chip" style="background: #fdecea; color: var(--red-text); margin-top: 12px; font-size: 22px;">personalizado para ti</span>
+          </div>
+          <div style="padding: 30px 50px 0;">
+            <div style="font-size: 24px; color: var(--muted); margin-bottom: 4px;">Por qué encaja</div>
+            <div class="row" id="s8-r1"><span><span class="ic">✓</span>Equipos de 2 a 10</span><span class="ok">Sí</span></div>
+            <div class="row" id="s8-r2"><span><span class="ic">✓</span>Leads que no convierten</span><span class="ok">Sí</span></div>
+            <div class="row" id="s8-r3"><span><span class="ic">✓</span>Conecta con tu CRM</span><span class="ok">Sí</span></div>
+            <div id="s8-off" style="margin-top: 30px; border-radius: 28px; background: #f6f5f2; padding: 26px 30px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 28px; color: var(--ink-2);">Oferta específica</span><span class="chip ej">ejemplo</span></div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px;"><span style="font-size: 64px; font-weight: 650; letter-spacing: -0.03em; color: var(--red-text);">−30%</span><span style="font-size: 30px; color: var(--ink-2);">caduca en <b id="s8-cd" style="font-variant-numeric: tabular-nums; color: var(--ink);">14:59</b></span></div>
+            </div>
+            <div id="s8-btn" class="btn" style="margin-top: 30px; height: 110px; font-size: 38px;">Canjear oferta</div>
+          </div>
+        </div>
+        <div id="s8-toast" class="center" style="top: 1500px;"><div class="pill" style="font-size: 36px; padding: 20px 38px;">✓ Oferta canjeada</div></div>
+        <svg id="s8-cur" class="cur" viewBox="0 0 24 24" style="left: 0; top: 0;"><path d="M4 2 L4 20 L9 15.5 L12.5 22 L15.5 20.5 L12 14 L19 14 Z" fill="#1f1f24" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" /></svg>
+      </section>
+
+      <!-- ============ S9 · 39.6–43.4 · payoff lines + mascot peeking ============ -->
+      <section id="s9" class="scene clip" data-start="39.6" data-duration="3.9" data-track-index="1">
+        <div class="center" style="top: 520px;"><div id="s9-a" class="h" style="font-size: 64px; color: var(--muted); font-weight: 500;">Así no solo captas el lead.</div></div>
+        <div class="center" style="top: 680px;"><div id="s9-b" class="h" style="font-size: 96px;">Lo <span class="acc">segmentas</span>,</div></div>
+        <div class="center" style="top: 800px;"><div id="s9-c" class="h" style="font-size: 96px;">lo <span class="acc">educas</span></div></div>
+        <div class="center" style="top: 920px;"><div id="s9-d" class="h" style="font-size: 96px; position: relative;">y lo llevas a la <span class="acc">compra</span>.</div></div>
+        <svg id="s9-sw" viewBox="0 0 400 60" style="position: absolute; left: 645px; top: 1030px; width: 330px; height: 52px; overflow: visible;"><path id="s9-swp" d="M8 40 C 90 12, 200 8, 392 26" fill="none" stroke="#e8382d" stroke-width="9" stroke-linecap="round" stroke-dasharray="420" stroke-dashoffset="420" /></svg>
+        <div id="s9-peek" class="mas" style="left: 330px; top: 1430px; width: 420px; height: 420px;"></div>
+      </section>
+
+      <!-- ============ S10 · 43.4–46 · wordmark + close-up mascots + CTA ============ -->
+      <section id="s10" class="scene clip" data-start="43.4" data-duration="2.6" data-track-index="1" style="background: var(--white);">
+        <div id="s10-ms" class="full"></div>
+        <div class="center" style="top: 830px;">
+          <div id="s10-wm" style="display: flex; align-items: center; gap: 22px; font-size: 118px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">
+            <span>SaaS</span>
+            <span class="px" style="font-size: 54px; background: var(--red); color: #fff; padding: 16px 20px 10px; border-radius: 14px; box-shadow: 6px 6px 0 var(--red-deep); letter-spacing: 0.08em;">IN</span>
+            <span>House</span>
+          </div>
+        </div>
+        <div class="center" style="top: 1040px;"><div id="s10-cta" class="btn px" style="height: 108px; padding: 0 50px; font-size: 38px; font-weight: 400; box-shadow: 6px 6px 0 var(--red-deep);">comenta «quiz»</div></div>
+        <div class="center" style="top: 1180px;"><div id="s10-sub" style="font-size: 36px; color: var(--ink-2);">y te enseño cómo montarlo</div></div>
+      </section>
+    </div>
+
+    <script>
+      const END = 46;
+      const tl = gsap.timeline({ paused: true });
+
+      // ---------- original flat geometric mascots (code-built SVG, no images) ----------
+      const C = { red: "#e8382d", gold: "#f5c51b", sky: "#4f8fdc", coral: "#ff7a59", teal: "#2bb3a3", brown: "#b0682f", grey: "#9a979f", ink: "#55535b" };
+      function body(kind, c) {
+        const st = `fill="${c}" stroke="${c}" stroke-width="8" stroke-linejoin="round"`;
+        switch (kind) {
+          case "circle": return `<circle cx="50" cy="52" r="42" ${st}/>`;
+          case "tri": return `<path d="M50 10 L92 90 L8 90 Z" ${st}/>`;
+          case "square": return `<rect x="10" y="12" width="80" height="80" rx="16" ${st}/>`;
+          case "ghost": return `<path d="M50 8 C78 8 90 30 90 56 L90 92 L72 82 L50 92 L28 82 L10 92 L10 56 C10 30 22 8 50 8 Z" ${st}/>`;
+          case "heart": return `<path d="M50 90 C18 68 6 50 10 32 C14 14 38 10 50 28 C62 10 86 14 90 32 C94 50 82 68 50 90 Z" ${st}/>`;
+          case "star": { let p = ""; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 22 : 44; p += `${(50 + Math.cos(a) * r).toFixed(1)},${(54 + Math.sin(a) * r).toFixed(1)} `; } return `<polygon points="${p}" ${st}/>`; }
+          case "gear": { let p = ""; for (let i = 0; i < 16; i++) { const a = (i * Math.PI) / 8, r = i % 2 ? 36 : 44; p += `${(50 + Math.cos(a) * r).toFixed(1)},${(52 + Math.sin(a) * r).toFixed(1)} `; } return `<polygon points="${p}" ${st}/>`; }
+        }
+      }
+      function mascot(kind, c, look = 0, brow = 0) {
+        const ey = kind === "tri" ? 62 : 50;
+        const eye = (x) => `<ellipse cx="${x}" cy="${ey}" rx="10" ry="12.5" fill="#fff"/><circle cx="${x + look * 3.5}" cy="${ey + 2}" r="5.6" fill="#111"/>`;
+        const br = brow ? `<path d="M28 ${ey - 20} L44 ${ey - 14 + brow * 4}" stroke="#111" stroke-width="5" stroke-linecap="round"/><path d="M72 ${ey - 20} L56 ${ey - 14 + brow * 4}" stroke="#111" stroke-width="5" stroke-linecap="round"/>` : "";
+        return `<svg viewBox="0 0 100 100">${body(kind, c)}${eye(39)}${eye(61)}${br}</svg>`;
+      }
+      const put = (id, ...a) => { document.getElementById(id).innerHTML = mascot(...a); };
+
+      // split text into per-letter spans for the blur-in reveal
+      function letters(id) {
+        const out = [];
+        const walk = (node) => {
+          [...node.childNodes].forEach((n) => {
+            if (n.nodeType === 3) {
+              const frag = document.createDocumentFragment();
+              [...n.textContent].forEach((ch) => { const s = document.createElement("span"); s.className = "l"; s.textContent = ch; frag.appendChild(s); out.push(s); });
+              n.replaceWith(frag);
+            } else if (n.nodeType === 1 && n.tagName !== "BR") walk(n);
+          });
+        };
+        walk(document.getElementById(id));
+        return out;
+      }
+      const fadeLetters = (els, at, dur = 0.9) =>
+        tl.fromTo(els, { opacity: 0, filter: "blur(10px)", y: 10 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.45, ease: "power2.out", stagger: dur / els.length }, at);
+      const rise = (sel, at, d = 0.6) => tl.fromTo(sel, { opacity: 0, y: 40, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: d, ease: "power3.out" }, at);
+      const out = (sel, at, d = 0.35) => tl.to(sel, { opacity: 0, y: -24, filter: "blur(10px)", duration: d, ease: "power2.in" }, at);
+      const pop = (sel, at) => tl.fromTo(sel, { opacity: 0, scale: 0.7, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: "back.out(1.8)" }, at);
+
+      /* ---------- S1 · 0–8 ---------- */
+      tl.fromTo("#s1-in", { opacity: 0, scale: 0.4, rotation: -20 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(2)" }, 0.25);
+      fadeLetters(letters("s1-intro"), 0.55, 0.8);
+      out("#s1-wm", 1.9, 0.4);
+      fadeLetters(letters("s1-a"), 2.3, 0.8);
+      fadeLetters(letters("s1-b"), 3.1, 0.8);
+      fadeLetters(letters("s1-c"), 3.9, 0.6);
+      // 7 visitor tiles (one mascot face each) all slide down into the same landing window
+      const dock = document.getElementById("s1-dock");
+      const VIS = [["circle", C.sky], ["tri", C.gold], ["square", C.brown], ["ghost", C.red], ["heart", C.coral], ["gear", C.grey], ["star", C.teal]];
+      VIS.forEach(([k, c], i) => {
+        const d = document.createElement("div");
+        d.className = "tile"; d.id = `s1-t${i}`;
+        d.style.left = `${105 + i * 128}px`; d.style.top = "1080px";
+        d.innerHTML = `<div style="width:62px;height:62px">${mascot(k, c, i % 3 - 1)}</div>`;
+        dock.appendChild(d);
+        tl.fromTo(d, { opacity: 0, y: 30, scale: 0.6 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(2)" }, 3.0 + i * 0.08);
+        tl.to(d, { x: 540 - (151 + i * 128), y: 300, scale: 0.35, opacity: 0, duration: 0.6, ease: "power3.in" }, 4.75 + i * 0.05);
+      });
+      pop("#s1-land", 4.45);
+      tl.to("#s1-land", { scale: 1.06, duration: 0.15, yoyo: true, repeat: 1, ease: "power1.inOut" }, 5.4);
+      tl.to(["#s1-a", "#s1-b", "#s1-c", "#s1-land"], { opacity: 0, y: -30, filter: "blur(12px)", duration: 0.4, ease: "power2.in", stagger: 0.04 }, 6.15);
+      tl.fromTo("#s1-d", { opacity: 0, scale: 0.85, filter: "blur(16px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: "power3.out" }, 6.6);
+      tl.to("#s1-d", { scale: 1.6, opacity: 0, filter: "blur(18px)", duration: 0.5, ease: "power2.in" }, 7.55);
+
+      /* ---------- S2 · 8–12.6 (on the drop) ---------- */
+      tl.fromTo("#s2-ph", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 8.0);
+      tl.fromTo("#s2-img", { scale: 1.18 }, { scale: 1.0, duration: 4.6, ease: "power2.out" }, 8.0);
+      fadeLetters(letters("s2-a"), 8.15, 0.6);
+      fadeLetters(letters("s2-b"), 8.8, 0.7);
+      tl.fromTo("#s2-card", { opacity: 0, y: 160, rotationX: 18, transformPerspective: 1400 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.8, ease: "power3.out" }, 9.55);
+      const n2 = { v: 0 };
+      tl.to(n2, { v: 172, duration: 1.2, ease: "power2.out", onUpdate: () => { document.getElementById("s2-num").textContent = "+" + Math.round(n2.v); } }, 9.9);
+      tl.fromTo("#s2-b1", { scaleX: 0 }, { scaleX: 1, duration: 1.0, ease: "power2.out" }, 10.0);
+      tl.fromTo("#s2-b2", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.out" }, 10.15);
+      tl.to("#s2-card", { y: -10, duration: 1.4, ease: "sine.inOut" }, 10.8);
+      tl.to(["#s2-a", "#s2-b", "#s2-card"], { opacity: 0, y: -40, filter: "blur(12px)", duration: 0.4, ease: "power2.in", stagger: 0.05 }, 12.2);
+
+      /* ---------- S3 · 12.6–18.2 ---------- */
+      rise("#s3-chap", 12.65, 0.6);
+      tl.to("#s3-chap", { opacity: 0, scale: 0.92, filter: "blur(12px)", duration: 0.35, ease: "power2.in" }, 13.55);
+      fadeLetters(letters("s3-h"), 13.85, 0.6);
+      rise("#s3-s", 14.3, 0.5);
+      const sdock = document.getElementById("s3-dock");
+      for (let i = 0; i < 8; i++) {
+        const d = document.createElement("div");
+        d.className = "tile"; d.id = `s3-t${i}`; d.textContent = i + 1;
+        d.style.left = `${110 + i * 109.7}px`; d.style.top = "560px";
+        sdock.appendChild(d);
+        tl.fromTo(d, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 13.9 + i * 0.04);
+      }
+      tl.fromTo("#s3-line", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.out" }, 14.0);
+      tl.fromTo("#s3-win", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 14.0);
+      // the active tile lifts (Manus "Unlock" row); questions swap; the cursor picks an answer
+      const QT = [14.1, 15.5, 16.9];
+      const PICK = [[400, 925], [430, 1035], [600, 1035]];
+      tl.set(["#q2", "#q3"], { opacity: 0 }, 0);
+      [1, 2, 3].forEach((q, k) => {
+        const t = QT[k], tile = `#s3-t${k}`;
+        tl.set(tile, { className: "tile on" }, t);
+        tl.to(tile, { y: -26, scale: 1.18, duration: 0.35, ease: "back.out(2)" }, t);
+        if (k) {
+          tl.to(`#s3-t${k - 1}`, { y: 0, scale: 1, duration: 0.3 }, t);
+          tl.to(`#q${q - 1}`, { opacity: 0, x: -60, duration: 0.3, ease: "power2.in" }, t - 0.05);
+          tl.fromTo(`#q${q}`, { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, t + 0.15);
+        }
+        tl.fromTo(`#q${q}s`, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t + 0.6);
+      });
+      tl.set("#s3-cur", { x: 820, y: 1500, opacity: 0 }, 0);
+      tl.to("#s3-cur", { opacity: 1, duration: 0.2 }, 14.2);
+      PICK.forEach(([x, y], k) => {
+        tl.to("#s3-cur", { x, y, duration: 0.45, ease: "power3.inOut" }, QT[k] + 0.12);
+        tl.to("#s3-cur", { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1 }, QT[k] + 0.58);
+      });
+      tl.to(["#s3-h", "#s3-s", "#s3-dock", "#s3-line", "#s3-win", "#s3-cur"], { opacity: 0, y: -30, filter: "blur(10px)", duration: 0.35, ease: "power2.in", stagger: 0.03 }, 17.8);
+
+      /* ---------- S4 · 18.2–20.4 ---------- */
+      rise("#s4-chap", 18.25, 0.6);
+      fadeLetters(letters("s4-a"), 18.85, 0.7);
+      tl.to(["#s4-chap", "#s4-a"], { opacity: 0, filter: "blur(12px)", duration: 0.35, ease: "power2.in" }, 20.05);
+
+      /* ---------- S5 · 20.4–26 ---------- */
+      tl.fromTo("#s5-ph", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 20.4);
+      tl.fromTo("#s5-img", { scale: 1.2, y: 40 }, { scale: 1.02, y: 0, duration: 5.6, ease: "power2.out" }, 20.4);
+      fadeLetters(letters("s5-a"), 20.55, 0.7);
+      ["#s5-c1", "#s5-c2", "#s5-c3"].forEach((s, i) => {
+        tl.fromTo(s, { opacity: 0, y: 140, rotation: i === 1 ? 4 : -4 }, { opacity: 1, y: 0, rotation: i === 1 ? 1.5 : -1.5, duration: 0.7, ease: "power3.out" }, 21.55 + i * 0.8);
+        tl.to(s, { y: i === 1 ? -14 : 14, duration: 1.4, ease: "sine.inOut" }, 22.3 + i * 0.8);
+      });
+      // focus pull to the quote
+      tl.to(["#s5-c1", "#s5-c2", "#s5-c3", "#s5-a"], { opacity: 0.0, filter: "blur(10px)", duration: 0.5, ease: "power2.inOut" }, 24.3);
+      tl.to("#s5-scrim", { opacity: 1, duration: 0.5 }, 24.3);
+      tl.to("#s5-img", { filter: "blur(6px)", duration: 0.5 }, 24.3);
+      rise("#s5-q", 24.45, 0.6);
+      tl.to("#s5-q", { opacity: 0, scale: 1.08, filter: "blur(12px)", duration: 0.35, ease: "power2.in" }, 25.75);
+
+      /* ---------- S6 · 26–30.6 ---------- */
+      const CROWD = [
+        ["tri", C.sky, 380, 560, 200, 0, 0], ["circle", C.red, 640, 600, 190, 1, 1], ["gear", C.grey, 150, 700, 180, -1, -1], ["square", C.brown, 520, 760, 200, 0, 0],
+        ["star", C.gold, 790, 760, 190, 1, 0], ["ghost", C.coral, 90, 930, 190, -1, 0], ["heart", C.red, 300, 980, 180, 1, 1], ["circle", C.grey, 820, 970, 200, -1, 1],
+        ["tri", C.teal, 560, 1060, 190, 0, 0], ["square", C.gold, 100, 1150, 200, 1, -1], ["gear", C.ink, 360, 1200, 190, -1, 1], ["ghost", C.sky, 660, 1220, 200, 0, 0],
+        ["star", C.coral, 860, 1180, 180, -1, 0], ["heart", C.teal, 200, 1380, 190, 1, 0], ["circle", C.brown, 470, 1410, 200, 0, -1], ["tri", C.red, 740, 1400, 200, 1, 1],
+      ];
+      const crowd = document.getElementById("s6-crowd");
+      CROWD.forEach(([k, c, x, y, s, look, brow], i) => {
+        const d = document.createElement("div");
+        d.className = "mas"; d.id = `s6-c${i}`;
+        d.style.cssText = `left:${x - s / 2}px;top:${y - s / 2}px;width:${s}px;height:${s}px;`;
+        d.innerHTML = mascot(k, c, look, brow);
+        crowd.appendChild(d);
+        const rot = ((i * 37) % 30) - 15;
+        tl.fromTo(d, { opacity: 0, y: 500, scale: 0.4, rotation: rot * 3 }, { opacity: 1, y: 0, scale: 1, rotation: rot, duration: 0.6, ease: "back.out(1.6)" }, 26.0 + (i % 8) * 0.05 + Math.floor(i / 8) * 0.1);
+        tl.to(d, { y: i % 2 ? -12 : 12, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 26.9);
+        const ang = Math.atan2(y - 960, x - 540);
+        tl.to(d, { x: Math.cos(ang) * 900, y: Math.sin(ang) * 1100, rotation: rot * 4, duration: 0.6, ease: "power3.in" }, 28.1 + (i % 4) * 0.03);
+      });
+      pop("#s6-pill", 26.85);
+      tl.to("#s6-pill", { opacity: 0, scale: 0.6, duration: 0.3, ease: "power2.in" }, 28.05);
+      put("s6-m1", "ghost", C.red, 1, 0); put("s6-m2", "tri", C.sky, 0, 0); put("s6-m3", "square", C.gold, -1, 1);
+      fadeLetters(letters("s6-a"), 28.45, 0.5);
+      fadeLetters(letters("s6-b"), 28.85, 0.6);
+      ["#s6-r1", "#s6-r2", "#s6-r3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, x: i % 2 ? 300 : -300 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, 28.7 + i * 0.25));
+      tl.to(["#s6-a", "#s6-b", "#s6-r1", "#s6-r2", "#s6-r3"], { opacity: 0, y: -30, filter: "blur(10px)", duration: 0.35, ease: "power2.in", stagger: 0.03 }, 30.25);
+
+      /* ---------- S7 · 30.6–34.4 ---------- */
+      fadeLetters(letters("s7-a"), 30.7, 0.9);
+      tl.to("#s7-a", { opacity: 0, filter: "blur(12px)", duration: 0.3 }, 32.0);
+      rise("#s7-b", 32.05, 0.45);
+      const TK = ["por qué encaja contigo", "una oferta específica", "un contador de tiempo", "la compra"];
+      const tk = document.getElementById("s7-tk");
+      TK.forEach((w, i) => {
+        const d = document.createElement("div");
+        d.className = "tk"; d.id = `s7-w${i}`; d.textContent = w;
+        d.style.top = "880px";
+        if (i === TK.length - 1) d.style.color = "#ff4b3e";
+        tk.appendChild(d);
+      });
+      // vertical ticker: row i is centred at step i; neighbours sit ±130px, dimmed
+      const steps = [32.3, 32.85, 33.4, 33.95];
+      TK.forEach((_, i) => {
+        tl.set(`#s7-w${i}`, { y: (i + 1) * 130, opacity: 0 }, 0);
+        steps.forEach((t, k) => {
+          const off = i - k;
+          tl.to(`#s7-w${i}`, { y: off * 130, opacity: off === 0 ? 1 : Math.abs(off) === 1 ? 0.22 : 0, filter: off === 0 ? "blur(0px)" : "blur(3px)", duration: 0.32, ease: "power3.out" }, t);
+        });
+      });
+
+      /* ---------- S8 · 34.4–39.6 ---------- */
+      tl.fromTo("#s8-ph", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 34.4);
+      tl.fromTo("#s8-img", { scale: 1.1 }, { scale: 1.0, duration: 5.2, ease: "power1.out" }, 34.4);
+      fadeLetters(letters("s8-h"), 34.5, 0.6);
+      tl.fromTo("#s8-phone", { opacity: 0, y: 500, rotationX: 14, transformPerspective: 1600 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.85, ease: "power3.out" }, 34.6);
+      put("s8-m", "tri", C.sky, 0, 0);
+      tl.fromTo("#s8-m", { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(2.2)" }, 35.25);
+      ["#s8-r1", "#s8-r2", "#s8-r3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 35.6 + i * 0.25));
+      pop("#s8-off", 36.55);
+      const cd = { v: 899 };
+      tl.to(cd, { v: 895, duration: 4, ease: "none", onUpdate: () => { const s = Math.ceil(cd.v); document.getElementById("s8-cd").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; } }, 35.6);
+      pop("#s8-btn", 37.0);
+      tl.set("#s8-cur", { x: 900, y: 1700, opacity: 0 }, 0);
+      tl.to("#s8-cur", { opacity: 1, duration: 0.2 }, 37.6);
+      tl.to("#s8-cur", { x: 560, y: 1430, duration: 0.8, ease: "power3.inOut" }, 37.65);
+      tl.to("#s8-cur", { scale: 0.8, duration: 0.09, yoyo: true, repeat: 1 }, 38.55);
+      tl.to("#s8-btn", { scale: 0.95, duration: 0.09, yoyo: true, repeat: 1 }, 38.55);
+      tl.to("#s8-btn", { backgroundColor: "#1f1f24", duration: 0.2 }, 38.7);
+      pop("#s8-toast", 38.75);
+      tl.to(["#s8-h", "#s8-phone", "#s8-toast", "#s8-cur"], { opacity: 0, y: -40, filter: "blur(10px)", duration: 0.35, ease: "power2.in", stagger: 0.03 }, 39.25);
+
+      /* ---------- S9 · 39.6–43.4 ---------- */
+      fadeLetters(letters("s9-a"), 39.65, 0.7);
+      rise("#s9-b", 40.5, 0.5);
+      rise("#s9-c", 40.95, 0.5);
+      rise("#s9-d", 41.4, 0.5);
+      tl.to("#s9-swp", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 41.9);
+      put("s9-peek", "tri", C.sky, 0, 0);
+      tl.fromTo("#s9-peek", { y: 520 }, { y: 0, duration: 0.7, ease: "back.out(1.4)" }, 41.9);
+      tl.to("#s9-peek", { rotation: 6, duration: 0.4, ease: "sine.inOut", yoyo: true, repeat: 1 }, 42.6);
+
+      /* ---------- S10 · 43.4–46 ---------- */
+      const CLOSE = [["tri", C.gold, -150, -120, 520, 18], ["circle", C.grey, -230, 1240, 480, -10], ["square", C.sky, 800, 260, 440, 14], ["ghost", C.brown, 600, 1560, 560, -6]];
+      const cm = document.getElementById("s10-ms");
+      CLOSE.forEach(([k, c, x, y, s, r], i) => {
+        const d = document.createElement("div");
+        d.className = "mas"; d.id = `s10-m${i}`;
+        d.style.cssText = `left:${x}px;top:${y}px;width:${s}px;height:${s}px;`;
+        d.innerHTML = mascot(k, c, i % 2 ? 1 : -1, 0);
+        cm.appendChild(d);
+        tl.fromTo(d, { scale: 0.3, opacity: 0, rotation: r * 3 }, { scale: 1, opacity: 1, rotation: r, duration: 0.6, ease: "back.out(1.6)" }, 43.45 + i * 0.07);
+      });
+      tl.fromTo("#s10-wm", { opacity: 0, scale: 0.85, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "power3.out" }, 43.5);
+      pop("#s10-cta", 44.1);
+      rise("#s10-sub", 44.4, 0.5);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

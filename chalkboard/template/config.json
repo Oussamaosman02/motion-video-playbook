@@ -1,0 +1,250 @@
+{
+ "final": "board_final.png",
+ "empty": "board_empty.png",
+ "hand": "hand_long_cut.png",
+ "duration": 28.6,
+ "geometry": {
+  "scale": 0.72,
+  "ox": -76,
+  "oy": 50
+ },
+ "hand_scale": 0.58,
+ "arm_angle_deg": 24,
+ "elements": [
+  {
+   "name": "icon1",
+   "box": [
+    1453,
+    663,
+    1552,
+    777
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 8.25,
+   "dur": 0.45
+  },
+  {
+   "name": "icon2",
+   "box": [
+    1380,
+    862,
+    1532,
+    971
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 12.55,
+   "dur": 0.5
+  },
+  {
+   "name": "icon3",
+   "box": [
+    1400,
+    1097,
+    1544,
+    1236
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 15.8,
+   "dur": 0.5
+  },
+  {
+   "name": "icon4",
+   "box": [
+    1350,
+    1418,
+    1506,
+    1570
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 18.05,
+   "dur": 0.35
+  },
+  {
+   "name": "icon5",
+   "box": [
+    1375,
+    1643,
+    1501,
+    1801
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 19.5,
+   "dur": 0.6
+  },
+  {
+   "name": "title",
+   "box": [
+    190,
+    221,
+    1561,
+    480
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 0.15,
+   "dur": 2.9
+  },
+  {
+   "name": "people",
+   "box": [
+    310,
+    594,
+    594,
+    809
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 3.7,
+   "dur": 0.8
+  },
+  {
+   "name": "funnel",
+   "box": [
+    234,
+    758,
+    670,
+    1144
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 4.55,
+   "dur": 0.8
+  },
+  {
+   "name": "stick",
+   "box": [
+    379,
+    1144,
+    676,
+    1390
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 5.4,
+   "dur": 0.7
+  },
+  {
+   "name": "item1",
+   "box": [
+    828,
+    657,
+    1453,
+    781
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 6.25,
+   "dur": 1.9
+  },
+  {
+   "name": "item2",
+   "box": [
+    828,
+    859,
+    1415,
+    1055
+   ],
+   "kind": "text",
+   "lines": 2,
+   "start": 10.45,
+   "dur": 2.0
+  },
+  {
+   "name": "item3",
+   "box": [
+    828,
+    1097,
+    1453,
+    1324
+   ],
+   "kind": "text",
+   "lines": 2,
+   "start": 13.6,
+   "dur": 2.1
+  },
+  {
+   "name": "item4",
+   "box": [
+    828,
+    1413,
+    1352,
+    1586
+   ],
+   "kind": "text",
+   "lines": 2,
+   "start": 16.6,
+   "dur": 1.4
+  },
+  {
+   "name": "item5",
+   "box": [
+    828,
+    1643,
+    1378,
+    1801
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 18.45,
+   "dur": 1.0
+  },
+  {
+   "name": "landing",
+   "box": [
+    202,
+    1466,
+    739,
+    1643
+   ],
+   "kind": "text",
+   "lines": 2,
+   "start": 22.0,
+   "dur": 1.3
+  },
+  {
+   "name": "browser",
+   "box": [
+    322,
+    1643,
+    588,
+    1877
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 23.35,
+   "dur": 0.8
+  },
+  {
+   "name": "bottom",
+   "box": [
+    240,
+    1921,
+    1479,
+    2062
+   ],
+   "kind": "text",
+   "lines": 1,
+   "start": 24.4,
+   "dur": 2.3
+  },
+  {
+   "name": "underline",
+   "box": [
+    240,
+    2062,
+    1479,
+    2148
+   ],
+   "kind": "drawing",
+   "lines": 1,
+   "start": 26.8,
+   "dur": 0.6
+  }
+ ],
+ "sprite_rotate_deg": 30
+}

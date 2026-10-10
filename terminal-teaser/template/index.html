@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "GPix"; src: url("assets/GeistPixel-Square.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Geist"; src: url("assets/Geist-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "GMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      :root {
+        /* terminal-teaser look: near-black, mono everything, ONE accent (brand red) */
+        --bg: #0b0b0d; --win: #111114; --line: #2a2a30; --fg: #f2efe6; --dim: #8b8892; --faint: #7d7c84;
+        --ac: #e8382d; --ac-ink: #1a0604;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font-family: "GMono", monospace; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .mono { font-family: "GMono", monospace; }
+      .ac { color: var(--ac); }
+      .ch { display: none; }
+      .cur { display: inline-block; width: 0.55em; height: 1.05em; background: var(--ac); vertical-align: -0.17em; margin-left: 0.06em; opacity: 0; }
+      .tline { position: absolute; left: 80px; right: 60px; font-weight: 600; white-space: pre-wrap; }
+      /* error stack */
+      #errs { position: absolute; left: 70px; top: 0; right: 40px; }
+      .err { position: absolute; left: 0; font-size: 40px; font-weight: 600; white-space: nowrap; opacity: 0; }
+      .err .x { color: var(--ac); margin-right: 22px; }
+      /* terminal window */
+      #win { position: absolute; left: 50px; top: 300px; width: 980px; height: 1270px; background: var(--win); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; opacity: 0; }
+      .dots { position: absolute; left: 30px; top: 26px; display: flex; gap: 12px; }
+      .dots i { width: 18px; height: 18px; border-radius: 50%; background: #3a3a40; display: block; }
+      .dots i:first-child { background: var(--ac); }
+      .wtitle { position: absolute; left: 0; right: 0; top: 22px; text-align: center; font-size: 22px; color: var(--faint); }
+      .wh { position: absolute; left: 50px; right: 40px; font-size: 54px; font-weight: 700; line-height: 1.2; }
+      .hist { position: absolute; left: 50px; right: 40px; font-size: 30px; color: var(--dim); opacity: 0; white-space: nowrap; }
+      .hist b { color: var(--fg); font-weight: 600; }
+      .hist .ok { color: var(--ac); }
+      .box { position: absolute; left: 40px; right: 40px; top: 1050px; height: 110px; border: 2px solid #3a3a42; border-radius: 12px; padding: 0 30px; display: flex; align-items: center; font-size: 34px; overflow: hidden; }
+      .ans { position: absolute; left: 30px; top: 50%; transform: translateY(-50%); white-space: nowrap; }
+      .ph { color: var(--faint); }
+      .stat { position: absolute; left: 44px; right: 30px; font-size: 25px; color: var(--dim); white-space: nowrap; }
+      .stat .ac { font-weight: 700; }
+      .q { opacity: 0; }
+      .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: linear-gradient(90deg, rgba(232,56,45,0.10), rgba(232,56,45,0.28)); transform-origin: left center; transform: scaleX(0); }
+      .item { position: absolute; left: 50px; right: 40px; font-size: 29px; line-height: 1.45; opacity: 0; }
+      .item .lab { color: var(--fg); font-weight: 700; font-style: normal; }
+      .item .txt { color: var(--dim); font-style: italic; }
+      .chip { display: inline-block; font-style: normal; font-size: 20px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border: 1px solid var(--faint); border-radius: 6px; color: var(--dim); vertical-align: 3px; margin-left: 8px; }
+      /* red slot card */
+      #red { position: absolute; inset: 0; background: var(--ac); opacity: 0; }
+      .rl { position: absolute; left: 80px; color: var(--ac-ink); font-weight: 700; }
+      .roll { position: absolute; left: 80px; top: 800px; height: 160px; width: 940px; overflow: hidden; }
+      .rw { position: absolute; left: 0; top: 0; font-size: 124px; font-weight: 800; letter-spacing: -0.03em; color: var(--ac-ink); white-space: nowrap; line-height: 160px; opacity: 0; }
+      /* offer + checks */
+      .sub { position: absolute; left: 80px; font-size: 42px; font-weight: 600; opacity: 0; }
+      .chk { position: absolute; left: 80px; font-size: 58px; font-weight: 700; opacity: 0; white-space: nowrap; }
+      .chk .v { display: inline-block; width: 74px; height: 74px; line-height: 74px; text-align: center; background: var(--ac); color: var(--fg); border-radius: 12px; margin-right: 26px; font-size: 44px; vertical-align: 4px; }
+      /* outro */
+      #lock { position: absolute; left: 0; right: 0; top: 760px; display: flex; justify-content: center; align-items: center; font-family: "GPix", monospace; font-size: 132px; line-height: 1; }
+      #lock .l { opacity: 0; }
+      #lock .in { font-family: "GPix", monospace; background: var(--ac); color: var(--fg); font-size: 84px; padding: 16px 18px 10px; border-radius: 12px; margin: 0 26px; }
+      #px { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; pointer-events: none; }
+      #fontwarm { position: absolute; left: -2000px; top: 0; font-family: "GPix"; font-size: 40px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="42.3" data-width="1080" data-height="1920">
+      <div id="fontwarm">Quiz Funnel -30% 14:59 SaaS House</div>
+
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="42.3" data-track-index="10" data-volume="0.8"></audio>
+      <audio id="a-ty1" src="assets/type.mp3" data-start="0.15" data-duration="1.6" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="a-e1" src="assets/err.mp3" data-start="2.6" data-duration="0.5" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="a-e2" src="assets/err.mp3" data-start="2.92" data-duration="0.5" data-track-index="13" data-volume="0.5"></audio>
+      <audio id="a-e3" src="assets/err.mp3" data-start="3.2" data-duration="0.5" data-track-index="14" data-volume="0.5"></audio>
+      <audio id="a-e4" src="assets/err.mp3" data-start="3.44" data-duration="0.5" data-track-index="15" data-volume="0.5"></audio>
+      <audio id="a-gl1" src="assets/glitch.mp3" data-start="4.6" data-duration="0.6" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="a-ty2" src="assets/type.mp3" data-start="5.45" data-duration="0.7" data-track-index="17" data-volume="0.4"></audio>
+      <audio id="a-sw1" src="assets/swarm.mp3" data-start="6.3" data-duration="1.6" data-track-index="18" data-volume="0.8"></audio>
+      <audio id="a-ty3" src="assets/type.mp3" data-start="7.9" data-duration="1.2" data-track-index="19" data-volume="0.3"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="9.55" data-duration="0.8" data-track-index="20" data-volume="0.45"></audio>
+      <audio id="a-tk1" src="assets/tick.mp3" data-start="11.55" data-duration="0.5" data-track-index="21" data-volume="0.6"></audio>
+      <audio id="a-tk2" src="assets/tick.mp3" data-start="12.85" data-duration="0.5" data-track-index="22" data-volume="0.6"></audio>
+      <audio id="a-tk3" src="assets/tick.mp3" data-start="14.15" data-duration="0.5" data-track-index="23" data-volume="0.6"></audio>
+      <audio id="a-ty4" src="assets/type.mp3" data-start="15.0" data-duration="1.4" data-track-index="24" data-volume="0.3"></audio>
+      <audio id="a-p1" src="assets/pop.mp3" data-start="16.6" data-duration="0.5" data-track-index="25" data-volume="0.5"></audio>
+      <audio id="a-p2" src="assets/pop.mp3" data-start="17.4" data-duration="0.5" data-track-index="26" data-volume="0.5"></audio>
+      <audio id="a-p3" src="assets/pop.mp3" data-start="18.2" data-duration="0.5" data-track-index="27" data-volume="0.5"></audio>
+      <audio id="a-p4" src="assets/pop.mp3" data-start="19.0" data-duration="0.5" data-track-index="28" data-volume="0.5"></audio>
+      <audio id="a-dg1" src="assets/ding.mp3" data-start="19.8" data-duration="1.0" data-track-index="29" data-volume="0.5"></audio>
+      <audio id="a-ty5" src="assets/type.mp3" data-start="20.5" data-duration="1.3" data-track-index="30" data-volume="0.35"></audio>
+      <audio id="a-wh2" src="assets/whoosh.mp3" data-start="21.9" data-duration="0.8" data-track-index="31" data-volume="0.6"></audio>
+      <audio id="a-tk4" src="assets/tick.mp3" data-start="22.7" data-duration="0.5" data-track-index="32" data-volume="0.55"></audio>
+      <audio id="a-tk5" src="assets/tick.mp3" data-start="23.25" data-duration="0.5" data-track-index="33" data-volume="0.55"></audio>
+      <audio id="a-tk6" src="assets/tick.mp3" data-start="23.75" data-duration="0.5" data-track-index="34" data-volume="0.55"></audio>
+      <audio id="a-tk7" src="assets/tick.mp3" data-start="24.2" data-duration="0.5" data-track-index="35" data-volume="0.55"></audio>
+      <audio id="a-gl2" src="assets/glitch.mp3" data-start="24.85" data-duration="0.6" data-track-index="36" data-volume="0.5"></audio>
+      <audio id="a-sh1" src="assets/shimmer.mp3" data-start="25.0" data-duration="1.5" data-track-index="37" data-volume="0.4"></audio>
+      <audio id="a-ty6" src="assets/type.mp3" data-start="25.6" data-duration="1.0" data-track-index="38" data-volume="0.3"></audio>
+      <audio id="a-sw2" src="assets/swarm.mp3" data-start="26.6" data-duration="1.6" data-track-index="39" data-volume="0.7"></audio>
+      <audio id="a-p5" src="assets/pop.mp3" data-start="27.8" data-duration="0.5" data-track-index="40" data-volume="0.5"></audio>
+      <audio id="a-p6" src="assets/pop.mp3" data-start="28.4" data-duration="0.5" data-track-index="41" data-volume="0.5"></audio>
+      <audio id="a-sw3" src="assets/swarm.mp3" data-start="29.75" data-duration="1.6" data-track-index="42" data-volume="0.7"></audio>
+      <audio id="a-tk8" src="assets/tick.mp3" data-start="31.9" data-duration="0.5" data-track-index="43" data-volume="0.6"></audio>
+      <audio id="a-tk9" src="assets/tick.mp3" data-start="32.9" data-duration="0.5" data-track-index="44" data-volume="0.6"></audio>
+      <audio id="a-ty7" src="assets/type.mp3" data-start="33.2" data-duration="1.1" data-track-index="45" data-volume="0.3"></audio>
+      <audio id="a-p7" src="assets/pop.mp3" data-start="34.6" data-duration="0.5" data-track-index="46" data-volume="0.55"></audio>
+      <audio id="a-p8" src="assets/pop.mp3" data-start="35.2" data-duration="0.5" data-track-index="47" data-volume="0.55"></audio>
+      <audio id="a-p9" src="assets/pop.mp3" data-start="35.8" data-duration="0.5" data-track-index="48" data-volume="0.55"></audio>
+      <audio id="a-ty8" src="assets/type.mp3" data-start="37.1" data-duration="0.9" data-track-index="49" data-volume="0.35"></audio>
+      <audio id="a-ty9" src="assets/type.mp3" data-start="38.5" data-duration="1.0" data-track-index="50" data-volume="0.3"></audio>
+      <audio id="a-dg2" src="assets/ding.mp3" data-start="39.6" data-duration="1.0" data-track-index="51" data-volume="0.45"></audio>
+
+      <!-- S1 hook (typed) -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="2.6" data-track-index="1">
+        <div id="hook" class="tline" style="top: 780px; font-size: 60px; line-height: 1.25;">¿Quieres vender tu SaaS sin mandar a todo el mundo a la <span class="ac">misma landing?</span></div>
+      </section>
+
+      <!-- S2 error stack -->
+      <section id="s2" class="scene clip" data-start="2.6" data-duration="3.75" data-track-index="1">
+        <div id="errs"></div>
+      </section>
+
+      <!-- S3 swarm → wordmark (canvas) + subline -->
+      <section id="s3" class="scene clip" data-start="6.35" data-duration="3.65" data-track-index="1">
+        <div id="s3sub" class="tline" style="top: 1010px; left: 0; right: 0; text-align: center; font-size: 40px; line-height: 1.35; font-weight: 500;">En lugar de pedir una demo,<br />crea un <span class="ac">Quiz Funnel</span>.</div>
+      </section>
+
+      <!-- S4 + S5 terminal window -->
+      <section id="s45" class="scene clip" data-start="10.0" data-duration="10.5" data-track-index="1">
+        <div id="win" data-layout-allow-occlusion>
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="wtitle">quiz-funnel — saas-in-house</div>
+          <div id="wh1" class="wh" style="top: 250px;">Entre 5 y 8 preguntas.</div>
+          <div id="wh2" class="wh ac" style="top: 320px;">Para saber quién es.</div>
+          <div id="h1" class="hist" style="top: 500px;"><span class="ok">✓</span> 1/8 ¿Quién eres? <b>Founder · SaaS B2B</b></div>
+          <div id="h2" class="hist" style="top: 570px;"><span class="ok">✓</span> 2/8 ¿Qué quieres? <b>Más demos cualificadas</b></div>
+          <div id="h3" class="hist" style="top: 640px;"><span class="ok">✓</span> 3/8 ¿Tu problema? <b>Leads que no compran</b></div>
+          <div id="wh3" class="wh" style="top: 250px;">Pero no hagas solo preguntas.</div>
+          <div id="wh4" class="wh ac" style="top: 384px; font-size: 44px;">Entre medias, cards con valor:</div>
+          <div id="it1" class="item" style="top: 490px;"><span class="lab">• Caso real</span><span class="chip">ejemplo</span><br /><span class="txt">…un SaaS B2B de 12 personas pasó del 2% al 6% de demo a cierre</span></div>
+          <div id="it2" class="item" style="top: 620px;"><span class="lab">• Dato</span><span class="chip">ejemplo</span><br /><span class="txt">…7 de cada 10 visitas aún no están listas para una demo</span></div>
+          <div id="it3" class="item" style="top: 750px;"><span class="lab">• Resultado</span><br /><span class="txt">…lo que consiguen equipos como el suyo en 90 días</span></div>
+          <div id="it4" class="item" style="top: 850px;"><span class="lab">• Consejo</span><br /><span class="txt">…pregunta por el problema antes que por el presupuesto</span></div>
+          <div class="box">
+            <div id="bar" class="bar"></div>
+            <div id="ph" class="ans ph">Responde o escribe / para opciones</div>
+            <div id="a1" class="ans"><span class="t">Founder · SaaS B2B</span></div>
+            <div id="a2" class="ans"><span class="t">Más demos cualificadas</span></div>
+            <div id="a3" class="ans"><span class="t">Leads que no compran</span></div>
+            <div id="a4" class="ans ac" style="font-weight: 600;"><span class="t">› «vale, esto tiene sentido»</span></div>
+          </div>
+          <div class="stat" style="top: 1180px;">
+            <span id="q1" class="q" style="position: absolute; left: 0;">Pregunta <span class="ac">1/8</span> · ¿Quién eres? · /siguiente</span>
+            <span id="q2" class="q" style="position: absolute; left: 0;">Pregunta <span class="ac">2/8</span> · ¿Qué quieres conseguir?</span>
+            <span id="q3" class="q" style="position: absolute; left: 0;">Pregunta <span class="ac">3/8</span> · ¿Tu principal problema?</span>
+            <span id="q4" class="q" style="position: absolute; left: 0;">Card <span class="ac">valor</span> · entre pregunta y pregunta</span>
+          </div>
+          <div class="stat" style="top: 1222px; color: var(--faint);">↑ atrás · ? ayuda · esc salir</div>
+        </div>
+      </section>
+
+      <!-- S6 typed → red slot roll -->
+      <section id="s6" class="scene clip" data-start="20.5" data-duration="5.1" data-track-index="1">
+        <div id="s6t" class="tline" style="top: 820px; font-size: 66px; line-height: 1.25;">Después, según<br />sus respuestas…</div>
+        <div id="red">
+          <div id="rl1" class="rl" style="top: 690px; font-size: 60px;">Le muestras</div>
+          <div class="roll" id="roll">
+            <div class="rw" id="r0">Plan Starter</div>
+            <div class="rw" id="r1">Plan Scale</div>
+            <div class="rw" id="r2">Plan Agency</div>
+            <div class="rw" id="r3">Plan Growth</div>
+          </div>
+          <div id="rl2" class="rl" style="top: 980px; font-size: 60px;">personalizado.</div>
+          <div class="rl" style="top: 1110px; font-size: 26px; opacity: 0.7;">nombres de plan: ejemplo</div>
+        </div>
+      </section>
+
+      <!-- S7 offer: -30% → 14:59 (canvas) -->
+      <section id="s7" class="scene clip" data-start="25.6" data-duration="7.6" data-track-index="1">
+        <div id="s7t" data-layout-allow-occlusion class="tline" style="top: 470px; font-size: 48px; line-height: 1.3;">Y aquí viene<br /><span class="ac">la parte importante.</span></div>
+        <div id="o1" class="sub" style="top: 1090px;">Por qué encaja con su situación.</div>
+        <div id="o2" class="sub" style="top: 1160px;">Una oferta específica. <span class="chip" style="font-size: 24px;">−30% ejemplo</span></div>
+        <div id="o3" class="sub" style="top: 1090px;">Contador con tiempo limitado</div>
+        <div id="o4" class="sub" style="top: 1160px; color: var(--dim);">para canjearla.</div>
+      </section>
+
+      <!-- S8 checks -->
+      <section id="s8" class="scene clip" data-start="33.2" data-duration="3.8" data-track-index="1">
+        <div id="s8t" class="tline" style="top: 600px; font-size: 54px;">Así no solo captas el lead.</div>
+        <div id="c1" class="chk" style="top: 800px;"><span class="v">✓</span>Lo segmentas.</div>
+        <div id="c2" class="chk" style="top: 920px;"><span class="v">✓</span>Lo educas.</div>
+        <div id="c3" class="chk" style="top: 1040px;"><span class="v">✓</span>Lo llevas a la compra.</div>
+      </section>
+
+      <!-- S9 outro -->
+      <section id="s9" class="scene clip" data-start="37.0" data-duration="5.3" data-track-index="1">
+        <div id="lock"><span class="l">S</span><span class="l">a</span><span class="l">a</span><span class="l">S</span><span class="l in">IN</span><span class="l">H</span><span class="l">o</span><span class="l">u</span><span class="l">s</span><span class="l">e</span></div>
+        <div id="cmd" class="tline" style="top: 960px; left: 0; right: 0; text-align: center; font-size: 42px; font-weight: 500;"><span class="ac">$</span> comenta QUIZ</div>
+        <div id="url" class="tline" style="top: 1050px; left: 0; right: 0; text-align: center; font-size: 26px; color: var(--dim); font-weight: 400; opacity: 0;">saasinhouse.com</div>
+      </section>
+
+      <canvas id="px" data-layout-ignore data-layout-allow-occlusion width="1080" height="1920"></canvas>
+    </div>
+
+    <script>
+      const END = 42.3;
+      document.fonts.load("40px GPix");
+      const tl = gsap.timeline({ paused: true });
+      const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+      const clamp = (v) => Math.max(0, Math.min(1, v));
+      const eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+      const eo = (x) => 1 - Math.pow(1 - x, 3);
+
+      /* ---------- typing: wrap every character (keeps inner spans), reveal with display ---------- */
+      function wrapChars(el) {
+        const out = [];
+        const walk = (n) => {
+          [...n.childNodes].forEach((c) => {
+            if (c.nodeType === 3) {
+              const f = document.createDocumentFragment();
+              [...c.textContent].forEach((ch) => { const s = document.createElement("span"); s.className = "ch"; s.textContent = ch; f.appendChild(s); out.push(s); });
+              n.replaceChild(f, c);
+            } else if (c.nodeName === "BR") { /* line breaks stay */ }
+            else if (!c.classList.contains("cur")) walk(c);
+          });
+        };
+        walk(el);
+        return out;
+      }
+      // type `sel` from t0 at cps chars/s; a red block cursor follows and blinks until `hold`
+      function typeIn(sel, t0, cps, hold) {
+        const el = document.querySelector(sel);
+        const chars = wrapChars(el);
+        let cur = el.querySelector(".cur");
+        if (!cur) { cur = document.createElement("span"); cur.className = "cur"; el.appendChild(cur); }
+        chars.forEach((c, i) => tl.set(c, { display: "inline" }, t0 + i / cps));
+        const t1 = t0 + chars.length / cps;
+        tl.set(cur, { opacity: 1 }, t0);
+        if (hold) { for (let k = t1; k < hold - 0.25; k += 0.5) tl.set(cur, { opacity: 0 }, k + 0.25).set(cur, { opacity: 1 }, k + 0.5); tl.set(cur, { opacity: 0 }, hold); }
+        return t1;
+      }
+      const fadeIn = (sel, at, d = 0.3, y = 18) => tl.fromTo(sel, { opacity: 0, y }, { opacity: 1, y: 0, duration: d, ease: "power3.out" }, at);
+      const fadeOut = (sel, at, d = 0.2) => tl.to(sel, { opacity: 0, duration: d, ease: "power1.in" }, at);
+
+      /* ---------- pixel particle engine (one canvas, painted as a pure function of time) ---------- */
+      const cv = document.getElementById("px"), cx = cv.getContext("2d");
+      const off = document.createElement("canvas"); off.width = 1080; off.height = 600;
+      const octx = off.getContext("2d", { willReadFrequently: true });
+      const TG = {};
+      // sample the Geist Pixel font's own pixel grid → list of square centres (canvas coords)
+      function targets(str, size, cy, maxW = 940) {
+        const key = str + "|" + size + "|" + cy;
+        if (TG[key]) return TG[key];
+        octx.font = `${size}px GPix`;
+        let w = octx.measureText(str).width;
+        if (w > maxW) { size = size * maxW / w; octx.font = `${size}px GPix`; w = octx.measureText(str).width; }
+        const m = size * 0.076, x0 = Math.round(540 - w / 2), base = 400;
+        octx.clearRect(0, 0, 1080, 600); octx.fillStyle = "#000"; octx.textBaseline = "alphabetic";
+        octx.fillText(str, x0, base);
+        const img = octx.getImageData(0, 0, 1080, 600).data;
+        const pts = [];
+        for (let j = -3; j < size / m + 2; j++) for (let k = 0; k * m < w + m; k++) {
+          const x = x0 + (k + 0.5) * m, y = base - (j + 0.5) * m;
+          if (y < 0 || y >= 600) continue;
+          if (img[(Math.floor(y) * 1080 + Math.floor(x)) * 4 + 3] > 110) pts.push({ x, y: y - base + cy + size * 0.36 });
+        }
+        const res = { pts, m };
+        if (document.fonts.check("40px GPix")) TG[key] = res;
+        return res;
+      }
+      const sq = (x, y, s, col, a = 1) => { cx.globalAlpha = a; cx.fillStyle = col; cx.fillRect(x - s / 2, y - s / 2, s, s); };
+      const mix = (q) => (q < 1 ? (q < 0.5 ? "#e8382d" : "#ff7a6e") : null);
+      // assemble: burst out of `o` then converge on the text's pixels
+      function assemble(T, u, o, col, seed, R = 560) {
+        T.pts.forEach((p, i) => {
+          const a = hash(i, seed) * Math.PI * 2, r = R * (0.25 + hash(seed, i) * 0.75);
+          const bx = o.x + Math.cos(a) * r, by = o.y + Math.sin(a) * r * 1.2;
+          const s1 = eo(clamp(u / 0.3));
+          const q = eio(clamp((u - 0.3 - hash(i, seed + 3) * 0.3) / 0.4));
+          const sx = o.x + (bx - o.x) * s1, sy = o.y + (by - o.y) * s1;
+          const sw = Math.sin(q * Math.PI) * 60 * (hash(i, 9) - 0.5);
+          const x = sx + (p.x - sx) * q + sw, y = sy + (p.y - sy) * q - sw;
+          sq(x, y, T.m * (q >= 1 ? 0.94 : 0.7), q >= 1 ? col : (hash(i, seed + 5) < 0.5 ? "#e8382d" : "#f2efe6"), q >= 1 ? 1 : 0.55 + 0.45 * s1);
+        });
+      }
+      function settled(T, col, dx = 0, dy = 0, s = 1, ox = 540, oy = 0) {
+        T.pts.forEach((p) => sq(ox + (p.x - 540) * s + dx, oy + (p.y - oy) * s + dy, T.m * 0.94 * s, col));
+      }
+      function scatter(T, u, col, seed) {
+        T.pts.forEach((p, i) => {
+          const a = hash(i, seed) * Math.PI * 2, r = 120 + hash(seed, i) * 520;
+          const k = eo(clamp(u * (0.7 + hash(i, 4) * 0.6)));
+          sq(p.x + Math.cos(a) * r * k, p.y + Math.sin(a) * r * k, T.m * (0.86 - 0.4 * k), col, 1 - k);
+        });
+      }
+      // pixel-block dissolve to the background colour
+      function blocks(u, col) {
+        const B = 60;
+        for (let j = 0; j < 1920 / B; j++) for (let i = 0; i < 1080 / B; i++) if (hash(i * 7 + 1, j * 13 + 2) < u) sq(i * B + B / 2, j * B + B / 2, B + 1, col);
+      }
+
+      function paint(t) {
+        cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, 1080, 1920); cx.globalAlpha = 1;
+        // A) "Quiz Funnel" swarm from the typed "$ haz esto" line, hold, then shrink into the window header
+        const QF = targets("Quiz Funnel", 200, 860);
+        if (t >= 6.3 && t < 7.9) assemble(QF, (t - 6.3) / 1.6, { x: 420, y: SWARM_Y }, "#f2efe6", 11, 620);
+        else if (t >= 7.9 && t < 9.6) settled(QF, "#f2efe6");
+        else if (t >= 9.6 && t < 20.5) {
+          // header slot inside #win: text left at x=100, centre y=430
+          const k = eio(clamp((t - 9.6) / 0.45)), s = 1 - 0.71 * k;
+          const minX = Math.min(...QF.pts.map((p) => p.x));
+          const tx = (100 - (540 + (minX - 540) * 0.29)) * k, ty = (420 - 860) * k;
+          const a = t > 20.2 ? clamp((20.5 - t) / 0.3) : 1;
+          cx.globalAlpha = a;
+          QF.pts.forEach((p) => sq(540 + (p.x - 540) * s + tx, 860 + (p.y - 860) * s + ty, QF.m * 0.94 * s, "#f2efe6", a));
+        }
+        // B) red card dissolves to black in pixel blocks
+        if (t >= 25.0 && t < 25.6) blocks(clamp((t - 25.0) / 0.5), "#0b0b0d");
+        // C) -30% assembles, scatters, 14:59 assembles and counts down
+        const P30 = targets("−30%", 300, 830), CD = targets("14:59", 290, 830);
+        if (t >= 26.6 && t < 27.8) assemble(P30, (t - 26.6) / 1.2, { x: 540, y: 830 }, "#e8382d", 21, 520);
+        else if (t >= 27.8 && t < 29.75) settled(P30, "#e8382d");
+        else if (t >= 29.75 && t < 30.5) scatter(P30, (t - 29.75) / 0.75, "#e8382d", 31);
+        if (t >= 30.0 && t < 31.0) assemble(CD, (t - 30.0) / 1.0, { x: 540, y: 830 }, "#f2efe6", 41, 420);
+        else if (t >= 31.0 && t < 33.2) {
+          const ss = 59 - Math.max(0, Math.floor(t - 30.9));
+          const T = targets("14:" + String(ss).padStart(2, "0"), 290, 830);
+          settled(T, ss < 59 ? "#f2efe6" : "#f2efe6");
+        }
+        cx.globalAlpha = 1;
+      }
+
+      /* ===================== S1 hook ===================== */
+      typeIn("#hook", 0.15, 38, 2.6);
+
+      /* ===================== S2 error stack ===================== */
+      const ERR = ["Misma landing para todos", "Formulario: «Pide una demo»", "Lead sin cualificar", "Demo: no se presentó", "Visitante sin contexto"];
+      const errs = document.getElementById("errs");
+      let te = 2.6, gap = 0.32, n = 0;
+      const LH = 62, TOP = 300, BOTTOM = 1420;
+      while (te < 5.35) {
+        const d = document.createElement("div");
+        d.className = "err"; d.id = "e" + n;
+        d.innerHTML = `<span class="x">×</span>${ERR[n % ERR.length]}`;
+        d.style.top = TOP + n * LH + "px";
+        errs.appendChild(d);
+        tl.set(d, { opacity: 1 }, te);
+        const over = TOP + n * LH - BOTTOM;
+        if (over > 0) tl.set(errs, { y: -over }, te);
+        n++; te += gap; gap = Math.max(0.055, gap * 0.84);
+      }
+      // the last line: "$ haz esto" typed in white
+      const last = document.createElement("div");
+      last.className = "err"; last.id = "elast"; last.style.top = TOP + n * LH + "px"; last.style.color = "#f2efe6";
+      last.innerHTML = `<span class="x">$</span><span id="hz">haz esto</span>`;
+      errs.appendChild(last);
+      tl.set(last, { opacity: 1 }, 5.4);
+      { const over = TOP + n * LH - BOTTOM; if (over > 0) tl.set(errs, { y: -over }, 5.4); }
+      const SWARM_Y = Math.min(TOP + n * LH, BOTTOM) + 24;
+      typeIn("#hz", 5.45, 16, 6.3);
+      // the stack drops away as the swarm takes over
+      tl.to("#errs .err", { opacity: 0, duration: 0.25, stagger: { each: 0.004, from: "end" } }, 6.15);
+
+      /* ===================== S3 subline ===================== */
+      typeIn("#s3sub", 7.9, 40, 9.5);
+      fadeOut("#s3sub", 9.5);
+
+      /* ===================== S4 questions ===================== */
+      tl.fromTo("#win", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" }, 9.75);
+      typeIn("#wh1", 10.15, 30, 10.9);
+      typeIn("#wh2", 10.9, 30, 11.6);
+      const QS = [["#q1", "#a1", "#h1", 10.6, 11.55], ["#q2", "#a2", "#h2", 11.9, 12.85], ["#q3", "#a3", "#h3", 13.2, 14.15]];
+      tl.set("#ph", { opacity: 1 }, 10.0);
+      QS.forEach(([q, a, h, t0, t1], i) => {
+        tl.set(q, { opacity: 1 }, t0 - 0.2);
+        if (i) tl.set(QS[i - 1][0], { opacity: 0 }, t0 - 0.2);
+        tl.set("#ph", { opacity: 0 }, t0);
+        typeIn(a + " .t", t0, 26);
+        tl.set(a, { opacity: 1 }, t0);
+        tl.set(a + " .cur", { opacity: 1 }, t0);
+        tl.set(a, { opacity: 0 }, t1);
+        fadeIn(h, t1, 0.3, 12);
+      });
+      // fade every answer layer out of the way at start (they are stacked)
+      gsap.set(["#a1", "#a2", "#a3", "#a4"], { opacity: 0 });
+      tl.set("#ph", { opacity: 1 }, 14.15);
+      tl.set("#q3", { opacity: 0 }, 15.0).set("#q4", { opacity: 1 }, 15.0);
+
+      /* ===================== S5 value cards ===================== */
+      fadeOut(["#wh1", "#wh2", "#h1", "#h2", "#h3"], 14.85, 0.15);
+      typeIn("#wh3", 15.0, 32, 16.0);
+      typeIn("#wh4", 15.95, 40, 16.6);
+      ["#it1", "#it2", "#it3", "#it4"].forEach((s, i) => {
+        const at = 16.6 + i * 0.8;
+        tl.set(s, { opacity: 1 }, at);
+        typeIn(s, at, 90);
+        tl.set(s + " .cur", { opacity: 0 }, at + 0.8);
+      });
+      tl.set("#ph", { opacity: 0 }, 16.6);
+      tl.fromTo("#bar", { scaleX: 0 }, { scaleX: 1, duration: 3.1, ease: "none" }, 16.6);
+      tl.set("#a4", { opacity: 1 }, 19.8);
+      tl.fromTo("#a4", { x: -20 }, { x: 0, duration: 0.3, ease: "power3.out" }, 19.8);
+      tl.to("#win", { opacity: 0, scale: 0.98, duration: 0.25 }, 20.25);
+
+      /* ===================== S6 typed → red roll ===================== */
+      typeIn("#s6t", 20.55, 24, 21.95);
+      tl.set("#s6t", { opacity: 0 }, 21.95);
+      tl.set("#red", { opacity: 1 }, 22.0);
+      tl.fromTo(["#rl1", "#rl2"], { y: 30 }, { y: 0, duration: 0.35, ease: "power3.out" }, 22.0);
+      const RT = [22.1, 22.7, 23.25, 23.75, 24.2];
+      const RW = ["#r0", "#r1", "#r2", "#r0", "#r3"];
+      RT.forEach((t, i) => {
+        if (i) { tl.fromTo(RW[i - 1], { y: 0 }, { y: -160, duration: 0.18, ease: "power2.in", immediateRender: false }, t - 0.02); tl.set(RW[i - 1], { opacity: 0 }, t + 0.17); }
+        tl.set(RW[i], { opacity: 1 }, t - 0.02);
+        tl.fromTo(RW[i], { y: 160 }, { y: 0, duration: 0.22, ease: "power3.out", immediateRender: false }, t - 0.02);
+      });
+      // glitch: horizontal jitter on the block
+      [[24.86, 14], [24.9, -22], [24.94, 8], [24.98, -12], [25.02, 0]].forEach(([t, x]) => tl.set(["#rl1", "#roll", "#rl2"], { x }, t));
+      tl.set("#red", { opacity: 0 }, 25.5);
+
+      /* ===================== S7 offer + countdown ===================== */
+      typeIn("#s7t", 25.65, 34, 26.6);
+      fadeIn("#o1", 27.8); fadeIn("#o2", 28.4);
+      fadeOut(["#o1", "#o2"], 29.7, 0.2);
+      fadeIn("#o3", 31.0); fadeIn("#o4", 31.3);
+
+      /* ===================== S8 checks ===================== */
+      typeIn("#s8t", 33.25, 28, 34.5);
+      ["#c1", "#c2", "#c3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.3, ease: "back.out(2)" }, 34.6 + i * 0.6));
+
+      /* ===================== S9 outro: wordmark types with a grey ghost ===================== */
+      document.querySelectorAll("#lock .l").forEach((l, i) => {
+        const at = 37.15 + i * 0.08;
+        tl.set(l, { opacity: 0.35 }, at);
+        tl.set(l, { opacity: 1 }, at + 0.08);
+      });
+      typeIn("#cmd", 38.55, 22, END);
+      fadeIn("#url", 39.6, 0.4, 0);
+
+      /* canvas driver: one tween over the whole film so any frame can be sought */
+      const PX = { t: 0 };
+      tl.fromTo(PX, { t: 0 }, { t: END, duration: END, ease: "none", onUpdate: () => paint(PX.t) }, 0);
+      tl.set({}, {}, END);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

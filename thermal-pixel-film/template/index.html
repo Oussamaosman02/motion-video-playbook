@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --paper: #e7e6e2; --paper-hi: #f3f2ef; --ink: #161618; --night: #0d0d0f;
+        --red: #e8382d; --red-deep: #7e140d; --cream: #f2efe6; --cyan: #5ff2e6; --blue: #2b3bff;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Archivo", sans-serif; }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+      .paper { background: radial-gradient(ellipse 75% 60% at 50% 46%, var(--paper-hi), var(--paper) 60%, #d4d3cf); }
+      .night { background: radial-gradient(ellipse 80% 60% at 50% 50%, #151517, var(--night) 70%); }
+      .full { position: absolute; inset: 0; }
+      .tx { position: absolute; font-weight: 700; font-size: 48px; letter-spacing: -0.02em; line-height: 1.15; white-space: nowrap; }
+      .tx.dark { color: var(--ink); }
+      .tx.light { color: var(--cream); }
+      .tx .w { display: inline-block; margin-right: 0.24em; }
+      .cur { display: inline-block; width: 6px; height: 54px; background: currentColor; vertical-align: -8px; margin-left: 26px; }
+      .ico { position: absolute; image-rendering: pixelated; }
+      .ico img, img.ico { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+      .ring-item { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; display: flex; align-items: center; justify-content: center; }
+      .ring-item img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+      .big-letter { position: absolute; font-weight: 800; font-size: 64px; color: var(--ink); }
+      .disp { font-weight: 860; font-stretch: 118%; text-transform: uppercase; line-height: 1; letter-spacing: -0.015em; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.08em; }
+      svg { overflow: visible; }
+      #grain { position: absolute; inset: -200px; background-image: url("assets/grain0.png"); background-size: 384px 384px; mix-blend-mode: overlay; opacity: 0.22; pointer-events: none; }
+      #vig { position: absolute; inset: 0; background: radial-gradient(ellipse 72% 58% at 50% 48%, transparent 55%, rgba(0,0,0,0.38)); pointer-events: none; }
+      #fade { position: absolute; inset: 0; background: #000; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="28" data-width="1080" data-height="1920">
+      <!-- audio: reused VO + music (sih-quiz-film), new ElevenLabs SFX -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.3" data-duration="26.1" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="28" data-track-index="11" data-volume="0.22"></audio>
+      <audio id="a-wh0" src="assets/whoosh.mp3" data-start="0" data-duration="1.2" data-track-index="12" data-volume="0.45"></audio>
+      <audio id="a-scr" src="assets/scribble.mp3" data-start="0.95" data-duration="1" data-track-index="13" data-volume="0.35"></audio>
+      <audio id="a-fl" src="assets/flare.mp3" data-start="1.75" data-duration="1.5" data-track-index="14" data-volume="0.5"></audio>
+      <audio id="a-bm1" src="assets/boom.mp3" data-start="2.93" data-duration="1.5" data-track-index="15" data-volume="0.7"></audio>
+      <audio id="a-k1" src="assets/key.mp3" data-start="3.75" data-duration="0.5" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="a-p1" src="assets/pop.mp3" data-start="5.49" data-duration="0.5" data-track-index="17" data-volume="0.3"></audio>
+      <audio id="a-p2" src="assets/pop.mp3" data-start="5.8" data-duration="0.5" data-track-index="18" data-volume="0.3"></audio>
+      <audio id="a-ink0" src="assets/ink.mp3" data-start="7.05" data-duration="0.8" data-track-index="19" data-volume="0.35"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="8.6" data-duration="1.2" data-track-index="20" data-volume="0.45"></audio>
+      <audio id="a-k2" src="assets/key.mp3" data-start="10.16" data-duration="0.5" data-track-index="21" data-volume="0.45"></audio>
+      <audio id="a-k3" src="assets/key.mp3" data-start="11.02" data-duration="0.5" data-track-index="22" data-volume="0.45"></audio>
+      <audio id="a-k4" src="assets/key.mp3" data-start="11.87" data-duration="0.5" data-track-index="23" data-volume="0.45"></audio>
+      <audio id="a-bm2" src="assets/boom.mp3" data-start="12.63" data-duration="1.5" data-track-index="24" data-volume="0.55"></audio>
+      <audio id="a-wh2" src="assets/whoosh.mp3" data-start="13.72" data-duration="1.2" data-track-index="25" data-volume="0.4"></audio>
+      <audio id="a-ink1" src="assets/ink.mp3" data-start="14.9" data-duration="0.8" data-track-index="26" data-volume="0.45"></audio>
+      <audio id="a-ink2" src="assets/ink.mp3" data-start="15.35" data-duration="0.8" data-track-index="27" data-volume="0.4"></audio>
+      <audio id="a-p3" src="assets/pop.mp3" data-start="16.4" data-duration="0.5" data-track-index="28" data-volume="0.35"></audio>
+      <audio id="a-t1" src="assets/tick.mp3" data-start="18.05" data-duration="0.5" data-track-index="29" data-volume="0.5"></audio>
+      <audio id="a-t2" src="assets/tick.mp3" data-start="18.55" data-duration="0.5" data-track-index="30" data-volume="0.5"></audio>
+      <audio id="a-t3" src="assets/tick.mp3" data-start="19.05" data-duration="0.5" data-track-index="31" data-volume="0.5"></audio>
+      <audio id="a-bm3" src="assets/boom.mp3" data-start="19.34" data-duration="1.5" data-track-index="32" data-volume="0.6"></audio>
+      <audio id="a-fl2" src="assets/flare.mp3" data-start="20.75" data-duration="1.5" data-track-index="33" data-volume="0.35"></audio>
+      <audio id="a-wh3" src="assets/whoosh.mp3" data-start="22.45" data-duration="1.2" data-track-index="34" data-volume="0.4"></audio>
+      <audio id="a-scr2" src="assets/scribble.mp3" data-start="24.1" data-duration="1" data-track-index="35" data-volume="0.4"></audio>
+      <audio id="a-scr3" src="assets/scribble.mp3" data-start="24.7" data-duration="1" data-track-index="36" data-volume="0.3"></audio>
+
+      <!-- ============ S1 · paper, giant type → tiny sentence, scribbles, cyan flare ============ -->
+      <section id="s1" class="scene paper">
+        <div id="s1-warm" class="full" style="background: radial-gradient(ellipse 60% 45% at 52% 48%, rgba(255,214,196,0.55), transparent 70%); opacity: 0;"></div>
+        <div id="s1-bigwrap" class="full">
+          <div id="s1-dash" style="position: absolute; left: -200px; right: -200px; top: 905px; border-top: 4px dashed rgba(22,22,24,0.55);"></div>
+          <div id="s1-big" class="tx dark" style="top: 760px; left: 0; font-size: 300px; font-weight: 800; letter-spacing: -0.05em;">tu próximo</div>
+        </div>
+        <svg id="s1-scr" class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s1-p1" pathLength="1" d="M 300 1180 C 330 1000, 420 860, 470 760 C 500 700, 420 720, 380 900 C 350 1040, 390 1150, 360 1240" fill="none" stroke="rgba(30,30,30,0.55)" stroke-width="6" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: blur(1.5px);" />
+          <path id="s1-p2" pathLength="1" d="M 560 700 C 680 660, 820 690, 900 760" fill="none" stroke="rgba(30,30,30,0.45)" stroke-width="7" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: blur(2px);" />
+          <path id="s1-p3" pathLength="1" d="M 210 610 C 260 570, 330 575, 350 600" fill="none" stroke="#e8382d" stroke-width="9" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s1-p4" pathLength="1" d="M 520 1230 C 600 1210, 690 1180, 760 1150" fill="none" stroke="rgba(30,30,30,0.5)" stroke-width="5" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1; filter: blur(1px);" />
+        </svg>
+        <img id="s1-i1" class="ico" src="assets/px_chat.png" style="left: 640px; top: 640px; width: 84px; opacity: 0;" />
+        <img id="s1-i2" class="ico" src="assets/px_mail.png" style="left: 820px; top: 700px; width: 84px; opacity: 0;" />
+        <img id="s1-i3" class="ico" src="assets/px_coin.png" style="left: 700px; top: 1080px; width: 76px; opacity: 0;" />
+        <img id="s1-i4" class="ico" src="assets/px_tag.png" style="left: 880px; top: 1220px; width: 70px; opacity: 0;" />
+        <div id="s1-line" class="tx dark" style="left: 0; right: 0; top: 930px; text-align: center; font-size: 46px;"></div>
+        <svg id="s1-star" viewBox="-100 -100 200 200" width="1300" height="1300" style="position: absolute; left: -980px; top: 330px; opacity: 0;">
+          <defs>
+            <radialGradient id="s1-sg" cx="0" cy="0" r="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#ffffff" />
+              <stop offset="0.25" stop-color="#7ffff2" />
+              <stop offset="0.7" stop-color="#3d7bff" />
+              <stop offset="1" stop-color="#1d22d6" />
+            </radialGradient>
+          </defs>
+          <path d="M0,-100 C8,-12 12,-8 100,0 C12,8 8,12 0,100 C-8,12 -12,8 -100,0 C-12,-8 -8,-12 0,-100Z" fill="url(#s1-sg)" style="filter: drop-shadow(0 0 14px rgba(95,242,230,0.8));" />
+        </svg>
+        <div id="s1-vig" class="full" style="background: radial-gradient(ellipse 58% 44% at 52% 49%, transparent 45%, rgba(10,6,8,0.92) 100%); opacity: 0;"></div>
+      </section>
+
+      <!-- ============ S2 · black, thermal profile, "llega por un quiz." ============ -->
+      <section id="s2" class="scene night">
+        <img id="s2-prof" src="assets/profile_thermal.png" style="position: absolute; left: 300px; top: 740px; width: 880px; height: auto;" />
+        <svg class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s2-arc" pathLength="1" d="M 700 760 C 790 700, 880 690, 960 700" fill="none" stroke="#f2efe6" stroke-width="7" stroke-linecap="round" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+        </svg>
+        <div id="s2-emb" class="full"></div>
+        <div id="s2-line" class="tx light" style="left: 90px; top: 560px; font-size: 54px;"></div>
+      </section>
+
+      <!-- ============ S3 · paper, shadow profile → ring of pixel icons + questions ============ -->
+      <section id="s3" class="scene paper">
+        <div id="s3-window" class="full" style="background: linear-gradient(90deg, transparent 52%, rgba(255,235,228,0.65) 60%, transparent 75%); opacity: 0.8;"></div>
+        <img id="s3-shadow" src="assets/profile_shadow.png" style="position: absolute; left: 340px; top: 760px; width: 840px; height: auto; filter: blur(1.5px);" />
+        <div id="s3-line" class="tx dark" style="left: 80px; top: 600px; font-size: 50px;"></div>
+        <div id="s3-ring" style="position: absolute; left: 540px; top: 900px; width: 0; height: 0;"></div>
+        <svg class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s3-comet" pathLength="1" d="M 220 560 C 420 520, 700 600, 820 820 C 900 980, 760 1220, 560 1260" fill="none" stroke="rgba(18,18,20,0.75)" stroke-width="26" stroke-linecap="round" style="stroke-dasharray: 0.22 1.3; stroke-dashoffset: 0.22; filter: blur(4px); opacity: 0;" />
+        </svg>
+        <div id="s3-q1" class="tx dark" style="left: 0; right: 0; top: 870px; text-align: center; font-size: 50px; opacity: 0;">¿quién es?</div>
+        <div id="s3-q2" class="tx dark" style="left: 0; right: 0; top: 870px; text-align: center; font-size: 50px; opacity: 0;">¿qué quiere?</div>
+        <div id="s3-q3" class="tx dark" style="left: 0; right: 0; top: 870px; text-align: center; font-size: 50px; opacity: 0;">¿qué le duele?</div>
+        <div id="s3-cap" class="tx dark" style="left: 0; right: 0; top: 1420px; text-align: center; font-size: 40px; opacity: 0.0;">5 a 8 preguntas</div>
+      </section>
+
+      <!-- ============ S4 · row slide + three close-up cards ============ -->
+      <section id="s4" class="scene paper">
+        <div id="s4-row" style="position: absolute; left: 0; top: 820px; height: 260px; display: flex; gap: 40px; align-items: center;"></div>
+        <svg class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s4-st1" pathLength="1" d="M 1100 800 L -40 790" fill="none" stroke="#e8382d" stroke-width="5" style="stroke-dasharray: 0.25 1.3; stroke-dashoffset: 0.25; filter: blur(2px);" />
+          <path id="s4-st2" pathLength="1" d="M 1100 1110 L -40 1120" fill="none" stroke="#e8382d" stroke-width="4" style="stroke-dasharray: 0.2 1.3; stroke-dashoffset: 0.2; filter: blur(2px);" />
+        </svg>
+        <div id="s4-cap" class="tx dark" style="left: 0; right: 0; top: 1420px; text-align: center; font-size: 42px;"></div>
+      </section>
+      <section id="c1" class="scene night">
+        <svg viewBox="-100 -100 200 200" width="1100" height="1100" style="position: absolute; left: 260px; top: 160px;">
+          <defs><pattern id="c1-dots" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="1.6" height="1.6" fill="#b3141b" /></pattern></defs>
+          <path id="c1-bigstar" d="M0,-100 C8,-12 12,-8 100,0 C12,8 8,12 0,100 C-8,12 -12,8 -100,0 C-12,-8 -8,-12 0,-100Z" fill="url(#c1-dots)" opacity="0.85" />
+        </svg>
+        <div id="c1-objw" style="position: absolute; left: 240px; top: 520px; width: 520px; height: 520px; perspective: 900px;">
+          <img id="c1-obj" src="assets/px_chat.png" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; transform: rotateY(-24deg) rotateZ(-8deg); filter: drop-shadow(18px 24px 0 rgba(0,0,0,0.5));" />
+        </div>
+        <svg viewBox="-100 -100 200 200" width="240" height="240" style="position: absolute; left: 640px; top: 440px;">
+          <path id="c1-star" d="M0,-100 C8,-12 12,-8 100,0 C12,8 8,12 0,100 C-8,12 -12,8 -100,0 C-12,-8 -8,-12 0,-100Z" fill="#ff3227" />
+        </svg>
+        <div class="tx light" style="left: 0; right: 0; top: 1220px; text-align: center; font-size: 66px;">casos reales.<span id="c1-cur" class="cur"></span></div>
+      </section>
+      <section id="c2" class="scene paper">
+        <div id="c2-row" style="position: absolute; left: -120px; top: 640px; display: flex; gap: 10px; align-items: center;">
+          <img src="assets/px_check.png" style="width: 300px; image-rendering: pixelated;" />
+          <img id="c2-coin" src="assets/px_coin.png" style="width: 520px; image-rendering: pixelated;" />
+          <img src="assets/px_target.png" style="width: 300px; image-rendering: pixelated;" />
+        </div>
+        <div class="tx dark" style="left: 0; right: 0; top: 1260px; text-align: center; font-size: 66px;">datos.<span id="c2-cur" class="cur"></span></div>
+      </section>
+      <section id="c3" class="scene night">
+        <img id="c3-obj" src="assets/px_target.png" style="position: absolute; left: 330px; top: 600px; width: 420px; image-rendering: pixelated;" />
+        <div id="c3-marks" class="full"></div>
+        <div class="tx light" style="left: 0; right: 0; top: 1220px; text-align: center; font-size: 66px;">pensar.<span id="c3-cur" class="cur"></span></div>
+      </section>
+
+      <!-- ============ S5 · thermal hand, "esto tiene · sentido." ============ -->
+      <section id="s5" class="scene night">
+        <img id="s5-hand" src="assets/hand_thermal.png" style="position: absolute; left: 140px; top: 640px; width: 860px; height: auto;" />
+        <div id="s5-a" class="tx light" style="left: 60px; top: 760px; font-size: 52px; opacity: 0;">esto tiene</div>
+        <div id="s5-b" class="tx light" style="right: 60px; top: 760px; font-size: 52px; opacity: 0;">sentido.</div>
+        <div id="s5-flicks" class="full"></div>
+        <div id="s5-dim" class="full" style="background: #2a1714; opacity: 0;"></div>
+      </section>
+
+      <!-- ============ S6 · ring → scatter → ink blots, result / offer / countdown ============ -->
+      <section id="s6" class="scene paper">
+        <div id="s6-ring" style="position: absolute; left: 540px; top: 880px; width: 0; height: 0;"></div>
+        <div id="s6-blots" class="full"></div>
+        <svg class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s6-comet" pathLength="1" d="M 160 1240 C 360 1120, 520 1100, 700 1000 C 860 900, 900 700, 760 560" fill="none" stroke="rgba(18,18,20,0.8)" stroke-width="30" stroke-linecap="round" style="stroke-dasharray: 0.2 1.3; stroke-dashoffset: 0.2; filter: blur(5px); opacity: 0;" />
+        </svg>
+        <div id="s6-clockw" style="position: absolute; left: 540px; top: 860px; width: 0; height: 0;">
+          <div id="s6-count" class="px" style="position: absolute; left: -200px; width: 400px; top: 210px; text-align: center; font-size: 84px; color: #e8382d; opacity: 0;">15:00</div>
+        </div>
+        <div id="s6-c1" class="tx dark" style="left: 0; right: 0; top: 1440px; text-align: center; font-size: 44px;"></div>
+        <div id="s6-c2" class="tx dark" style="left: 0; right: 0; top: 1440px; text-align: center; font-size: 44px;"></div>
+        <div id="s6-c3" class="tx dark" style="left: 0; right: 0; top: 1440px; text-align: center; font-size: 44px;"></div>
+      </section>
+
+      <!-- ============ S7 · L E A D around a hero object, three colour beats ============ -->
+      <section id="s7" class="scene night">
+        <div id="s7-bgd" class="full" style="background: radial-gradient(circle at 50% 50%, rgba(200,200,200,0.55), rgba(40,40,40,0.4) 35%, #0a0a0b 62%);"></div>
+        <div id="s7-bgr" class="full" style="background: #e1251b; opacity: 0;"></div>
+        <div id="s7-bgp" class="full paper" style="opacity: 0;"></div>
+        <img id="s7-heart" class="ico" src="assets/px_heart.png" style="left: 330px; top: 760px; width: 420px;" />
+        <img id="s7-target" class="ico" src="assets/px_target.png" style="left: 360px; top: 760px; width: 360px; opacity: 0; filter: drop-shadow(0 30px 30px rgba(80,0,0,0.5));" />
+        <img id="s7-mail" class="ico" src="assets/px_mail.png" style="left: 340px; top: 800px; width: 400px; opacity: 0;" />
+        <img id="s7-coin" class="ico" src="assets/px_coin.png" style="left: 380px; top: 780px; width: 320px; opacity: 0;" />
+        <div id="s7-L" class="big-letter" style="left: 90px; top: 925px; color: #d8d8d8;">L</div>
+        <div id="s7-E" class="big-letter" style="left: 250px; top: 925px; color: #d8d8d8;">E</div>
+        <div id="s7-A" class="big-letter" style="left: 780px; top: 925px; color: #d8d8d8;">A</div>
+        <div id="s7-D" class="big-letter" style="left: 940px; top: 925px; color: #d8d8d8;">D</div>
+        <div id="s7-c1" class="tx light" style="left: 0; right: 0; top: 1420px; text-align: center; font-size: 44px;"></div>
+        <div id="s7-c2" class="tx light" style="left: 0; right: 0; top: 1420px; text-align: center; font-size: 44px;"></div>
+        <div id="s7-c3" class="tx dark" style="left: 0; right: 0; top: 1420px; text-align: center; font-size: 44px;"></div>
+        <div id="s7-c4" class="tx dark" style="left: 0; right: 0; top: 1420px; text-align: center; font-size: 44px;"></div>
+      </section>
+
+      <!-- ============ S8 · scattered Q U I Z + red scribble circles, CTA, wordmark ============ -->
+      <section id="s8" class="scene paper">
+        <div id="s8-dots" class="full"></div>
+        <div id="s8-Q" class="big-letter" style="left: 210px; top: 560px;">Q</div>
+        <div id="s8-U" class="big-letter" style="left: 800px; top: 640px;">U</div>
+        <div id="s8-I" class="big-letter" style="left: 260px; top: 1230px;">I</div>
+        <div id="s8-Z" class="big-letter" style="left: 790px; top: 1300px;">Z</div>
+        <svg class="full" viewBox="0 0 1080 1920" width="1080" height="1920">
+          <path id="s8-r1" pathLength="1" d="M 196 560 C 160 600, 200 700, 270 650 C 330 600, 280 520, 220 540 C 180 560, 190 620, 240 610" fill="none" stroke="#d3241c" stroke-width="4" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s8-r2" pathLength="1" d="M 790 700 C 770 640, 840 600, 870 650 C 900 700, 850 760, 810 730 C 780 700, 800 650, 850 640" fill="none" stroke="#d3241c" stroke-width="4" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s8-r3" pathLength="1" d="M 250 1310 C 240 1250, 270 1200, 300 1230 C 320 1260, 300 1330, 270 1320 L 330 1250" fill="none" stroke="#d3241c" stroke-width="4" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+          <path id="s8-r4" pathLength="1" d="M 780 1310 C 800 1270, 880 1280, 860 1350 C 840 1400, 770 1390, 780 1340 C 790 1300, 850 1300, 870 1330" fill="none" stroke="#d3241c" stroke-width="4" style="stroke-dasharray: 1; stroke-dashoffset: 1;" />
+        </svg>
+        <div id="s8-cta" class="tx dark" style="left: 0; right: 0; top: 900px; text-align: center; font-size: 74px; font-weight: 800; opacity: 0;">comenta <span style="color: #e8382d;">QUIZ</span></div>
+        <div id="s8-sub" class="tx dark" style="left: 0; right: 0; top: 1000px; text-align: center; font-size: 40px;"></div>
+        <div id="s8-lock" style="position: absolute; left: 0; right: 0; top: 1640px; display: flex; justify-content: center; align-items: center; gap: 14px; color: var(--ink); opacity: 0;">
+          <div class="disp" style="font-size: 52px;">SaaS</div>
+          <div class="px" style="font-size: 30px; background: var(--red); color: var(--cream); padding: 8px 12px 4px; border-radius: 8px; box-shadow: 4px 4px 0 var(--red-deep);">IN</div>
+          <div class="disp" style="font-size: 52px;">House</div>
+        </div>
+      </section>
+
+      <div id="grain" data-layout-ignore></div>
+      <div id="vig" data-layout-ignore></div>
+      <div id="fade" data-layout-ignore></div>
+    </div>
+
+    <script>
+      const VO = 0.3; // voiceover offset; word times are relative to assets/vo.mp3 (local whisper transcript)
+      const W = [["Tu",0.09,0.13],["próximo",0.13,0.67],["cliente",0.67,1.13],["no",1.13,1.26],["llega",1.26,1.59],["por",1.59,1.79],["la",1.79,1.91],["landing,",1.91,2.45],["llega",2.63,3],["por",3,3.32],["un",3.32,3.45],["quiz.",3.45,4.12],["Cinco",4.21,4.4],["a",4.4,4.45],["ocho",4.45,4.67],["preguntas",4.7,5.19],["para",5.19,5.42],["saber",5.42,5.7],["quién",5.7,6.03],["es,",6.03,6.24],["qué",6.31,6.33],["quiere",6.75,6.88],["y",6.88,7],["qué",7,7.48],["le",7.48,7.57],["duele.",7.57,8.34],["Entre",8.43,8.64],["pregunta",8.66,9.17],["y",9.17,9.23],["pregunta,",9.23,9.86],["casos",9.86,10.18],["reales",10.18,10.47],["y",10.47,10.72],["datos",10.72,10.97],["que",10.97,11.13],["le",11.13,11.26],["hacen",11.26,11.57],["pensar.",11.57,12.06],["Esto",12.33,12.48],["tiene",12.48,12.79],["sentido.",12.82,13.42],["Al",13.42,13.56],["final,",13.56,14.1],["un",14.1,14.25],["resultado",14.25,14.93],["hecho",14.93,15.31],["para",15.31,15.61],["él",15.61,15.69],["y",15.69,15.95],["una",15.95,16.03],["oferta",16.1,16.48],["a",16.53,16.55],["su",16.55,16.7],["medida,",16.7,17.21],["con",17.22,17.32],["un",17.41,17.45],["contador",17.45,17.97],["para",17.97,18.23],["canjearla.",18.23,19.04],["No",19.04,19.19],["solo",19.19,19.43],["captas",19.79,19.94],["el",19.95,20.09],["lead,",20.09,20.55],["lo",20.55,20.69],["segmentas,",20.69,21.44],["lo",21.44,21.61],["educas",21.61,22.14],["y",22.18,22.2],["lo",22.2,22.28],["llevas",22.28,22.59],["a",22.59,22.69],["la",22.69,22.78],["compra.",22.8,23.37],["Comenta",23.37,23.82],["quiz",23.82,24.04],["y",24.09,24.14],["te",24.14,24.27],["enseño",24.27,24.71],["cómo",24.71,24.74],["montarlo.",25.23,25.8]];
+      const t = (i) => W[i][1] + VO;            // start of word i on the film clock
+      const END = 28;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 11;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (id) => document.getElementById(id);
+
+      // scene windows (hard cuts, like the reference)
+      const SC = [["s1", 0, t(8)], ["s2", t(8), t(12) + 0.24], ["s3", t(12) + 0.24, t(26) + 0.17], ["s4", t(26) + 0.17, t(30)],
+                  ["c1", t(30), t(33)], ["c2", t(33), t(37)], ["c3", t(37), t(38)], ["s5", t(38), t(41) + 0.0],
+                  ["s6", t(41), t(59)], ["s7", t(59), t(74)], ["s8", t(74), END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); tl.set("#" + id, { visibility: "hidden" }, b); });
+
+      // typed words: build spans in host from word indexes; each fades/unblurs in on its start time
+      function typed(host, from, to, opts = {}) {
+        const el = $(host);
+        for (let i = from; i <= to; i++) {
+          const s = document.createElement("span");
+          s.className = "w"; s.id = `${host}-w${i}`;
+          let txt = W[i][0];
+          if (opts.lower !== false) txt = txt.toLowerCase();
+          if (opts.map && opts.map[i] !== undefined) txt = opts.map[i];
+          s.textContent = txt;
+          el.appendChild(s);
+          tl.fromTo(s, { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power1.out" }, t(i));
+        }
+        if (opts.cursor) {
+          const c = document.createElement("span"); c.className = "cur"; c.id = host + "-cur"; el.appendChild(c);
+          blink(c.id, t(from), opts.cursorEnd);
+        }
+      }
+      function blink(id, a, b) {
+        tl.set("#" + id, { opacity: 1 }, a);
+        for (let k = a + 0.3; k < b; k += 0.5) tl.set("#" + id, { opacity: 0 }, k).set("#" + id, { opacity: 1 }, k + 0.25);
+      }
+      const draw = (id, at, dur, ease = "power2.inOut") => tl.to("#" + id, { strokeDashoffset: 0, duration: dur, ease }, at);
+
+      /* ---------- grain: jump the texture every 1/12 s (film grain feel) ---------- */
+      for (let k = 0, n = 0; k < END; k += 1 / 12, n++) {
+        tl.set("#grain", { backgroundImage: `url(assets/grain${n % 3}.png)`, backgroundPosition: `${Math.floor(rnd() * 384)}px ${Math.floor(rnd() * 384)}px` }, k);
+      }
+
+      /* ---------- S1 ---------- */
+      tl.fromTo("#s1-big", { x: 1080 }, { x: -1700, duration: 1.0, ease: "power1.in" }, 0);
+      tl.fromTo("#s1-dash", { x: 300 }, { x: -300, duration: 1.0, ease: "none" }, 0);
+      tl.to("#s1-bigwrap", { opacity: 0, duration: 0.08 }, 0.72);
+      typed("s1-line", 0, 7);
+      tl.fromTo("#s1-line", { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.72);
+      draw("s1-p1", t(2) + 0.2, 0.7); draw("s1-p2", t(3), 0.5); draw("s1-p3", t(4), 0.35); draw("s1-p4", t(5), 0.45);
+      ["s1-i1", "s1-i2", "s1-i3", "s1-i4"].forEach((id, i) => {
+        tl.fromTo("#" + id, { opacity: 0, scale: 0.5, filter: "blur(10px)", rotation: -20 + 40 * rnd() },
+                            { opacity: 1, scale: 1, filter: "blur(0px)", rotation: -12 + 24 * rnd(), duration: 0.35, ease: "back.out(2)" }, t(4) + i * 0.12);
+        tl.to("#" + id, { y: -30 - 30 * rnd(), x: -20 + 40 * rnd(), duration: 2.2, ease: "sine.inOut" }, t(4) + 0.3);
+      });
+      tl.to("#s1-star", { opacity: 1, duration: 0.15 }, t(5) + 0.1);
+      tl.fromTo("#s1-star", { scale: 0.2, rotation: -25, x: -200 }, { scale: 1, rotation: 0, x: 0, duration: 0.7, ease: "expo.out" }, t(5) + 0.1);
+      tl.to("#s1-star", { x: -140, rotation: 6, duration: 1.0, ease: "sine.inOut" }, t(5) + 0.8);
+      tl.to("#s1-warm", { opacity: 1, duration: 0.8 }, t(7));
+      tl.to("#s1-vig", { opacity: 1, duration: 0.9, ease: "power2.in" }, t(7) - 0.2);
+      tl.to("#s1-line-w7", { color: "#e8382d", duration: 0.2 }, t(7) + 0.1);
+      ["s1-i1", "s1-i2", "s1-i3", "s1-i4"].forEach((id) => tl.to("#" + id, { opacity: 0, filter: "blur(8px)", duration: 0.3 }, t(7) + 0.2));
+
+      /* ---------- S2 · thermal ---------- */
+      typed("s2-line", 8, 11, { cursor: true, cursorEnd: t(12) + 0.2 });
+      tl.fromTo("#s2-prof", { opacity: 0, filter: "blur(30px) brightness(0.6)", x: 40 }, { opacity: 1, filter: "blur(0px) brightness(1)", x: 0, duration: 0.45, ease: "power2.out" }, t(8));
+      tl.to("#s2-prof", { scale: 1.04, duration: 1.6, ease: "none", transformOrigin: "60% 40%" }, t(8));
+      for (let k = t(8) + 0.4; k < t(12) + 0.2; k += 0.16) tl.set("#s2-prof", { filter: `brightness(${(0.92 + rnd() * 0.16).toFixed(2)}) saturate(${(1 + rnd() * 0.2).toFixed(2)})` }, k);
+      draw("s2-arc", t(10), 0.35, "power2.out");
+      for (let i = 0; i < 9; i++) {
+        const d = document.createElement("div"); d.id = "s2-e" + i;
+        const sz = 6 + rnd() * 18;
+        Object.assign(d.style, { position: "absolute", left: 120 + rnd() * 800 + "px", top: 300 + rnd() * 1300 + "px", width: sz + "px", height: sz + "px", borderRadius: "50%", background: rnd() < 0.5 ? "#ff7a1a" : "#c4161c", filter: `blur(${(sz / 3).toFixed(1)}px)`, opacity: 0 });
+        $("s2-emb").appendChild(d);
+        tl.to(d, { opacity: 0.4 + rnd() * 0.5, duration: 0.2 }, t(8) + rnd() * 0.5);
+        tl.to(d, { y: -80 - rnd() * 140, duration: 1.6, ease: "none" }, t(8));
+      }
+
+      /* ---------- S3 · shadow profile → ring ---------- */
+      const S3 = t(12) + 0.24;
+      typed("s3-line", 12, 15);
+      tl.to("#s3-shadow", { x: 30, duration: 1.2, ease: "none" }, S3);
+      tl.to(["#s3-shadow", "#s3-line", "#s3-window"], { opacity: 0, duration: 0.25 }, t(16) + 0.05);
+      const RING = ["px_heart", "px_coin", "px_clock", "px_target", "px_check", "px_rocket", "px_chat", "px_trophy", "px_gift", "px_mail", "px_tag"];
+      const R = 350;
+      tl.fromTo("#s3-ring", { rotation: -30 }, { rotation: 40, duration: (t(26) + 0.17) - t(16), ease: "none" }, t(16));
+      RING.forEach((name, i) => {
+        const a = (i / RING.length) * Math.PI * 2 - Math.PI / 2;
+        const d = document.createElement("div"); d.className = "ring-item"; d.id = "s3-r" + i;
+        d.style.left = (Math.cos(a) * R).toFixed(1) + "px"; d.style.top = (Math.sin(a) * R).toFixed(1) + "px";
+        d.innerHTML = `<img src="assets/${name}.png">`;
+        $("s3-ring").appendChild(d);
+        const at = t(16) + i * 0.06;
+        tl.fromTo(d, { opacity: 0, scale: 0.2, rotation: 30 }, { opacity: 1, scale: 1, rotation: -30, duration: 0.4, ease: "back.out(2.2)" }, at);
+        tl.to(d, { rotation: -70, duration: (t(26) + 0.17) - at - 0.4, ease: "none" }, at + 0.4); // counter-rotate: stays upright
+      });
+      tl.fromTo("#s3-q1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.2 }, t(18));
+      tl.to("#s3-q1", { opacity: 0, duration: 0.12 }, t(20) - 0.05);
+      tl.fromTo("#s3-q2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.2 }, t(20));
+      tl.to("#s3-q2", { opacity: 0, duration: 0.12 }, t(23) - 0.05);
+      tl.fromTo("#s3-q3", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.2 }, t(23));
+      tl.fromTo("#s3-cap", { opacity: 0 }, { opacity: 0.55, duration: 0.3 }, t(16) + 0.3);
+      tl.to("#s3-comet", { opacity: 1, duration: 0.05 }, t(21) + 0.1);
+      tl.to("#s3-comet", { strokeDashoffset: -1.1, duration: 0.6, ease: "power2.inOut" }, t(21) + 0.1);
+      // "le duele": heart throbs with orange burst
+      tl.to("#s3-r0", { scale: 1.35, duration: 0.14, yoyo: true, repeat: 3, ease: "power2.out" }, t(25));
+
+      /* ---------- S4 · row slides through, then three close-ups ---------- */
+      const S4 = t(26) + 0.17;
+      ["px_gift", "px_trophy", "px_check", "px_rocket", "px_clock", "px_heart", "px_mail", "px_coin", "px_tag", "px_chat"].forEach((n, i) => {
+        const im = document.createElement("img"); im.src = `assets/${n}.png`; im.id = "s4-i" + i;
+        Object.assign(im.style, { width: "210px", imageRendering: "pixelated" }); $("s4-row").appendChild(im);
+      });
+      tl.fromTo("#s4-row", { x: 1100 }, { x: -1900, duration: t(30) - S4, ease: "power1.inOut" }, S4);
+      tl.to("#s4-st1", { strokeDashoffset: -1.1, duration: 0.5, ease: "power1.in" }, S4 + 0.1);
+      tl.to("#s4-st2", { strokeDashoffset: -1.1, duration: 0.6, ease: "power1.in" }, S4 + 0.5);
+      typed("s4-cap", 26, 29);
+      // c1 casos reales
+      blink("c1-cur", t(30), t(33));
+      tl.fromTo("#c1-objw", { scale: 0.75, rotation: -6 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.6)" }, t(30));
+      tl.to("#c1-objw", { y: -20, duration: t(33) - t(30), ease: "sine.inOut" }, t(30) + 0.5);
+      tl.fromTo("#c1-star", { scale: 0, rotation: -40, transformOrigin: "50% 50%" }, { scale: 1, rotation: 0, duration: 0.35, ease: "back.out(2.5)" }, t(30) + 0.15);
+      tl.fromTo("#c1-bigstar", { scale: 0.6, transformOrigin: "50% 50%" }, { scale: 1.05, duration: t(33) - t(30), ease: "power1.out" }, t(30));
+      // c2 datos
+      blink("c2-cur", t(33), t(37));
+      tl.fromTo("#c2-row", { x: 200 }, { x: -180, duration: t(37) - t(33), ease: "power1.out" }, t(33));
+      tl.fromTo("#c2-coin", { scaleX: 1 }, { scaleX: -1, duration: 0.35, ease: "power2.inOut", yoyo: true, repeat: 1 }, t(33) + 0.15);
+      // c3 pensar
+      blink("c3-cur", t(37), t(38));
+      tl.fromTo("#c3-obj", { scale: 0.8, rotation: 10 }, { scale: 1, rotation: -4, duration: 0.6, ease: "back.out(2)" }, t(37));
+      [["?", 280, 420, 120, -14], ["?", 760, 520, 90, 18], ["!", 820, 1000, 110, 10], ["?", 200, 980, 80, -22]].forEach(([ch, x, y, fs, r], i) => {
+        const m = document.createElement("div"); m.id = "c3-m" + i; m.textContent = ch;
+        Object.assign(m.style, { position: "absolute", left: x + "px", top: y + "px", fontSize: fs + "px", fontWeight: 900, color: "#ff2a1f", transform: `rotate(${r}deg)` });
+        $("c3-marks").appendChild(m);
+        tl.fromTo(m, { opacity: 0, y: 30, scale: 0.4 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(3)" }, t(37) + 0.08 * i);
+        tl.to(m, { y: -24, duration: 0.6, ease: "sine.inOut" }, t(37) + 0.35);
+      });
+
+      /* ---------- S5 · thermal hand ---------- */
+      tl.fromTo("#s5-hand", { y: 700, filter: "blur(18px)" }, { y: 0, filter: "blur(0px)", duration: 0.55, ease: "power3.out" }, t(38));
+      tl.to("#s5-hand", { y: -40, rotation: -3, duration: 0.6, ease: "sine.inOut", transformOrigin: "50% 100%" }, t(38) + 0.55);
+      tl.to("#s5-a", { opacity: 1, duration: 0.15 }, t(38) + 0.05);
+      tl.to("#s5-b", { opacity: 1, duration: 0.15 }, t(40));
+      for (let i = 0; i < 5; i++) {
+        const f = document.createElement("div"); f.id = "s5-f" + i;
+        Object.assign(f.style, { position: "absolute", left: 380 + rnd() * 380 + "px", top: 560 + rnd() * 160 + "px", width: "5px", height: 28 + rnd() * 30 + "px", background: "#f2efe6", borderRadius: "3px", transform: `rotate(${-40 + rnd() * 80}deg)`, opacity: 0 });
+        $("s5-flicks").appendChild(f);
+        tl.to(f, { opacity: 0.9, duration: 0.05 }, t(39) + i * 0.06);
+        tl.to(f, { y: -60, opacity: 0, duration: 0.45 }, t(39) + i * 0.06 + 0.05);
+      }
+      tl.to("#s5-dim", { opacity: 0.6, duration: 0.3 }, t(41) - 0.3);
+
+      /* ---------- S6 · ring returns, scatters, ink swallows the noise ---------- */
+      const S6 = t(41);
+      typed("s6-c1", 43, 47);   // un resultado hecho para él
+      typed("s6-c2", 49, 53);   // una oferta a su medida
+      typed("s6-c3", 54, 58);   // con un contador para canjearla
+      tl.to("#s6-c1", { opacity: 0, duration: 0.1 }, t(49) - 0.05);
+      tl.to("#s6-c2", { opacity: 0, duration: 0.1 }, t(54) - 0.05);
+      const KEEP = { px_trophy: [540, 560], px_gift: [540, 560], px_clock: [540, 560] };
+      const scat = [];
+      RING.forEach((name, i) => {
+        const a = (i / RING.length) * Math.PI * 2 - Math.PI / 2;
+        const d = document.createElement("div"); d.className = "ring-item"; d.id = "s6-r" + i;
+        const x0 = Math.cos(a) * R, y0 = Math.sin(a) * R;
+        d.style.left = x0.toFixed(1) + "px"; d.style.top = y0.toFixed(1) + "px";
+        d.innerHTML = `<img id="s6-img${i}" src="assets/${name}.png">`;
+        $("s6-ring").appendChild(d);
+        tl.fromTo(d, { x: -x0 * 0.4, y: -y0 * 0.4, opacity: 0, rotation: -40 }, { x: 0, y: 0, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" }, S6 + i * 0.015);
+        // scatter on "resultado"
+        const SP = [[140,620],[430,290],[900,420],[150,800],[940,760],[180,1180],[900,1200],[650,330],[330,1300],[760,1320],[930,1000]];
+        const sx = SP[i][0] - 540 - x0, sy = SP[i][1] - 880 - y0;
+        scat.push([sx + x0, sy + y0]);
+        tl.to(d, { x: sx, y: sy, scale: 0.6 + rnd() * 0.25, rotation: -20 + rnd() * 40, duration: 0.55, ease: "power3.out" }, t(44) + rnd() * 0.08);
+      });
+      tl.to("#s6-comet", { opacity: 1, duration: 0.05 }, t(44));
+      tl.to("#s6-comet", { strokeDashoffset: -1.1, duration: 0.7, ease: "power2.inOut" }, t(44));
+      // ink: most icons turn to black blots (the noise you filter out)
+      const inkOrder = [0, 1, 3, 4, 5, 6, 9, 10];
+      inkOrder.forEach((i, k) => {
+        const at = (k < 4 ? t(45) : t(50) - 0.2) + (k % 4) * 0.12;
+        tl.to("#s6-img" + i, { filter: "brightness(0) blur(1px)", duration: 0.12 }, at);
+        const b = document.createElement("div"); b.id = "s6-b" + k;
+        const [bx, by] = scat[i]; const sz = 60 + rnd() * 70;
+        Object.assign(b.style, { position: "absolute", left: 540 + bx + 40 * (rnd() - 0.5) - sz / 2 + "px", top: 880 + by + 40 * (rnd() - 0.5) - sz / 2 + "px", width: sz + "px", height: sz * (0.8 + rnd() * 0.4) + "px", borderRadius: "48% 52% 45% 55%", background: "#111", filter: "blur(3px)", opacity: 0 });
+        $("s6-blots").appendChild(b);
+        tl.fromTo(b, { opacity: 0, scale: 0.2 }, { opacity: 0.92, scale: 1, duration: 0.18, ease: "power2.out" }, at + 0.04);
+      });
+      // heroes: trophy (result) → gift (offer) → clock (countdown) take the centre in turn
+      const hero = (i, at, out) => {
+        tl.to("#s6-r" + i, { x: 540 - 540 - parseFloat($("s6-r" + i).style.left), y: -140 - parseFloat($("s6-r" + i).style.top), scale: 1.9, rotation: 0, duration: 0.5, ease: "back.out(1.4)" }, at);
+        if (out) tl.to("#s6-r" + i, { scale: 0.55, x: "+=" + out[0], y: "+=" + out[1], duration: 0.45, ease: "power3.inOut" }, out[2]);
+      };
+      hero(7, t(44) + 0.3, [-330, -360, t(50) - 0.1]);   // trophy
+      hero(8, t(50) - 0.1, [330, -360, t(56) - 0.1]);    // gift
+      hero(2, t(56) - 0.1, null);                         // clock
+      tl.to("#s6-blots", { opacity: 0.0, scale: 0.9, duration: 0.4 }, t(56) - 0.1);
+      inkOrder.forEach((i) => tl.to("#s6-r" + i, { opacity: 0, scale: 0.2, duration: 0.35, ease: "power2.in" }, t(56) - 0.1));
+      tl.fromTo("#s6-count", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3 }, t(56) + 0.25);
+      const clk = { v: 900 };
+      tl.to(clk, { v: 896, duration: 1.4, ease: "steps(4)",
+        onUpdate: () => { const s = Math.round(clk.v); $("s6-count").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; } }, t(56) + 0.4);
+      tl.to("#s6-r2", { rotation: 6, duration: 0.08, yoyo: true, repeat: 7 }, t(57) + 0.2);
+
+      /* ---------- S7 · L E A D ---------- */
+      const S7 = t(59);
+      typed("s7-c1", 59, 63);   // no solo captas el lead
+      typed("s7-c2", 64, 65);   // lo segmentas
+      typed("s7-c3", 66, 67);   // lo educas
+      typed("s7-c4", 68, 73);   // y lo llevas a la compra
+      tl.to("#s7-c1", { opacity: 0, duration: 0.05 }, t(64) - 0.02);
+      tl.to("#s7-c2", { opacity: 0, duration: 0.05 }, t(66) - 0.02);
+      tl.to("#s7-c3", { opacity: 0, duration: 0.05 }, t(68) - 0.02);
+      tl.fromTo("#s7-heart", { scale: 0.6, filter: "blur(14px)" }, { scale: 1, filter: "blur(0px)", duration: 0.5, ease: "back.out(1.8)" }, S7);
+      tl.to("#s7-heart", { scale: 1.08, duration: 0.25, yoyo: true, repeat: 3, ease: "sine.inOut" }, S7 + 0.5);
+      ["L", "E", "A", "D"].forEach((c, i) => tl.fromTo("#s7-" + c, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.25 }, t(63) + i * 0.06));
+      // segmentas: red flash, target
+      tl.set("#s7-bgr", { opacity: 1 }, t(64)); tl.set("#s7-heart", { opacity: 0 }, t(64));
+      tl.set("#s7-target", { opacity: 1 }, t(64));
+      tl.fromTo("#s7-target", { scale: 1.3, rotation: 18 }, { scale: 1, rotation: -8, duration: 0.5, ease: "power3.out" }, t(64));
+      tl.set(["#s7-L", "#s7-E", "#s7-A", "#s7-D"], { color: "#7fe6ff" }, t(64));
+      // educas: paper, mail
+      tl.set("#s7-bgp", { opacity: 1 }, t(66)); tl.set("#s7-target", { opacity: 0 }, t(66)); tl.set("#s7-mail", { opacity: 1 }, t(66));
+      tl.fromTo("#s7-mail", { scale: 0.7, y: 30 }, { scale: 1, y: 0, duration: 0.4, ease: "back.out(2)" }, t(66));
+      tl.set(["#s7-L", "#s7-E", "#s7-A", "#s7-D"], { color: "#161618" }, t(66));
+      // compra: coin drops in, letters drift apart
+      tl.set("#s7-mail", { opacity: 0 }, t(73) - 0.1); tl.set("#s7-coin", { opacity: 1 }, t(73) - 0.1);
+      tl.fromTo("#s7-coin", { y: -500, scaleX: 1 }, { y: 0, duration: 0.45, ease: "bounce.out" }, t(73) - 0.1);
+      [["L", -60, -380, -40], ["E", 40, 420, 25], ["A", -30, -420, 60], ["D", 50, 360, -35]].forEach(([c, dx, dy, r]) =>
+        tl.to("#s7-" + c, { x: dx, y: dy, rotation: r, duration: 1.2, ease: "power2.inOut" }, t(68)));
+
+      /* ---------- S8 · Q U I Z, scribble circles, CTA ---------- */
+      const S8 = t(74);
+      [["Q", -40, 30, 12], ["U", 50, -40, -18], ["I", -30, 40, 20], ["Z", 40, -30, -10]].forEach(([c, dx, dy, r], i) => {
+        tl.fromTo("#s8-" + c, { opacity: 0, x: dx * 4, y: dy * 4, rotation: r * 3 }, { opacity: 1, x: 0, y: 0, rotation: r, duration: 0.6, ease: "power3.out" }, S8 + i * 0.05);
+        tl.to("#s8-" + c, { x: dx * 0.4, y: dy * 0.4, duration: END - S8 - 0.6, ease: "sine.inOut" }, S8 + 0.6);
+      });
+      for (let i = 0; i < 6; i++) {
+        const d = document.createElement("div"); d.id = "s8-d" + i;
+        Object.assign(d.style, { position: "absolute", left: 120 + rnd() * 840 + "px", top: 420 + rnd() * 1100 + "px", width: "12px", height: "12px", borderRadius: "50%", background: "#222" });
+        $("s8-dots").appendChild(d);
+        tl.fromTo(d, { opacity: 0 }, { opacity: 0.85, duration: 0.2 }, S8 + 0.2 + i * 0.05);
+      }
+      draw("s8-r1", t(75), 0.45); draw("s8-r2", t(75) + 0.3, 0.45); draw("s8-r3", t(75) + 0.9, 0.45); draw("s8-r4", t(75) + 1.2, 0.45);
+      tl.fromTo("#s8-cta", { opacity: 0, y: 20, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35 }, t(74));
+      typed("s8-sub", 76, 80);
+      tl.fromTo("#s8-lock", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, t(80) + 0.6);
+      tl.to("#fade", { opacity: 1, duration: 0.6 }, END - 0.6);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

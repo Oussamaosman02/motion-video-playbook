@@ -1,0 +1,11 @@
+# On-screen copy (no voiceover). Beat → base script line.
+0.0  S1  ¿Quieres vender tu SaaS sin mandar a todo el mundo a la misma landing?      (typed)
+2.6  S2  × Misma landing para todos / × Formulario: «Pide una demo» / × Lead sin cualificar / × Demo: no se presentó / × Visitante sin contexto  (accelerating stack)
+5.4      $ haz esto
+6.3  S3  [pixel swarm → "Quiz Funnel"]  En lugar de pedir una demo, crea un Quiz Funnel.
+10.0 S4  Entre 5 y 8 preguntas. Para saber quién es.  (3 answered questions in a terminal window)
+15.0 S5  Pero no hagas solo preguntas. Entre medias, cards con valor: Caso real / Dato / Resultado / Consejo  → › «vale, esto tiene sentido»
+20.5 S6  Después, según sus respuestas…  → [red] Le muestras [Plan Starter/Scale/Agency/Growth] personalizado.
+25.6 S7  Y aquí viene la parte importante.  [−30%] Por qué encaja con su situación. Una oferta específica.  [14:59 → 14:57] Contador con tiempo limitado para canjearla.
+33.2 S8  Así no solo captas el lead.  ✓ Lo segmentas. ✓ Lo educas. ✓ Lo llevas a la compra.
+37.0 S9  SaaS [IN] House   $ comenta QUIZ   saasinhouse.com

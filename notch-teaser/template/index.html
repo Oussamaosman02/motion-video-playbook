@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --bg: #0b0b10; --surface: #14141d; --surface-2: #1d1d29; --line: rgba(242, 239, 230, 0.14);
+        --red: #e8382d; --red-deep: #7e140d; --cream: #f2efe6; --muted: #a3a1ad; --gold: #f5c51b; --green: #34c759;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: "Archivo", sans-serif; letter-spacing: -0.02em; }
+      .full { position: absolute; inset: 0; }
+      .bgimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .scene { position: absolute; inset: 0; }
+      .shade { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0.30), rgba(0,0,0,0.05) 70%); }
+      .say { position: absolute; left: 90px; right: 90px; text-align: center; font-weight: 640; font-size: 84px; line-height: 1.08; text-shadow: 0 2px 30px rgba(0,0,0,0.28); }
+      .say .ln { display: block; }
+
+      /* rolling list (the format's signature move) */
+      .roll-head { position: absolute; left: 110px; font-weight: 560; text-shadow: 0 2px 24px rgba(0,0,0,0.3); transform-origin: left center; white-space: nowrap; }
+      .roll { position: absolute; left: 110px; right: 40px; height: 0; }
+      .row { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 22px; white-space: nowrap; font-weight: 660; font-size: 60px; text-shadow: 0 2px 24px rgba(0,0,0,0.3); transform-origin: left center; }
+      .ico { width: 66px; height: 66px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 4px 14px rgba(0,0,0,0.25); flex: none; }
+
+      /* desktop chrome */
+      #menubar { position: absolute; left: 0; right: 0; top: 0; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 22px; font-weight: 560; letter-spacing: 0; color: #fff; background: rgba(40,40,30,0.18); backdrop-filter: blur(0px); text-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+      #menubar .l, #menubar .r { display: flex; gap: 26px; align-items: center; }
+      #dock { position: absolute; left: 50%; bottom: 34px; height: 124px; transform: translateX(-50%); display: flex; gap: 16px; align-items: center; padding: 0 20px; border-radius: 36px; background: rgba(255,255,255,0.28); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.45), 0 10px 40px rgba(0,0,0,0.25); }
+      #dock .app { width: 90px; height: 90px; border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 50px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3); }
+      #dock .sep { width: 2px; height: 80px; background: rgba(255,255,255,0.5); }
+
+      /* the notch that becomes the product */
+      #notch { position: absolute; left: 50%; top: 0; width: 250px; height: 56px; background: #000; border-radius: 0 0 26px 26px; overflow: hidden; color: var(--cream); box-shadow: 0 18px 60px rgba(0,0,0,0.0); }
+      .nlayer { position: absolute; left: 0; top: 0; width: 900px; height: 1180px; opacity: 0; }
+      #pill { position: absolute; left: 0; right: 0; top: 0; height: 120px; display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 52px; font-weight: 650; opacity: 0; white-space: nowrap; }
+      .panel-pad { position: absolute; inset: 0; padding: 70px 64px; }
+      .eyebrow { font-family: "Silkscreen"; font-size: 24px; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
+      .bar { margin-top: 22px; height: 10px; border-radius: 5px; background: rgba(242,239,230,0.12); overflow: hidden; }
+      .bar i { display: block; height: 100%; width: 100%; background: var(--red); transform-origin: left center; }
+      .q { position: absolute; left: 64px; right: 64px; top: 190px; }
+      .q h3 { font-size: 66px; font-weight: 720; line-height: 1.05; margin-bottom: 46px; }
+      .opt { position: relative; height: 128px; border-radius: 26px; margin-bottom: 26px; background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--line); display: flex; align-items: center; padding: 0 36px; font-size: 44px; font-weight: 600; overflow: hidden; }
+      .opt .fill { position: absolute; inset: 0; background: var(--red); transform-origin: left center; }
+      .opt span { position: relative; }
+      .opt b { position: absolute; right: 36px; top: 50%; margin-top: -22px; width: 44px; height: 44px; border-radius: 50%; background: var(--cream); color: var(--red); font-size: 30px; display: flex; align-items: center; justify-content: center; opacity: 0; }
+      .chip { display: inline-block; padding: 10px 20px; border-radius: 999px; font-size: 26px; font-weight: 700; letter-spacing: 0; }
+      .rrow { display: flex; justify-content: space-between; align-items: center; height: 118px; border-bottom: 2px solid var(--line); font-size: 40px; }
+      .rrow em { font-style: normal; color: var(--muted); font-size: 32px; }
+      .why { display: flex; align-items: center; gap: 22px; font-size: 40px; font-weight: 600; height: 84px; }
+      .why i { width: 46px; height: 46px; border-radius: 50%; background: var(--green); color: #fff; font-style: normal; font-size: 28px; display: flex; align-items: center; justify-content: center; flex: none; }
+      .btn { display: flex; align-items: center; justify-content: center; height: 132px; border-radius: 28px; background: var(--red); font-size: 48px; font-weight: 750; box-shadow: 0 10px 0 var(--red-deep); }
+
+      .under { position: absolute; left: 60px; right: 60px; top: 1170px; text-align: center; text-shadow: 0 2px 26px rgba(0,0,0,0.45); }
+      .under .big { font-size: 74px; font-weight: 680; line-height: 1.05; }
+      .under .small { margin-top: 18px; font-size: 40px; font-weight: 560; color: rgba(255,255,255,0.9); }
+
+      /* chaos of identical landings */
+      .win { position: absolute; width: 640px; height: 470px; border-radius: 22px; background: #fbfaf7; color: #15151c; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.08); }
+      .win .tb { height: 54px; background: #ecebe6; display: flex; align-items: center; gap: 10px; padding: 0 20px; }
+      .win .tb i { width: 16px; height: 16px; border-radius: 50%; display: block; }
+      .win .url { margin-left: 18px; flex: 1; height: 32px; border-radius: 10px; background: #fff; font-size: 18px; color: #77757d; display: flex; align-items: center; padding: 0 14px; letter-spacing: 0; }
+      .win .hero { padding: 42px 40px 0; }
+      .win .h { font-size: 44px; font-weight: 760; line-height: 1.04; }
+      .win .p { margin-top: 16px; height: 14px; border-radius: 7px; background: #e3e1da; width: 86%; }
+      .win .p2 { margin-top: 12px; height: 14px; border-radius: 7px; background: #e3e1da; width: 64%; }
+      .win .cta { margin-top: 34px; display: inline-flex; height: 74px; padding: 0 34px; align-items: center; border-radius: 16px; background: var(--red); color: #fff; font-size: 32px; font-weight: 700; }
+
+      /* checklist */
+      .chk { position: absolute; left: 180px; display: flex; align-items: center; gap: 28px; font-size: 76px; font-weight: 660; text-shadow: 0 2px 26px rgba(0,0,0,0.35); white-space: nowrap; }
+      .chk svg { width: 62px; height: 62px; flex: none; }
+
+      /* logo */
+      .wm { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 26px; font-weight: 800; font-size: 150px; letter-spacing: -0.035em; text-shadow: 0 4px 40px rgba(0,0,0,0.3); }
+      .wm .in { font-family: "Silkscreen"; font-weight: 700; font-size: 66px; letter-spacing: 0; background: var(--red); padding: 18px 22px 10px; border-radius: 16px; box-shadow: 7px 7px 0 var(--red-deep); text-shadow: none; }
+      #cursor { position: absolute; left: 0; top: 0; width: 58px; height: 58px; opacity: 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35)); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="44" data-width="1080" data-height="1920">
+      <!-- audio: music bed + SFX (no voiceover: the reference is a music-only teaser) -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="44" data-track-index="10" data-volume="0.9"></audio>
+      <div id="sfx"></div>
+
+      <!-- impressionist painting backgrounds: blurred for text beats, sharp for "desktop" beats -->
+      <div id="bg" class="full">
+        <img id="bg-gs" class="bgimg" src="assets/garden.jpg" alt="" />
+        <img id="bg-gb" class="bgimg" src="assets/garden_blur.jpg" alt="" />
+        <img id="bg-ps" class="bgimg" src="assets/poppies.jpg" alt="" style="opacity: 0" />
+        <img id="bg-pb" class="bgimg" src="assets/poppies_blur.jpg" alt="" style="opacity: 0" />
+        <div class="shade"></div>
+      </div>
+
+      <!-- S1 hook + rolling list of visitors -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="6.4" data-track-index="1">
+        <div id="s1-head" class="roll-head" style="top: 700px; font-size: 92px;">a tu SaaS llega</div>
+        <div id="roll1" class="roll" style="top: 990px;" data-layout-allow-overlap></div>
+      </section>
+
+      <!-- S2 the question -->
+      <section id="s2" class="scene clip" data-start="6.4" data-duration="1.95" data-track-index="1">
+        <div class="say" style="top: 790px;"><span id="s2-a" class="ln">¿y los mandas a todos</span><span id="s2-b" class="ln">a la misma landing?</span></div>
+      </section>
+
+      <!-- S3 chaos: the same landing, over and over -->
+      <section id="s3" class="scene clip" data-start="8.35" data-duration="2.7" data-track-index="1">
+        <div id="wins" class="full" data-layout-allow-overlap></div>
+      </section>
+
+      <!-- S4 -->
+      <section id="s4" class="scene clip" data-start="11.05" data-duration="1.4" data-track-index="1">
+        <div class="say" style="top: 860px; font-size: 120px;"><span id="s4-a" class="ln">haz esto.</span></div>
+      </section>
+
+      <!-- S5 -->
+      <section id="s5" class="scene clip" data-start="12.45" data-duration="2.0" data-track-index="1">
+        <div class="say" style="top: 790px;"><span id="s5-a" class="ln">en lugar de pedir una demo,</span><span id="s5-b" class="ln">crea un…</span></div>
+      </section>
+
+      <!-- S8 cards between questions -->
+      <section id="s8" class="scene clip" data-start="22.6" data-duration="5.0" data-track-index="1">
+        <div id="s8-head" class="roll-head" style="top: 690px; font-size: 46px; line-height: 1.15;">pero no solo preguntas.<br />entre medias, cards con</div>
+        <div id="roll2" class="roll" style="top: 990px;" data-layout-allow-overlap></div>
+        <div class="say" style="top: 830px; font-size: 92px;"><span id="s8-q" class="ln">“vale, esto<br />tiene sentido.”</span></div>
+      </section>
+
+      <!-- S10 -->
+      <section id="s10" class="scene clip" data-start="30.4" data-duration="1.6" data-track-index="1">
+        <div class="say" style="top: 800px;"><span id="s10-a" class="ln">y aquí viene</span><span id="s10-b" class="ln">la parte importante.</span></div>
+      </section>
+
+      <!-- S12 checklist -->
+      <section id="s12" class="scene clip" data-start="36.4" data-duration="3.6" data-track-index="1">
+        <div id="s12-h" class="say" style="top: 560px; font-size: 52px; font-weight: 560; opacity: 0.92;">así no solo captas el lead:</div>
+        <div class="chk" id="c1" style="top: 720px;"><svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="27" fill="none" stroke="#fff" stroke-width="4" /><path class="ck" d="M18 32 L27 41 L45 22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="44" stroke-dashoffset="44" /></svg>captas el lead</div>
+        <div class="chk" id="c2" style="top: 850px;"><svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="27" fill="none" stroke="#fff" stroke-width="4" /><path class="ck" d="M18 32 L27 41 L45 22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="44" stroke-dashoffset="44" /></svg>lo segmentas</div>
+        <div class="chk" id="c3" style="top: 980px;"><svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="27" fill="none" stroke="#fff" stroke-width="4" /><path class="ck" d="M18 32 L27 41 L45 22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="44" stroke-dashoffset="44" /></svg>lo educas</div>
+        <div class="chk" id="c4" style="top: 1110px;"><svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="27" fill="none" stroke="#fff" stroke-width="4" /><path class="ck" d="M18 32 L27 41 L45 22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="44" stroke-dashoffset="44" /></svg>y lo llevas a la compra</div>
+      </section>
+
+      <!-- S13 logo -->
+      <section id="s13" class="scene clip" data-start="40.0" data-duration="4.0" data-track-index="1">
+        <div id="wm1" class="wm" style="top: 700px;">SaaS</div>
+        <div id="wm2" class="wm" style="top: 880px;"><span id="wm-in" class="in">IN</span><span>House</span></div>
+        <div id="wm-sub" class="say" style="top: 1110px; font-size: 44px; font-weight: 560;">comenta «quiz» y te enseño a montarlo</div>
+      </section>
+
+      <!-- macOS-like desktop chrome (shown on "desktop" beats) -->
+      <div id="desk" class="full" style="opacity: 0">
+        <div id="menubar">
+          <div class="l"><span style="font-size: 26px;">●</span><b>Finder</b><span>Archivo</span><span>Edición</span><span>Ver</span><span>Ventana</span></div>
+          <div class="r"><span>▮▮▮</span><span>mar 6 oct</span><span>12:36</span></div>
+        </div>
+        <div id="dock">
+          <div class="app" style="background: linear-gradient(#5ac8fa, #1e7cf2);">🗂</div>
+          <div class="app" style="background: linear-gradient(#fff, #e6e6e6);">🧭</div>
+          <div class="app" style="background: linear-gradient(#ffd60a, #ff9f0a);">📝</div>
+          <div class="app" style="background: linear-gradient(#34c759, #248a3d);">💬</div>
+          <div class="app" style="background: linear-gradient(#ff6b6b, #e8382d);">📅</div>
+          <div class="app" style="background: linear-gradient(#bf5af2, #7d3cff);">🎵</div>
+          <div class="app" style="background: linear-gradient(#2c2c34, #0b0b10); font-family: Silkscreen; font-size: 30px; color: #fff;">SiH</div>
+          <div class="sep"></div>
+          <div class="app" style="background: linear-gradient(#e5e5ea, #c7c7cc);">🗑</div>
+        </div>
+      </div>
+
+      <!-- the notch: pill → quiz panel → result → offer -->
+      <div id="notch" style="opacity: 0">
+        <div id="pill"><span>Quiz Funnel</span><svg width="40" height="40" viewBox="0 0 24 24"><path d="M5 3 L5 19 L9.5 14.8 L12.6 21 L15 19.8 L12 13.8 L18 13.6 Z" fill="#fff" /></svg></div>
+        <!-- quiz -->
+        <div id="L-quiz" class="nlayer">
+          <div class="panel-pad">
+            <div class="eyebrow" style="display: flex; justify-content: space-between;"><span>quiz · tu saas</span><span id="qnum">pregunta 1 de 6</span></div>
+            <div class="bar"><i id="qbar"></i></div>
+          </div>
+          <div id="q1" class="q"><h3>¿Quién eres?</h3><div class="opt"><div class="fill"></div><span>Fundador/a de SaaS</span><b>✓</b></div><div class="opt"><div class="fill"></div><span>Agencia</span><b>✓</b></div><div class="opt"><div class="fill"></div><span>Equipo de ventas</span><b>✓</b></div></div>
+          <div id="q2" class="q" style="opacity: 0"><h3>¿Qué quieres conseguir?</h3><div class="opt"><div class="fill"></div><span>Menos churn</span><b>✓</b></div><div class="opt"><div class="fill"></div><span>Más demos cualificadas</span><b>✓</b></div><div class="opt"><div class="fill"></div><span>Subir precios</span><b>✓</b></div></div>
+          <div id="q3" class="q" style="opacity: 0"><h3>¿Tu principal problema?</h3><div class="opt"><div class="fill"></div><span>Poco tráfico</span><b>✓</b></div><div class="opt"><div class="fill"></div><span>Los leads llegan fríos</span><b>✓</b></div><div class="opt"><div class="fill"></div><span>No sé qué ofrecer</span><b>✓</b></div></div>
+        </div>
+        <!-- result -->
+        <div id="L-res" class="nlayer">
+          <div class="panel-pad">
+            <div class="eyebrow">tu resultado</div>
+            <div style="margin-top: 26px; font-size: 76px; font-weight: 740; line-height: 1.02;">Fundador/a B2B<br />que necesita <span style="color: var(--red);">calentar leads</span></div>
+            <div style="margin-top: 26px;"><span class="chip" style="background: var(--gold); color: #15151c;">PERSONALIZADO</span></div>
+            <div style="margin-top: 40px;">
+              <div class="rrow r1"><em>Perfil</em><span>Fundador/a SaaS</span></div>
+              <div class="rrow r2"><em>Objetivo</em><span>Más demos cualificadas</span></div>
+              <div class="rrow r3"><em>Bloqueo</em><span>Leads fríos</span></div>
+              <div class="rrow r4" style="border: 0;"><em>Siguiente paso</em><span style="color: var(--gold);">Tu plan en 3 pasos →</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- offer -->
+        <div id="L-off" class="nlayer">
+          <div class="panel-pad">
+            <div class="eyebrow">por qué encaja contigo</div>
+            <div style="margin-top: 20px;">
+              <div class="why w1"><i>✓</i>Hecho para fundadores B2B</div>
+              <div class="why w2"><i>✓</i>Convierte leads fríos en demos</div>
+              <div class="why w3"><i>✓</i>Listo en una semana</div>
+            </div>
+            <div id="offcard" style="margin-top: 34px; border-radius: 30px; background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--line); padding: 38px 40px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;"><span class="eyebrow" style="color: var(--cream);">oferta para ti</span><span class="chip" style="background: rgba(242,239,230,0.12); color: var(--muted); font-size: 20px;">EJEMPLO</span></div>
+              <div style="margin-top: 14px; font-size: 104px; font-weight: 800; line-height: 1;"><span style="color: var(--red);">−30%</span> <span style="font-size: 48px; font-weight: 640;">el primer año</span></div>
+              <div style="margin-top: 22px; display: flex; align-items: center; gap: 18px; font-size: 38px; color: var(--muted);">expira en <span id="cd" style="font-family: Silkscreen; font-size: 54px; color: var(--gold); letter-spacing: 0;">14:59</span></div>
+            </div>
+            <div id="offbtn" class="btn" style="margin-top: 42px;">Canjear oferta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- white captions under the panel -->
+      <section id="u7" class="scene clip" data-start="17.3" data-duration="5.3" data-track-index="2">
+        <div class="under"><div id="u7-a" class="big">de 5 a 8 preguntas</div><div id="u7-b" class="small">quién es · qué quiere · qué le frena</div></div>
+      </section>
+      <section id="u9" class="scene clip" data-start="28.2" data-duration="2.2" data-track-index="2">
+        <div class="under"><div id="u9-a" class="big">un resultado a su medida</div></div>
+      </section>
+      <section id="u11" class="scene clip" data-start="32.6" data-duration="3.8" data-track-index="2">
+        <div class="under"><div id="u11-a" class="big">oferta específica</div><div id="u11-b" class="small">+ un contador para canjearla</div></div>
+      </section>
+
+      <svg id="cursor" viewBox="0 0 24 24"><path d="M5 3 L5 19 L9.5 14.8 L12.6 21 L15 19.8 L12 13.8 L18 13.6 Z" fill="#000" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" /></svg>
+    </div>
+
+    <script>
+      const END = 44;
+      const tl = gsap.timeline({ paused: true });
+      // seeded rng (no Math.random in HyperFrames)
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      // ---- SFX: one <audio> per hit (every audio needs its own id) ----
+      const sfxRoot = document.getElementById("sfx");
+      let sfxN = 0;
+      function sfx(file, t, vol, dur) {
+        const a = document.createElement("audio");
+        a.id = "sfx" + ++sfxN; a.src = "assets/" + file + ".mp3";
+        a.setAttribute("data-start", t.toFixed(2)); a.setAttribute("data-duration", String(dur || 0.6));
+        a.setAttribute("data-track-index", String(20 + sfxN)); a.setAttribute("data-volume", String(vol));
+        sfxRoot.appendChild(a);
+      }
+
+      // ---- helpers ----
+      function blurIn(sel, t, d) {
+        tl.fromTo(sel, { opacity: 0, filter: "blur(16px)", y: 18 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: d || 0.55, ease: "power3.out" }, t);
+      }
+      function blurOut(sel, t, d) {
+        tl.to(sel, { opacity: 0, filter: "blur(14px)", duration: d || 0.35, ease: "power2.in" }, t);
+      }
+      // background modes: "blur" (text beats), "sharp" (desktop beats), "poppy" (logo)
+      function bgMode(mode, t, d) {
+        d = d || 0.35;
+        tl.to("#bg-gb", { opacity: mode === "blur" ? 1 : 0, duration: d }, t);
+        tl.to("#bg-pb", { opacity: mode === "poppy" ? 1 : 0, duration: d }, t);
+        tl.to("#bg-ps", { opacity: mode === "poppy" ? 1 : 0, duration: d }, t);
+        tl.to("#desk", { opacity: mode === "sharp" ? 1 : 0, duration: d }, t);
+      }
+      tl.set("#notch", { xPercent: -50 }, 0);
+      tl.set(".opt .fill", { scaleX: 0 }, 0);
+      tl.set("#qbar", { scaleX: 0.12 }, 0);
+      // slow painterly drift on the whole background
+      tl.fromTo("#bg", { scale: 1.08 }, { scale: 1.0, duration: END, ease: "none" }, 0);
+
+      // ---- rolling list: rows slide through a "slot", blurred by distance + motion ----
+      function buildRoll(id, items) {
+        const host = document.getElementById(id);
+        return items.map(([ic, col, txt]) => {
+          const r = document.createElement("div"); r.className = "row";
+          r.innerHTML = `<div class="ico" style="background:${col}">${ic}</div><span>${txt}</span>`;
+          host.appendChild(r); return r;
+        });
+      }
+      function driveRoll(rows, steps, ROWH) {
+        // steps: [[time, index], ...]; position eases between integer indices
+        const st = { p: steps[0][1] };
+        const paint = () => {
+          const frac = Math.abs(st.p - Math.round(st.p));
+          rows.forEach((r, i) => {
+            const d = i - st.p, ad = Math.abs(d);
+            r.style.transform = `translateY(${d * ROWH - 40}px) scale(${1 - Math.min(ad, 2) * 0.1})`;
+            r.style.opacity = String(Math.max(0, 1 - ad * (d < 0 ? 0.6 : 0.42)));
+            r.style.filter = `blur(${(ad * 3.2 + frac * 9).toFixed(2)}px)`;
+          });
+        };
+        paint();
+        for (let k = 1; k < steps.length; k++) {
+          const [t, to] = steps[k]; const dur = Math.min(0.32, (t - steps[k - 1][0]) * 0.85);
+          tl.to(st, { p: to, duration: dur, ease: "power3.inOut", onUpdate: paint }, t);
+        }
+        tl.call(paint, null, 0);
+      }
+
+      // ===== S1 hook (0–6.4) =====
+      const visitors = [
+        ["🏃", "#ff9f0a", "un fundador con prisa"], ["🧮", "#5e5ce6", "una CTO que compara precios"], ["👀", "#30b0c7", "un freelance curioso"],
+        ["🏢", "#8e8e93", "una agencia con 20 clientes"], ["🛒", "#34c759", "un e-commerce que escala"], ["📞", "#ff375f", "un equipo de ventas"],
+        ["💸", "#ffd60a", "alguien que solo mira precios"], ["🌱", "#30d158", "una startup pre-seed"], ["🤔", "#bf5af2", "un consultor indeciso"],
+        ["⏱", "#ff453a", "un CEO sin tiempo"], ["🔌", "#0a84ff", "un dev que quiere tu API"], ["🏪", "#ac8e68", "una pyme que empieza"],
+        ["⭐", "#e8382d", "tu próximo gran cliente"],
+      ];
+      const rows1 = buildRoll("roll1", visitors);
+      tl.set("#roll1", { opacity: 0 }, 0);
+      blurIn("#s1-head", 0.25, 0.7);
+      // head shrinks into a small label above the list (like the reference)
+      tl.to("#s1-head", { y: 40, scale: 0.44, opacity: 0.88, duration: 0.6, ease: "power3.inOut" }, 1.35);
+      tl.fromTo("#roll1", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4 }, 1.55);
+      {
+        const steps = [[0, 0]]; let t = 1.95; let gap = 0.5;
+        for (let i = 1; i < visitors.length; i++) {
+          steps.push([t, i]); sfx("tick", t + 0.05, 0.22, 0.4);
+          t += gap; gap = i < 8 ? Math.max(0.22, gap * 0.82) : gap * 1.22;
+        }
+        driveRoll(rows1, steps, 84);
+        // land on the last one: highlight it
+        tl.to(rows1[rows1.length - 1].querySelector(".ico"), { scale: 1.18, duration: 0.25, yoyo: true, repeat: 1 }, t - 0.1);
+      }
+      blurOut("#s1-head", 6.05); blurOut("#roll1", 6.05);
+      sfx("whoosh", 6.15, 0.35, 1);
+
+      // ===== S2 question (6.4–8.35) =====
+      blurIn("#s2-a", 6.45); blurIn("#s2-b", 7.05);
+      blurOut("#s2-a", 8.05, 0.3); blurOut("#s2-b", 8.05, 0.3);
+
+      // ===== S3 the same landing, piled up (8.35–11.05) =====
+      bgMode("sharp", 8.3, 0.25);
+      {
+        const host = document.getElementById("wins");
+        const pos = [[60, 170], [380, 300], [120, 520], [400, 700], [40, 900], [360, 1060], [150, 1230], [420, 420], [230, 820], [90, 1380], [330, 160]];
+        pos.forEach(([x, y], i) => {
+          const w = document.createElement("div"); w.className = "win";
+          w.style.left = x + "px"; w.style.top = y + "px";
+          w.innerHTML = `<div class="tb"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url">tusaas.com</div></div>
+            <div class="hero"><div class="h">La herramienta perfecta para todos</div><div class="p"></div><div class="p2"></div><div class="cta">Pide una demo</div></div>`;
+          host.appendChild(w);
+          const t = 8.45 + i * 0.17;
+          tl.fromTo(w, { opacity: 0, scale: 0.86, y: 40, rotation: (rnd() - 0.5) * 6 }, { opacity: 1, scale: 1, y: 0, duration: 0.32, ease: "back.out(1.6)" }, t);
+          if (i % 2 === 0) sfx("pop", t, 0.18, 0.5);
+        });
+      }
+      tl.set("#cursor", { x: 820, y: 1500, opacity: 1 }, 8.6);
+      tl.to("#cursor", { x: 520, y: 980, duration: 0.7, ease: "power2.inOut" }, 8.7);
+      tl.to("#cursor", { x: 700, y: 760, duration: 0.6, ease: "power2.inOut" }, 9.5);
+      tl.to("#cursor", { x: 300, y: 600, duration: 0.6, ease: "power2.inOut" }, 10.15);
+      tl.set("#cursor", { opacity: 0 }, 10.8);
+      tl.to("#wins", { filter: "blur(18px)", opacity: 0, scale: 1.06, duration: 0.4, ease: "power2.in" }, 10.65);
+      bgMode("blur", 10.7);
+
+      // ===== S4 / S5 (11.05–14.45) =====
+      tl.fromTo("#s4-a", { opacity: 0, filter: "blur(20px)", scale: 1.15 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.5, ease: "power3.out" }, 11.1);
+      sfx("whoosh", 11.05, 0.3, 1);
+      blurOut("#s4-a", 12.15, 0.3);
+      blurIn("#s5-a", 12.5); blurIn("#s5-b", 13.35);
+      blurOut("#s5-a", 14.15, 0.3); blurOut("#s5-b", 14.15, 0.3);
+
+      // ===== S6 the notch becomes "Quiz Funnel" (14.45–16.8) =====
+      bgMode("sharp", 14.4, 0.3);
+      tl.set("#notch", { opacity: 1 }, 14.4);
+      tl.to("#notch", { width: 600, height: 120, y: 18, borderRadius: 60, boxShadow: "0 18px 60px rgba(0,0,0,0.35)", duration: 0.55, ease: "back.out(1.4)" }, 14.95);
+      tl.to("#pill", { opacity: 1, duration: 0.3 }, 15.2);
+      sfx("pop", 14.95, 0.6, 0.6);
+      tl.set("#cursor", { x: 860, y: 620, opacity: 1 }, 15.3);
+      tl.to("#cursor", { x: 600, y: 112, duration: 0.85, ease: "power3.inOut" }, 15.45);
+      tl.to("#cursor", { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1 }, 16.45);
+      tl.to("#notch", { scale: 0.96, duration: 0.08, yoyo: true, repeat: 1 }, 16.45);
+      sfx("click", 16.45, 0.7, 0.5);
+      tl.set("#cursor", { opacity: 0 }, 16.8);
+
+      // panel helpers: morph the notch into a big panel and back
+      function openPanel(t, layer) {
+        tl.to("#pill", { opacity: 0, duration: 0.15 }, t);
+        tl.to("#notch", { width: 900, height: 1000, y: 110, borderRadius: 54, boxShadow: "0 40px 90px rgba(0,0,0,0.45)", duration: 0.6, ease: "power4.out" }, t);
+        tl.fromTo(layer, { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, t + 0.3);
+        sfx("whoosh", t, 0.35, 1);
+      }
+      function closePanel(t, layer) {
+        tl.to(layer, { opacity: 0, duration: 0.15 }, t);
+        tl.to("#notch", { width: 250, height: 56, y: 0, borderRadius: "0 0 26px 26px", boxShadow: "0 18px 60px rgba(0,0,0,0)", duration: 0.45, ease: "power3.in" }, t + 0.05);
+      }
+      function pick(qsel, idx, t) {
+        const o = document.querySelectorAll(qsel + " .opt")[idx];
+        tl.to(o.querySelector(".fill"), { scaleX: 1, duration: 0.28, ease: "power2.out" }, t);
+        tl.to(o.querySelector("b"), { opacity: 1, duration: 0.15 }, t + 0.18);
+        tl.to(o, { scale: 1.03, duration: 0.12, yoyo: true, repeat: 1 }, t);
+        sfx("tick", t, 0.55, 0.4);
+      }
+      function staggerOpts(qsel, t) {
+        tl.fromTo(qsel + " h3", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, t);
+        tl.fromTo(qsel + " .opt", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.35, stagger: 0.08, ease: "power3.out" }, t + 0.1);
+      }
+
+      // ===== S7 quiz (16.8–22.6) =====
+      openPanel(16.8, "#L-quiz");
+      staggerOpts("#q1", 17.1);
+      pick("#q1", 0, 18.3);
+      tl.to("#q1", { opacity: 0, x: -60, duration: 0.3, ease: "power2.in" }, 18.85);
+      tl.set("#qnum", { textContent: "pregunta 2 de 6" }, 19.05);
+      tl.to("#qbar", { scaleX: 0.3, duration: 0.4 }, 19.0);
+      tl.set("#q2", { opacity: 1 }, 19.1); staggerOpts("#q2", 19.1);
+      pick("#q2", 1, 20.15);
+      tl.to("#q2", { opacity: 0, x: -60, duration: 0.3, ease: "power2.in" }, 20.7);
+      tl.set("#qnum", { textContent: "pregunta 3 de 6" }, 20.9);
+      tl.to("#qbar", { scaleX: 0.48, duration: 0.4 }, 20.85);
+      tl.set("#q3", { opacity: 1 }, 20.95); staggerOpts("#q3", 20.95);
+      pick("#q3", 1, 21.85);
+      blurIn("#u7-a", 17.4); blurIn("#u7-b", 17.9);
+      blurOut("#u7-a", 22.25, 0.3); blurOut("#u7-b", 22.25, 0.3);
+      closePanel(22.3, "#L-quiz");
+      tl.set("#notch", { opacity: 0 }, 22.8);
+      bgMode("blur", 22.5);
+
+      // ===== S8 cards between questions (22.6–27.6) =====
+      const cards = [["📈", "#34c759", "casos reales"], ["📊", "#0a84ff", "datos"], ["🏆", "#ff9f0a", "resultados"], ["💡", "#ffd60a", "consejos"]];
+      const rows2 = buildRoll("roll2", cards);
+      tl.set("#roll2", { opacity: 0 }, 0);
+      blurIn("#s8-head", 22.75, 0.6);
+      tl.fromTo("#roll2", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4 }, 23.25);
+      driveRoll(rows2, [[0, 0], [24.05, 1], [24.75, 2], [25.45, 3]], 84);
+      [24.1, 24.8, 25.5].forEach((t) => sfx("tick", t, 0.25, 0.4));
+      blurOut("#s8-head", 26.0); blurOut("#roll2", 26.0);
+      tl.set("#s8-q", { opacity: 0 }, 0);
+      blurIn("#s8-q", 26.25, 0.6);
+      blurOut("#s8-q", 27.3, 0.3);
+
+      // ===== S9 personalised result (27.6–30.4) =====
+      bgMode("sharp", 27.55, 0.3);
+      tl.set("#notch", { opacity: 1 }, 27.55);
+      openPanel(27.65, "#L-res");
+      tl.fromTo("#L-res .rrow", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.3, stagger: 0.18, ease: "power3.out" }, 28.15);
+      tl.fromTo("#L-res .chip", { scale: 0 }, { scale: 1, duration: 0.35, ease: "back.out(3)" }, 28.05);
+      sfx("ding", 28.1, 0.35, 1);
+      blurIn("#u9-a", 28.3);
+      blurOut("#u9-a", 30.05, 0.3);
+      closePanel(30.05, "#L-res");
+      tl.set("#notch", { opacity: 0 }, 30.55);
+      bgMode("blur", 30.3);
+
+      // ===== S10 (30.4–32.0) =====
+      blurIn("#s10-a", 30.45); blurIn("#s10-b", 30.85);
+      blurOut("#s10-a", 31.7, 0.3); blurOut("#s10-b", 31.7, 0.3);
+
+      // ===== S11 offer + countdown (32.0–36.4) =====
+      bgMode("sharp", 31.95, 0.3);
+      tl.set("#notch", { opacity: 1 }, 31.95);
+      openPanel(32.05, "#L-off");
+      tl.fromTo("#L-off .why", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.3, stagger: 0.2, ease: "power3.out" }, 32.45);
+      tl.fromTo("#offcard", { opacity: 0, y: 40, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 33.25);
+      tl.fromTo("#offbtn", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 33.75);
+      sfx("pop", 33.25, 0.4, 0.6);
+      {
+        const cd = { v: 899 };
+        const el = document.getElementById("cd");
+        const paint = () => { const s = Math.max(0, Math.round(cd.v)); el.textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
+        tl.to(cd, { v: 896, duration: 3.0, ease: "steps(3)", onUpdate: paint }, 33.4);
+        tl.call(paint, null, 0);
+      }
+      blurIn("#u11-a", 32.7); blurIn("#u11-b", 33.3);
+      tl.set("#cursor", { x: 900, y: 1500, opacity: 1, scale: 1 }, 34.4);
+      tl.to("#cursor", { x: 560, y: 1035, duration: 0.8, ease: "power3.inOut" }, 34.5);
+      tl.to("#cursor", { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1 }, 35.4);
+      tl.to("#offbtn", { scale: 0.95, duration: 0.08, yoyo: true, repeat: 1 }, 35.4);
+      tl.set("#offbtn", { textContent: "Oferta canjeada ✓", background: "#34c759", boxShadow: "0 10px 0 #1e7a34" }, 35.55);
+      sfx("click", 35.4, 0.7, 0.5); sfx("ding", 35.55, 0.5, 1);
+      tl.set("#cursor", { opacity: 0 }, 36.2);
+      blurOut("#u11-a", 36.05, 0.3); blurOut("#u11-b", 36.05, 0.3);
+      closePanel(36.05, "#L-off");
+      tl.set("#notch", { opacity: 0 }, 36.55);
+      bgMode("blur", 36.3);
+
+      // ===== S12 checklist (36.4–40.0) =====
+      blurIn("#s12-h", 36.45);
+      ["#c1", "#c2", "#c3", "#c4"].forEach((s, i) => {
+        const t = 36.85 + i * 0.62;
+        blurIn(s, t, 0.45);
+        tl.to(s + " .ck", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, t + 0.2);
+        sfx("tick", t + 0.2, 0.5, 0.4);
+      });
+      ["#s12-h", "#c1", "#c2", "#c3", "#c4"].forEach((s) => blurOut(s, 39.65, 0.3));
+
+      // ===== S13 logo on poppies (40.0–44) =====
+      bgMode("poppy", 39.75, 0.5);
+      blurIn("#wm1", 40.15, 0.7);
+      blurIn("#wm2", 40.45, 0.7);
+      tl.fromTo("#wm-in", { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(3)" }, 40.75);
+      sfx("impact", 40.1, 0.7, 2);
+      blurIn("#wm-sub", 41.3, 0.6);
+      tl.to("#bg-pb", { opacity: 0.55, duration: 2.0, ease: "sine.inOut" }, 41.6);
+      tl.set({}, {}, END);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

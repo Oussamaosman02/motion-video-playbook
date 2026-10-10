@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "GeistMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      :root {
+        --night: #131722; --night-2: #1b2130; --line: #353d53; --paper: #f3f1ec; --ink: #161a24;
+        --mute: #8c93a5; --dim: #586075; --gold: #f5c51b; --red: #e8382d; --cream: #f2efe6;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--night); font-family: "Archivo", sans-serif; }
+      .scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+      .dark { background-color: var(--night); background-image: radial-gradient(circle, rgba(255,255,255,0.035) 3px, transparent 3.6px), radial-gradient(ellipse 80% 60% at 50% 55%, #1a1f2d, var(--night) 75%); background-size: 54px 54px, 100% 100%; }
+      .light { background-color: var(--paper); background-image: linear-gradient(rgba(22,26,36,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(22,26,36,0.035) 1px, transparent 1px); background-size: 60px 60px; }
+      .full { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+      svg { overflow: visible; }
+      .head { position: absolute; left: 80px; top: 150px; width: 920px; }
+      .hl { font-weight: 640; font-size: 66px; line-height: 1.12; letter-spacing: -0.02em; white-space: pre; color: #fff; }
+      .light .hl { color: var(--ink); }
+      .hl.sub { font-size: 40px; font-weight: 520; color: var(--mute); letter-spacing: -0.005em; margin-bottom: 6px; }
+      .hl.gold { color: var(--gold); }
+      .light .hl.red { color: var(--red); }
+      .cur { display: inline-block; width: 5px; height: 0.9em; background: currentColor; vertical-align: -0.1em; margin-left: 6px; }
+      .mono { font-family: "GeistMono", monospace; letter-spacing: 0.04em; }
+      .card { position: absolute; background: #fff; border-radius: 18px; box-shadow: 0 18px 50px rgba(22,26,36,0.12), 0 2px 6px rgba(22,26,36,0.08); overflow: hidden; }
+      .card .bar-l { position: absolute; left: 0; top: 0; bottom: 0; width: 7px; background: var(--gold); }
+      .tag { font-family: "GeistMono", monospace; font-size: 22px; letter-spacing: 0.08em; color: var(--mute); text-transform: uppercase; }
+      .big { font-weight: 700; letter-spacing: -0.04em; line-height: 0.95; color: var(--ink); }
+      .node { position: absolute; left: 210px; width: 790px; height: 175px; background: #fff; border: 2px solid #e2ded5; border-radius: 16px; padding: 22px 28px; }
+      .node .t { font-weight: 680; font-size: 40px; color: var(--ink); letter-spacing: -0.01em; }
+      .node .s { font-size: 28px; color: var(--mute); margin-top: 6px; }
+      .chip { display: inline-block; padding: 8px 18px; border-radius: 999px; border: 2px solid #d9d4c8; font-size: 28px; font-weight: 600; color: var(--ink); background: #fff; }
+      .bul { position: absolute; left: 80px; font-size: 62px; font-weight: 600; letter-spacing: -0.02em; color: #fff; white-space: nowrap; }
+      .bul .dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--gold); margin-right: 26px; vertical-align: 0.18em; }
+      .bul .ul { position: absolute; left: 44px; right: 0; bottom: -10px; height: 4px; background: var(--gold); transform-origin: 0 50%; }
+      .light .hl.sub, .light .tag, .light .node .s { color: #686e7d; }
+      #fade { position: absolute; inset: 0; background: #000; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="58.5" data-width="1080" data-height="1920">
+      <!-- audio: reused VO (Guillermo, ui-launch-film) + reused bed (sih-fila-film, spliced + ducked), library SFX + 3 ElevenLabs SFX -->
+      <audio id="vo" src="assets/vo.mp3" data-start="0.4" data-duration="53.90" data-track-index="10" data-volume="1"></audio>
+      <audio id="mus" src="assets/music_mix.mp3" data-start="0" data-duration="58.5" data-track-index="11" data-volume="1"></audio>
+      <audio id="a0" src="assets/datarain.mp3" data-start="0.15" data-duration="2.5" data-track-index="12" data-volume="0.55"></audio>
+      <audio id="a1" src="assets/whoosh.mp3" data-start="3.28" data-duration="1.2" data-track-index="13" data-volume="0.4"></audio>
+      <audio id="a2" src="assets/pop.mp3" data-start="3.83" data-duration="0.5" data-track-index="14" data-volume="0.35"></audio>
+      <audio id="a3" src="assets/type.mp3" data-start="4.52" data-duration="0.6" data-track-index="15" data-volume="0.4"></audio>
+      <audio id="a4" src="assets/iris.mp3" data-start="5.07" data-duration="1.2" data-track-index="16" data-volume="0.55"></audio>
+      <audio id="a5" src="assets/pop.mp3" data-start="6.22" data-duration="0.5" data-track-index="17" data-volume="0.3"></audio>
+      <audio id="a6" src="assets/click.mp3" data-start="7.51" data-duration="0.5" data-track-index="18" data-volume="0.55"></audio>
+      <audio id="a7" src="assets/pop.mp3" data-start="8.35" data-duration="0.5" data-track-index="19" data-volume="0.35"></audio>
+      <audio id="a8" src="assets/chime.mp3" data-start="8.97" data-duration="1.5" data-track-index="20" data-volume="0.35"></audio>
+      <audio id="a9" src="assets/tick.mp3" data-start="11.29" data-duration="0.5" data-track-index="21" data-volume="0.6"></audio>
+      <audio id="a10" src="assets/tick.mp3" data-start="11.92" data-duration="0.5" data-track-index="22" data-volume="0.6"></audio>
+      <audio id="a11" src="assets/blips.mp3" data-start="13.25" data-duration="0.8" data-track-index="23" data-volume="0.5"></audio>
+      <audio id="a12" src="assets/blips.mp3" data-start="14.79" data-duration="0.8" data-track-index="24" data-volume="0.5"></audio>
+      <audio id="a13" src="assets/blips.mp3" data-start="16.27" data-duration="0.8" data-track-index="25" data-volume="0.5"></audio>
+      <audio id="a14" src="assets/whoosh.mp3" data-start="18.74" data-duration="1.2" data-track-index="26" data-volume="0.35"></audio>
+      <audio id="a15" src="assets/iris.mp3" data-start="19.60" data-duration="1.2" data-track-index="27" data-volume="0.5"></audio>
+      <audio id="a16" src="assets/blips.mp3" data-start="22.83" data-duration="0.8" data-track-index="28" data-volume="0.45"></audio>
+      <audio id="a17" src="assets/blips.mp3" data-start="24.12" data-duration="0.8" data-track-index="29" data-volume="0.45"></audio>
+      <audio id="a18" src="assets/blips.mp3" data-start="24.91" data-duration="0.8" data-track-index="30" data-volume="0.45"></audio>
+      <audio id="a19" src="assets/blips.mp3" data-start="25.57" data-duration="0.8" data-track-index="31" data-volume="0.45"></audio>
+      <audio id="a20" src="assets/chime.mp3" data-start="27.56" data-duration="1.5" data-track-index="32" data-volume="0.4"></audio>
+      <audio id="a21" src="assets/iris.mp3" data-start="29.30" data-duration="1.2" data-track-index="33" data-volume="0.5"></audio>
+      <audio id="a22" src="assets/whoosh.mp3" data-start="30.84" data-duration="1.2" data-track-index="34" data-volume="0.35"></audio>
+      <audio id="a23" src="assets/whoosh.mp3" data-start="32.06" data-duration="1.2" data-track-index="35" data-volume="0.3"></audio>
+      <audio id="a24" src="assets/pop.mp3" data-start="32.57" data-duration="0.5" data-track-index="36" data-volume="0.4"></audio>
+      <audio id="a25" src="assets/iris.mp3" data-start="34.31" data-duration="1.2" data-track-index="37" data-volume="0.55"></audio>
+      <audio id="a26" src="assets/impact.mp3" data-start="35.25" data-duration="1.5" data-track-index="38" data-volume="0.35"></audio>
+      <audio id="a27" src="assets/iris.mp3" data-start="35.60" data-duration="1.2" data-track-index="39" data-volume="0.45"></audio>
+      <audio id="a28" src="assets/pop.mp3" data-start="37.85" data-duration="0.5" data-track-index="40" data-volume="0.3"></audio>
+      <audio id="a29" src="assets/click.mp3" data-start="39.86" data-duration="0.5" data-track-index="41" data-volume="0.5"></audio>
+      <audio id="a30" src="assets/click.mp3" data-start="42.66" data-duration="0.5" data-track-index="42" data-volume="0.5"></audio>
+      <audio id="a31" src="assets/click.mp3" data-start="45.16" data-duration="0.5" data-track-index="43" data-volume="0.5"></audio>
+      <audio id="a32" src="assets/tick.mp3" data-start="46.16" data-duration="0.5" data-track-index="44" data-volume="0.5"></audio>
+      <audio id="a33" src="assets/tick.mp3" data-start="47.16" data-duration="0.5" data-track-index="45" data-volume="0.5"></audio>
+      <audio id="a34" src="assets/pop.mp3" data-start="47.27" data-duration="0.5" data-track-index="46" data-volume="0.35"></audio>
+      <audio id="a35" src="assets/iris.mp3" data-start="47.45" data-duration="1.2" data-track-index="47" data-volume="0.45"></audio>
+      <audio id="a36" src="assets/pop.mp3" data-start="48.78" data-duration="0.5" data-track-index="48" data-volume="0.3"></audio>
+      <audio id="a37" src="assets/pop.mp3" data-start="50.23" data-duration="0.5" data-track-index="49" data-volume="0.3"></audio>
+      <audio id="a38" src="assets/pop.mp3" data-start="51.26" data-duration="0.5" data-track-index="50" data-volume="0.3"></audio>
+      <audio id="a39" src="assets/pop.mp3" data-start="51.97" data-duration="0.5" data-track-index="51" data-volume="0.3"></audio>
+      <audio id="a40" src="assets/chime.mp3" data-start="53.62" data-duration="1.5" data-track-index="52" data-volume="0.4"></audio>
+      <audio id="a41" src="assets/whoosh.mp3" data-start="54.50" data-duration="1.2" data-track-index="53" data-volume="0.35"></audio>
+      <audio id="a42" src="assets/click.mp3" data-start="55.90" data-duration="0.5" data-track-index="54" data-volume="0.55"></audio>
+
+      <!-- S1 · dark: data rain lands on an isometric plate, then converges into ONE landing bar -->
+      <section id="s1" class="scene dark">
+        <svg id="s1-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s1-head" class="head"></div>
+        <div id="s1-stats" class="mono" style="position: absolute; left: 80px; top: 1730px; font-size: 26px; color: var(--mute); white-space: pre;"></div>
+      </section>
+
+      <!-- S3 · light: "pedir demo" button struck out, Quiz Funnel octagon lock-up -->
+      <section id="s3" class="scene light">
+        <div id="s3-head" class="head"></div>
+        <div id="s3-btn" style="position: absolute; left: 270px; top: 690px; width: 540px; height: 120px; border-radius: 60px; background: var(--ink); color: #fff; font-size: 46px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 22px; opacity: 0;">Pedir una demo <span style="color: var(--gold);">→</span></div>
+        <svg id="s3-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s3-word" style="position: absolute; left: 318px; top: 935px; font-size: 104px; font-weight: 640; letter-spacing: -0.035em; color: var(--ink); white-space: pre;"></div>
+        <div id="s3-rule" style="position: absolute; left: 324px; top: 1072px; width: 640px; height: 5px; background: var(--gold); transform-origin: 0 50%; transform: scaleX(0);"></div>
+        <div id="s3-sub" style="position: absolute; left: 324px; top: 1098px; font-size: 36px; font-weight: 560; color: var(--ink); opacity: 0;">Un gemelo digital de cada lead</div>
+        <div id="s3-sub2" class="mono" style="position: absolute; left: 324px; top: 1152px; font-size: 24px; color: var(--mute); opacity: 0;">5–8 PREGUNTAS · CARDS · OFERTA</div>
+      </section>
+
+      <!-- S4 · light: exploded octagon layers of one lead (perfil / objetivo / problema) + big counter -->
+      <section id="s4" class="scene light">
+        <div id="s4-head" class="head"></div>
+        <div id="s4-count" style="position: absolute; left: 80px; top: 430px; display: flex; align-items: flex-end; gap: 26px;">
+          <div class="big" style="font-size: 210px;"><span id="s4-n5" style="display: inline-block; opacity: 0;">5</span><span id="s4-n8" style="display: inline-block; opacity: 0;">–8</span></div>
+          <div id="s4-lab" style="padding-bottom: 22px; opacity: 0;"><div style="font-size: 44px; font-weight: 640; color: var(--ink);">preguntas</div><div style="height: 4px; width: 260px; background: var(--ink); margin: 10px 0 8px;"></div><div class="tag">por cada lead</div></div>
+        </div>
+        <svg id="s4-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+      </section>
+
+      <!-- S6 · dark: isometric card tiles (caso / dato / resultado / consejo) floating like data systems -->
+      <section id="s6" class="scene dark">
+        <svg id="s6-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s6-head" class="head"></div>
+        <div id="s6-quote" class="head" style="top: 300px;"></div>
+      </section>
+
+      <!-- S7 · light: hex-block city recoloured by the answers, one block = the personalised result -->
+      <section id="s7" class="scene light">
+        <div id="s7-head" class="head"></div>
+        <div id="s7-chips" style="position: absolute; left: 80px; top: 600px; display: flex; gap: 14px; opacity: 0;">
+          <span class="chip" id="s7-c0">Perfil</span><span class="chip" id="s7-c1">Objetivo</span><span class="chip" id="s7-c2">Problema</span>
+        </div>
+        <svg id="s7-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s7-card" class="card" style="left: 80px; top: 1560px; width: 920px; height: 250px; opacity: 0;">
+          <div class="bar-l"></div>
+          <div style="position: absolute; left: 44px; top: 30px;" class="tag">Resultado personalizado</div>
+          <div style="position: absolute; left: 44px; top: 70px; font-size: 40px; font-weight: 680; color: var(--ink);">Lead #257 · SaaS B2B</div>
+          <div style="position: absolute; left: 44px; top: 128px; display: flex; align-items: flex-end; gap: 16px;"><span id="s7-pct" class="big" style="font-size: 96px;">0</span><span class="big" style="font-size: 54px; padding-bottom: 8px;">%</span><span style="font-size: 28px; color: var(--mute); padding-bottom: 14px;">encaje con tu plan</span></div>
+          <div class="mono" style="position: absolute; right: 36px; top: 34px; font-size: 20px; color: #8f897b;">EJEMPLO</div>
+        </div>
+      </section>
+
+      <!-- S8 · gold frame with a dark octagon hole (the "important part" beat) -->
+      <section id="s8" class="scene" style="background: var(--gold);">
+        <svg id="s8-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s8-sub" class="hl sub" style="position: absolute; left: 0; width: 1080px; top: 700px; text-align: center; opacity: 0;">Y aquí viene</div>
+        <div id="s8-txt" class="hl" style="position: absolute; left: 0; width: 1080px; top: 1110px; text-align: center; font-size: 72px;"></div>
+      </section>
+
+      <!-- S9 · light: lead card + traceability tree (por qué encaja → oferta → contador) -->
+      <section id="s9" class="scene light">
+        <div id="s9-head" class="head"></div>
+        <svg id="s9-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s9-card" class="card" style="left: 470px; top: 440px; width: 530px; height: 450px; opacity: 0;">
+          <div class="bar-l"></div>
+          <div class="tag" style="position: absolute; left: 40px; top: 30px;">Lead #257</div>
+          <div style="position: absolute; left: 40px; top: 70px; font-size: 38px; font-weight: 680; color: var(--ink);">Tu producto encaja</div>
+          <div style="position: absolute; left: 40px; top: 130px; display: flex; align-items: flex-end; gap: 10px;"><span id="s9-pct" class="big" style="font-size: 120px;">0</span><span class="big" style="font-size: 60px; padding-bottom: 10px;">%</span></div>
+          <div id="s9-bars" style="position: absolute; left: 40px; top: 285px; width: 450px;"></div>
+        </div>
+        <div class="tag" id="s9-tlabel" style="position: absolute; left: 80px; top: 960px; opacity: 0;">Recorrido final</div>
+        <div class="node" id="s9-n1" style="top: 1020px; opacity: 0;">
+          <div class="t">Por qué encaja</div><div class="s">con su situación</div>
+          <div style="position: absolute; left: 28px; top: 118px; display: flex; gap: 12px;" id="s9-ticks"></div>
+        </div>
+        <div class="node" id="s9-n2" style="top: 1250px; opacity: 0;">
+          <div class="t">Oferta específica</div><div class="s">solo para su caso</div>
+          <div style="position: absolute; right: 30px; top: 30px; text-align: right;">
+            <div style="font-size: 34px; color: var(--mute); text-decoration: line-through;">99€</div>
+            <div id="s9-price" class="big" style="font-size: 76px; margin-top: 8px; transform-origin: 100% 0; opacity: 0;">69€</div>
+          </div>
+          <div class="mono" style="position: absolute; left: 28px; top: 120px; font-size: 22px; color: #8f897b;">−30% · EJEMPLO</div>
+        </div>
+        <div class="node" id="s9-n3" style="top: 1480px; opacity: 0;">
+          <div class="t">Tiempo limitado</div><div class="s">para canjearla</div>
+          <div id="s9-clock" class="mono" style="position: absolute; right: 30px; top: 12px; font-size: 64px; font-weight: 640; color: var(--red);">15:00</div>
+          <div style="position: absolute; left: 28px; right: 30px; bottom: 22px; height: 8px; border-radius: 4px; background: #efe9de;"><div id="s9-prog" style="height: 100%; width: 100%; border-radius: 4px; background: var(--red); transform-origin: 0 50%;"></div></div>
+          <div id="s9-btn" style="position: absolute; right: 30px; top: 88px; padding: 6px 20px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 26px; font-weight: 600; opacity: 0;">Canjear →</div>
+        </div>
+      </section>
+
+      <!-- S10 · dark: bullet list + plate filling gold (captas → segmentas → educas → compra) -->
+      <section id="s10" class="scene dark">
+        <svg id="s10-svg" class="full" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+        <div id="s10-logo" style="position: absolute; left: 80px; top: 150px; display: flex; align-items: center; gap: 18px; opacity: 0;">
+          <svg width="52" height="52" viewBox="-26 -26 52 52"><polygon id="s10-oct" fill="#fff" /><circle r="9" fill="#f5c51b" /></svg>
+          <span style="font-size: 36px; font-weight: 640; color: #fff; letter-spacing: -0.02em;">Quiz Funnel</span>
+        </div>
+        <div id="s10-list"></div>
+      </section>
+
+      <!-- S11 · end card -->
+      <section id="s11" class="scene dark">
+        <div id="s11-lock" style="position: absolute; left: 0; width: 1080px; top: 700px; display: flex; justify-content: center; align-items: center; gap: 30px; opacity: 0;">
+          <div style="width: 128px; height: 128px; border-radius: 30px; background: var(--red); color: var(--cream); font-weight: 900; font-size: 78px; display: flex; align-items: center; justify-content: center;">S</div>
+          <div style="font-size: 84px; font-weight: 680; color: #fff; letter-spacing: -0.03em;">SaaS in House</div>
+        </div>
+        <div id="s11-sub" style="position: absolute; left: 0; width: 1080px; top: 880px; text-align: center; font-size: 36px; color: var(--mute); opacity: 0;">Quiz Funnels para SaaS B2B</div>
+        <div id="s11-pill" style="position: absolute; left: 240px; width: 600px; top: 1010px; height: 130px; border-radius: 26px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 66px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; opacity: 0;">Comenta&nbsp;<span style="color: var(--red);">QUIZ</span></div>
+        <div id="s11-cta2" style="position: absolute; left: 0; width: 1080px; top: 1180px; text-align: center; font-size: 38px; color: #fff; opacity: 0;">y te enseño cómo montarlo</div>
+      </section>
+
+      <!-- transitions: octagon irises -->
+      <svg id="iris" class="full" viewBox="0 0 1080 1920" width="1080" height="1920" style="position: absolute; left: 0; top: 0;"></svg>
+      <div id="fade"></div>
+    </div>
+
+    <script>
+      const VO = 0.4, END = 58.5;
+      const W = [["¿Quieres", 0.0, 0.418], ["vender", 0.464, 0.766], ["tu", 0.836, 0.952], ["SaaS", 1.022, 1.231], ["sin", 1.254, 1.416], ["mandar", 1.463, 1.788], ["a", 1.834, 1.858], ["todo", 1.939, 2.276], ["el", 2.322, 2.38], ["mundo", 2.438, 2.682], ["a", 2.717, 2.74], ["la", 2.775, 2.833], ["misma", 2.879, 3.135], ["landing?", 3.181, 3.715], ["Haz", 4.122, 4.319], ["esto.", 4.389, 4.876], ["En", 5.283, 5.41], ["lugar", 5.433, 5.677], ["de", 5.735, 5.782], ["pedir", 5.817, 6.072], ["una", 6.13, 6.258], ["demo", 6.304, 6.653], ["directamente,", 6.908, 7.814], ["crea", 7.953, 8.208], ["un", 8.29, 8.394], ["Quiz", 8.475, 8.719], ["Funnel.", 8.789, 9.381], ["Primero", 9.938, 10.321], ["haces", 10.356, 10.577], ["entre", 10.623, 10.867], ["cinco", 10.89, 11.25], ["y", 11.331, 11.436], ["ocho", 11.517, 11.714], ["preguntas", 11.761, 12.26], ["para", 12.307, 12.469], ["saber", 12.504, 12.748], ["quién", 12.852, 13.119], ["es", 13.177, 13.259], ["esa", 13.34, 13.491], ["persona,", 13.537, 14.164], ["qué", 14.385, 14.513], ["quiere", 14.582, 14.826], ["conseguir", 14.861, 15.36], ["y", 15.662, 15.767], ["cuál", 15.871, 16.103], ["es", 16.15, 16.196], ["su", 16.219, 16.347], ["principal", 16.405, 16.939], ["problema.", 17.009, 17.729], ["Pero", 17.949, 18.182], ["no", 18.228, 18.309], ["hagas", 18.344, 18.565], ["solo", 18.588, 18.785], ["preguntas.", 18.82, 19.563], ["Entre", 19.819, 20.12], ["medias,", 20.155, 20.631], ["añade", 20.794, 21.131], ["pequeñas", 21.177, 21.595], ["cards", 21.665, 22.048], ["con", 22.152, 22.326], ["casos", 22.431, 22.779], ["reales,", 22.918, 23.522], ["datos,", 23.72, 24.346], ["resultados", 24.509, 25.101], ["o", 25.171, 25.194], ["consejos", 25.252, 25.751], ["que", 25.809, 25.879], ["le", 25.937, 26.018], ["hagan", 26.065, 26.309], ["pensar:", 26.367, 26.994], ["\"vale,", 27.156, 27.702], ["esto", 27.841, 28.108], ["tiene", 28.166, 28.375], ["sentido\".", 28.41, 29.072], ["Después,", 29.478, 30.024], ["según", 30.128, 30.407], ["sus", 30.442, 30.593], ["respuestas,", 30.627, 31.301], ["le", 31.463, 31.568], ["muestras", 31.614, 32.009], ["un", 32.172, 32.311], ["resultado", 32.381, 32.891], ["personalizado.", 32.938, 33.843], ["Y", 33.913, 33.971], ["aquí", 34.041, 34.192], ["viene", 34.227, 34.424], ["la", 34.459, 34.528], ["parte", 34.563, 34.807], ["importante.", 34.853, 35.573], ["Las", 35.678, 35.829], ["últimas", 35.898, 36.223], ["cards", 36.281, 36.595], ["ya", 36.897, 37.025], ["tienen", 37.071, 37.303], ["que", 37.35, 37.419], ["llevarlo", 37.454, 37.872], ["hacia", 37.942, 38.29], ["tu", 38.348, 38.464], ["producto:", 38.522, 39.184], ["le", 39.323, 39.428], ["explicas", 39.463, 39.915], ["por", 39.973, 40.101], ["qué", 40.159, 40.264], ["encaja", 40.322, 40.693], ["con", 40.751, 40.879], ["su", 40.925, 41.03], ["situación,", 41.076, 41.808], ["le", 42.11, 42.214], ["presentas", 42.261, 42.702], ["una", 42.771, 42.899], ["oferta", 42.922, 43.259], ["específica", 43.294, 43.897], ["y", 43.979, 44.083], ["añades", 44.153, 44.524], ["un", 44.629, 44.698], ["contador", 44.757, 45.256], ["con", 45.558, 45.755], ["tiempo", 45.825, 46.138], ["limitado", 46.185, 46.614], ["para", 46.661, 46.823], ["canjearla.", 46.87, 47.496], ["Así", 47.555, 47.903], ["no", 47.984, 48.1], ["solo", 48.147, 48.332], ["captas", 48.379, 48.727], ["el", 48.797, 48.878], ["lead.", 48.948, 49.284], ["Lo", 49.644, 49.784], ["segmentas,", 49.83, 50.527], ["lo", 50.666, 50.805], ["educas", 50.863, 51.27], ["y", 51.432, 51.502], ["lo", 51.572, 51.653], ["llevas", 51.688, 51.908], ["directamente", 51.943, 52.663], ["hacia", 52.709, 53.046], ["la", 53.092, 53.162], ["compra.", 53.22, 53.87]];
+      const t = (i) => W[i][1] + VO;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const $ = (id) => document.getElementById(id);
+      const NS = "http://www.w3.org/2000/svg";
+      function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+      function div(css, parent, html) { const d = document.createElement("div"); d.style.cssText = css; if (html !== undefined) d.innerHTML = html; if (parent) parent.appendChild(d); return d; }
+
+      /* ---------- isometric helpers ---------- */
+      const C30 = Math.cos(Math.PI / 6);
+      const P = (o, x, y, z) => [o.cx + (x - y) * C30 * o.s, o.cy + (x + y) * 0.5 * o.s - z * o.s];
+      const pts = (a) => a.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+      const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.substr(i, 2), 16));
+      const shade = (h, f) => "#" + rgb(h).map((v) => Math.max(0, Math.min(255, Math.round(v * f))).toString(16).padStart(2, "0")).join("");
+      const polyN = (n, r, rot, cx = 0, cy = 0) => Array.from({ length: n }, (_, i) => [cx + r * Math.cos(rot + (i * 2 * Math.PI) / n), cy + r * Math.sin(rot + (i * 2 * Math.PI) / n)]);
+      const OCT = Math.PI / 8;
+      const isoPoly = (o, poly, z, attrs, parent) => el("polygon", Object.assign({ points: pts(poly.map((p) => P(o, p[0], p[1], z))) }, attrs), parent);
+      const isoLine = (o, poly, z, attrs, parent) => el("polyline", Object.assign({ points: pts(poly.map((p) => P(o, p[0], p[1], z))), fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }, attrs), parent);
+      // extruded prism: visible side faces (normal facing the viewer) shaded, then the top face
+      function prism(parent, o, poly, z0, z1, col, opt = {}) {
+        const g = el("g", {}, parent);
+        const n = poly.length, mx0 = poly.reduce((s, p) => s + p[0], 0) / n, my0 = poly.reduce((s, p) => s + p[1], 0) / n;
+        const sides = [];
+        for (let i = 0; i < n; i++) {
+          const a = poly[i], b = poly[(i + 1) % n];
+          let nx = b[1] - a[1], ny = -(b[0] - a[0]);
+          if (nx * ((a[0] + b[0]) / 2 - mx0) + ny * ((a[1] + b[1]) / 2 - my0) < 0) { nx = -nx; ny = -ny; }
+          const L = Math.hypot(nx, ny); nx /= L; ny /= L;
+          if (nx + ny <= 0.001) continue;
+          sides.push({ a, b, f: 0.76 + 0.13 * (nx - ny), d: a[0] + b[0] + a[1] + b[1] });
+        }
+        sides.sort((u, v) => u.d - v.d);
+        const faces = [];
+        const st = { stroke: opt.stroke || "none", "stroke-width": opt.sw || 1, "stroke-linejoin": "round" };
+        if (z1 - z0 > 0.001) sides.forEach((sd) => {
+          const q = [P(o, sd.a[0], sd.a[1], z0), P(o, sd.b[0], sd.b[1], z0), P(o, sd.b[0], sd.b[1], z1), P(o, sd.a[0], sd.a[1], z1)];
+          faces.push({ e: el("polygon", Object.assign({ points: pts(q), fill: shade(col, sd.f) }, st), g), f: sd.f });
+        });
+        const top = isoPoly(o, poly, z1, Object.assign({ fill: col }, st), g);
+        faces.push({ e: top, f: 1 });
+        return { g, faces, top };
+      }
+      const recolor = (pr, col, at, dur = 0.4) => pr.faces.forEach((fc) => tl.to(fc.e, { attr: { fill: shade(col, fc.f) }, duration: dur, ease: "power1.inOut" }, at));
+
+      /* ---------- scenes (hard cuts under octagon irises) ---------- */
+      const S = { s1: 0, s3: t(16), s4: t(27), s6: t(54), s7: t(74), s8: t(83), s9: t(89), s10: t(121), s11: 54.6 };
+      const SC = [["s1", S.s1, S.s3], ["s3", S.s3, S.s4], ["s4", S.s4, S.s6], ["s6", S.s6, S.s7], ["s7", S.s7, S.s8], ["s8", S.s8, S.s9], ["s9", S.s9, S.s10], ["s10", S.s10, S.s11], ["s11", S.s11, END]];
+      SC.forEach(([id, a, b]) => { tl.set("#" + id, { visibility: "visible" }, a); if (b < END) tl.set("#" + id, { visibility: "hidden" }, b); });
+
+      // octagon iris: grows from the centre and covers the frame exactly at the cut
+      function iris(col, a, b, cx = 540, cy = 960) {
+        const p = el("polygon", { points: pts(polyN(8, 100, OCT, cx, cy)), fill: col, opacity: 0 }, $("iris"));
+        tl.set(p, { opacity: 1 }, a);
+        tl.fromTo(p, { scale: 0.02, rotation: -22.5, svgOrigin: `${cx} ${cy}` }, { scale: 13, rotation: 0, svgOrigin: `${cx} ${cy}`, duration: b - a, ease: "power3.in" }, a);
+        tl.set(p, { opacity: 0 }, b);
+      }
+
+      /* ---------- typewriter headline: per-character, cursor, dim previous lines ---------- */
+      function blinkEl(c, a, b) { for (let k = a; k < b - 0.25; k += 0.5) tl.set(c, { opacity: 0 }, k + 0.25).set(c, { opacity: 1 }, k + 0.5); }
+      function typeLine(host, text, at, opts = {}) {
+        const line = document.createElement("div");
+        line.className = "hl " + (opts.cls || "");
+        if (opts.style) line.style.cssText = opts.style;
+        (typeof host === "string" ? $(host) : host).appendChild(line);
+        const cps = opts.cps || 34, chars = [...text];
+        chars.forEach((ch, k) => { const s = document.createElement("span"); s.textContent = ch; s.style.display = "none"; line.appendChild(s); tl.set(s, { display: "inline" }, at + k / cps); });
+        const done = at + chars.length / cps;
+        if (opts.cursor !== false) {
+          const c = document.createElement("span"); c.className = "cur"; c.style.opacity = 0; line.appendChild(c);
+          const end = opts.curEnd !== undefined ? opts.curEnd : done + 0.5;
+          tl.set(c, { opacity: 1 }, at); blinkEl(c, done, end); tl.set(c, { opacity: 0 }, end);
+        }
+        return line;
+      }
+      const dim = (line, at, col = "#586075") => tl.to(line, { color: col, duration: 0.3 }, at);
+      const counter = (node, from, to, at, dur, fmt = (v) => Math.round(v).toString()) => {
+        const o = { v: from }; node.textContent = fmt(from);
+        tl.to(o, { v: to, duration: dur, ease: "power2.out", onUpdate: () => { node.textContent = fmt(o.v); } }, at);
+      };
+      const es = (v) => Math.round(v).toLocaleString("es-ES").replace(/,/g, ".");
+      const thousands = (v) => { const n = Math.round(v); return n >= 1000 ? Math.floor(n / 1000) + "." + String(n % 1000).padStart(3, "0") : String(n); };
+
+      /* ================= S1 · data rain → one landing ================= */
+      {
+        const svg = $("s1-svg"), o = { cx: 540, cy: 1200, s: 66 };
+        const plate = el("g", {}, svg);
+        prism(plate, o, polyN(8, 6.8, OCT), -0.4, 0, "#1e2433", { stroke: "#39415a", sw: 1.5 });
+        for (let k = -6; k <= 6; k++) {
+          const L = Math.sqrt(Math.max(0, 6.1 * 6.1 - k * k));
+          isoLine(o, [[k, -L], [k, L]], 0, { stroke: "#2a3245", "stroke-width": 1.2 }, plate);
+          isoLine(o, [[-L, k], [L, k]], 0, { stroke: "#2a3245", "stroke-width": 1.2 }, plate);
+        }
+        // a few district outlines (random walks) so the plate reads as a map
+        for (let d = 0; d < 7; d++) {
+          let x = -5 + rnd() * 10, y = -5 + rnd() * 10; const path = [];
+          for (let k = 0; k < 9; k++) { path.push([x, y]); x += -1 + rnd() * 2; y += -1 + rnd() * 2; const r = Math.hypot(x, y); if (r > 6) { x *= 6 / r; y *= 6 / r; } }
+          isoLine(o, path, 0, { stroke: "#444e69", "stroke-width": 1.6, opacity: 0.8 }, plate);
+        }
+        tl.fromTo(plate, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 0);
+
+        const LX = 0.6, LY = 0.2, land = P(o, LX, LY, 0.05);
+        const drops = el("g", {}, svg);
+        const N = 230;
+        for (let i = 0; i < N; i++) {
+          let x, y;
+          do { x = -6 + rnd() * 12; y = -6 + rnd() * 12; } while (Math.hypot(x, y) > 5.9 || (rnd() > 0.55 && Math.abs(x + y * 0.4 - 0.5) > 2.6));
+          const [lx, ly] = P(o, x, y, 0);
+          const a = 0.05 + Math.pow(rnd(), 0.8) * 2.3, d = 0.45 + rnd() * 0.35;
+          const ln = el("line", { x1: lx, x2: lx, y1: ly - 800, y2: ly - 620, stroke: rnd() < 0.12 ? "#f5c51b" : "#e9eef8", "stroke-width": 3.4, "stroke-linecap": "round", opacity: 0 }, drops);
+          tl.set(ln, { opacity: 0.9 }, a);
+          tl.fromTo(ln, { attr: { y1: ly - 800, y2: ly - 600 } }, { attr: { y1: ly, y2: ly }, duration: d, ease: "power2.in" }, a);
+          // converge on "misma landing"
+          const c = t(12) + rnd() * 0.3;
+          tl.to(ln, { attr: { x1: land[0], x2: land[0], y1: land[1], y2: land[1] }, duration: 0.5, ease: "power3.in" }, c);
+          tl.set(ln, { opacity: 0 }, c + 0.5);
+        }
+        // the one landing: a gold bar that shoots up
+        const barG = el("g", {}, svg);
+        const sq = [[LX - 0.32, LY - 0.32], [LX + 0.32, LY - 0.32], [LX + 0.32, LY + 0.32], [LX - 0.32, LY + 0.32]];
+        prism(barG, o, sq, 0, 6.2, "#f5c51b", { stroke: "#c99d0a", sw: 1 });
+        tl.set(barG, { opacity: 0 }, 0);
+        tl.set(barG, { opacity: 1 }, t(12) + 0.5);
+        tl.fromTo(barG, { scaleY: 0.01, svgOrigin: `${land[0]} ${land[1] + 20}` }, { scaleY: 1, svgOrigin: `${land[0]} ${land[1] + 20}`, duration: 0.7, ease: "expo.out" }, t(12) + 0.5);
+        const tagG = el("g", { opacity: 0 }, svg);
+        const tp = P(o, LX, LY, 6.2);
+        el("rect", { x: tp[0] - 120, y: tp[1] - 92, width: 240, height: 54, rx: 10, fill: "#f5c51b" }, tagG);
+        const tx = el("text", { x: tp[0], y: tp[1] - 56, "text-anchor": "middle", "font-family": "GeistMono", "font-size": 26, "font-weight": 600, fill: "#131722" }, tagG); tx.textContent = "/landing";
+        tl.to(tagG, { opacity: 1, duration: 0.3 }, t(12) + 1.0);
+        tl.to([plate, barG, tagG], { opacity: 0.25, duration: 0.4 }, t(14));
+
+        typeLine("s1-head", "¿Quieres vender tu SaaS", t(0), { cls: "sub", curEnd: t(4) });
+        typeLine("s1-head", "sin mandar a todo el mundo", t(4), { curEnd: t(10) });
+        const l3 = typeLine("s1-head", "a la misma landing?", t(10), { cls: "gold", curEnd: t(14) });
+        tl.to("#s1-head", { opacity: 0, duration: 0.15 }, t(14) - 0.1);
+        const h2 = div("position:absolute;left:80px;top:150px;", $("s1"));
+        typeLine(h2, "Haz esto.", t(14), { style: "font-size:96px;", cps: 22, curEnd: S.s3 });
+
+        // stats strip
+        const st = $("s1-stats");
+        st.innerHTML = 'VISITAS <span id="s1-v" style="color:#fff">0</span>   ·   LANDINGS <span style="color:#f5c51b">1</span>   ·   MENSAJE <span style="color:#f5c51b">1</span>';
+        tl.fromTo(st, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.3);
+        counter($("s1-v"), 0, 2151, 0.3, 2.4, thousands);
+        tl.to(st, { opacity: 0, duration: 0.2 }, t(14));
+        iris("#f3f1ec", t(14) + 0.55, S.s3);
+      }
+
+      /* ================= S3 · demo button out, Quiz Funnel lock-up ================= */
+      {
+        typeLine("s3-head", "En lugar de pedir una demo", S.s3, { cls: "sub", curEnd: t(22) });
+        typeLine("s3-head", "directamente,", t(22), { cls: "sub", curEnd: t(23) });
+        typeLine("s3-head", "crea un Quiz Funnel.", t(23), { curEnd: S.s4 - 0.3 });
+        tl.fromTo("#s3-btn", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, t(19));
+        const svg = $("s3-svg");
+        const strike = el("line", { x1: 240, y1: 760, x2: 840, y2: 740, stroke: "#e8382d", "stroke-width": 10, "stroke-linecap": "round", pathLength: 1, "stroke-dasharray": 1, "stroke-dashoffset": 1 }, svg);
+        tl.to(strike, { attr: { "stroke-dashoffset": 0 }, duration: 0.3, ease: "power2.out" }, t(22) + 0.2);
+        tl.to("#s3-btn", { background: "#c9c4b8", duration: 0.25 }, t(22) + 0.3);
+        tl.to(["#s3-btn", strike], { y: 60, opacity: 0, duration: 0.45, ease: "power2.in" }, t(23) - 0.15);
+        // octagon mark
+        const g = el("g", {}, svg);
+        el("polygon", { points: pts(polyN(8, 92, OCT, 200, 1040)), fill: "#161a24" }, g);
+        const dot = el("circle", { cx: 200, cy: 1040, r: 34, fill: "#f5c51b" }, svg);
+        tl.fromTo(g, { scale: 0, rotation: -45, svgOrigin: "200 1040" }, { scale: 1, rotation: 0, svgOrigin: "200 1040", duration: 0.6, ease: "back.out(1.6)" }, t(23));
+        tl.fromTo(dot, { scale: 0, svgOrigin: "200 1040" }, { scale: 1, svgOrigin: "200 1040", duration: 0.4, ease: "back.out(3)" }, t(23) + 0.3);
+        typeLine("s3-word", "Quiz Funnel", t(25), { cps: 20, cursor: false });
+        tl.to("#s3-rule", { scaleX: 1, duration: 0.6, ease: "power3.out" }, t(26) + 0.2);
+        tl.fromTo("#s3-sub", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, t(26) + 0.4);
+        tl.fromTo("#s3-sub2", { opacity: 0 }, { opacity: 1, duration: 0.4 }, t(26) + 0.7);
+      }
+
+      /* ================= S4 · exploded layers of one lead ================= */
+      const S4 = {};
+      {
+        typeLine("s4-head", "Primero,", S.s4, { cls: "sub", curEnd: t(29) });
+        const l2 = typeLine("s4-head", "haz entre 5 y 8 preguntas", t(28), { curEnd: t(34) });
+        tl.fromTo("#s4-n5", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.35, ease: "back.out(2)" }, t(30));
+        tl.fromTo("#s4-n8", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.35, ease: "back.out(2)" }, t(32));
+        tl.fromTo("#s4-lab", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4 }, t(33));
+        const svg = $("s4-svg"), o = { cx: 420, cy: 1430, s: 50 }, R = 4.7;
+        const oct = polyN(8, R, OCT);
+        const layers = [
+          { z: 0, col: "#e9e5dc", name: "Lead", sub: "una persona", dotc: "#9aa0ad", at: S.s4 + 0.1 },
+          { z: 2.3, col: "#fbfaf6", name: "Perfil", sub: "quién es", dotc: "#e8742d", at: t(36) },
+          { z: 4.6, col: "#fbfaf6", name: "Objetivo", sub: "qué quiere conseguir", dotc: "#f5c51b", at: t(40) },
+          { z: 6.9, col: "#fbfaf6", name: "Problema", sub: "su principal dolor", dotc: "#e8382d", at: t(44) },
+        ];
+        const right = P(o, R * Math.cos(-Math.PI / 4), R * Math.sin(-Math.PI / 4), 0);
+        S4.layers = [];
+        layers.forEach((L, k) => {
+          const g = el("g", {}, svg);
+          prism(g, o, oct, L.z - 0.22, L.z, L.col, { stroke: "#cfc9bc", sw: 1.4 });
+          const zt = L.z + 0.001;
+          if (k === 0) { // base: district outlines
+            for (let d = 0; d < 6; d++) { let x = -3.5 + rnd() * 7, y = -3.5 + rnd() * 7; const path = []; for (let q = 0; q < 7; q++) { path.push([x, y]); x += -0.9 + rnd() * 1.8; y += -0.9 + rnd() * 1.8; const r = Math.hypot(x, y); if (r > 4.2) { x *= 4.2 / r; y *= 4.2 / r; } } isoLine(o, path, zt, { stroke: "#b9b2a3", "stroke-width": 1.6 }, g); }
+          } else if (k === 1) { // perfil: warm dots
+            for (let q = 0; q < 80; q++) { let x, y; do { x = -4.3 + rnd() * 8.6; y = -4.3 + rnd() * 8.6; } while (Math.hypot(x, y) > 4.1); const p = P(o, x, y, zt); const c = ["#f0a24a", "#e8742d", "#e8382d", "#f5c51b"][Math.floor(rnd() * 4)]; el("ellipse", { cx: p[0], cy: p[1], rx: 4 + rnd() * 5, ry: 2.5 + rnd() * 3, fill: c, opacity: 0.85 }, g); }
+          } else if (k === 2) { // objetivo: gold routes
+            for (let q = 0; q < 5; q++) { let x = -3.8, y = -3 + q * 1.5; const path = []; for (let s = 0; s < 9; s++) { path.push([x, y]); x += 0.9; y += -0.5 + rnd() * 1.0; } isoLine(o, path.filter((p) => Math.hypot(p[0], p[1]) < 4.3), zt, { stroke: q % 2 ? "#f5c51b" : "#d9a600", "stroke-width": 4 }, g); }
+          } else { // problema: red heat blobs
+            for (let q = 0; q < 14; q++) { const x = -3 + rnd() * 6, y = -3 + rnd() * 6; const r = 0.3 + rnd() * 0.6; isoPoly(o, polyN(16, r, 0, x, y), zt, { fill: q % 3 ? "#e8382d" : "#7e140d", opacity: 0.5 + rnd() * 0.3 }, g); }
+          }
+          const ly = right[1] - L.z * o.s - 4;
+          const lg = el("g", {}, svg);
+          el("line", { x1: right[0] + 14, y1: ly, x2: right[0] + 70, y2: ly, stroke: "#9aa0ad", "stroke-width": 2 }, lg);
+          el("circle", { cx: right[0] + 92, cy: ly, r: 10, fill: L.dotc }, lg);
+          const a = el("text", { x: right[0] + 114, y: ly + 12, "font-size": 40, "font-weight": 660, fill: "#161a24", "font-family": "Archivo" }, lg); a.textContent = L.name;
+          const b = el("text", { x: right[0] + 114, y: ly + 48, "font-size": 26, fill: "#686e7d", "font-family": "Archivo" }, lg); b.textContent = L.sub;
+          tl.fromTo(g, { opacity: 0, y: k ? -160 : 40 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, L.at);
+          tl.fromTo(lg, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.45 }, L.at + 0.2);
+          S4.layers.push({ g, lg, z: L.z });
+        });
+        // "Pero no hagas solo preguntas": everything collapses into a thin stack
+        tl.to(["#s4-head", "#s4-count"], { opacity: 0, duration: 0.2 }, t(49) - 0.1);
+        const h = div("position:absolute;left:80px;top:150px;width:920px;", $("s4"));
+        typeLine(h, "Pero no hagas", t(49), { cls: "sub", curEnd: t(51) });
+        typeLine(h, "solo preguntas.", t(51), { cls: "red", curEnd: S.s6 });
+        S4.layers.forEach((L, k) => {
+          tl.to(L.g, { y: (L.z - k * 0.3) * o.s, duration: 0.6, ease: "power3.inOut" }, t(51) + 0.1);
+          tl.to(L.lg, { opacity: 0, duration: 0.25 }, t(51));
+        });
+        tl.to(svg, { x: 120, y: -300, duration: 0.7, ease: "power3.inOut" }, t(51) + 0.1);
+        iris("#131722", t(54) - 0.62, S.s6);
+      }
+
+      /* ================= S6 · isometric card tiles ================= */
+      {
+        const svg = $("s6-svg"), o = { cx: 540, cy: 1250, s: 74 };
+        const feats = { "1,0": 0, "3,1": 1, "0,2": 2, "2,2": 3 };
+        const FT = [
+          { tag: "01  CASO REAL", sub: "cliente · antes / después", at: t(60) },
+          { tag: "02  DATO", sub: "benchmark del sector", at: t(62) },
+          { tag: "03  RESULTADO", sub: "lo que consiguió", at: t(63) },
+          { tag: "04  CONSEJO", sub: "haz esto primero", at: t(64) },
+        ];
+        const tiles = [];
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) tiles.push({ c, r, x: c * 2.35 - 3.5, y: r * 2.3 - 2.3 });
+        tiles.sort((a, b) => a.x + a.y - (b.x + b.y));
+        const fpos = [];
+        tiles.forEach((T, i) => {
+          const g = el("g", {}, svg);
+          const rect = [[T.x - 0.9, T.y - 0.8], [T.x + 0.9, T.y - 0.8], [T.x + 0.9, T.y + 0.8], [T.x - 0.9, T.y + 0.8]];
+          const f = feats[T.c + "," + T.r];
+          const pr = prism(g, o, rect, 0, 0.14, "#222a3c", { stroke: "#3b4560", sw: 1.2 });
+          // generic content: thin rows
+          for (let k = 0; k < 3; k++) isoLine(o, [[T.x - 0.65, T.y - 0.45 + k * 0.4], [T.x + 0.6 - k * 0.25, T.y - 0.45 + k * 0.4]], 0.141, { stroke: "#39425a", "stroke-width": 3 }, g);
+          tl.fromTo(g, { opacity: 0, y: 60 }, { opacity: f === undefined ? 0.55 : 0.8, y: 0, duration: 0.6, ease: "power3.out" }, S.s6 + 0.05 + i * 0.06);
+          if (f === undefined) return;
+          const F = FT[f], cg = el("g", { opacity: 0 }, g), z = 0.142;
+          if (f === 0) { isoPoly(o, polyN(18, 0.32, 0, T.x - 0.35, T.y - 0.25), z, { fill: "#f2efe6" }, cg); isoLine(o, [[T.x + 0.1, T.y - 0.4], [T.x + 0.7, T.y - 0.4]], z, { stroke: "#f2efe6", "stroke-width": 5 }, cg); isoLine(o, [[T.x + 0.1, T.y - 0.1], [T.x + 0.55, T.y - 0.1]], z, { stroke: "#8c93a5", "stroke-width": 4 }, cg); isoPoly(o, polyN(10, 0.22, 0, T.x + 0.4, T.y + 0.42).map((p, k) => k % 2 ? [T.x + 0.4 + (p[0] - T.x - 0.4) * 0.45, T.y + 0.42 + (p[1] - T.y - 0.42) * 0.45] : p), z, { fill: "#f5c51b" }, cg); }
+          if (f === 1) { [0.4, 0.75, 1.1, 1.55].forEach((hgt, k) => prism(cg, o, [[T.x - 0.6 + k * 0.38, T.y - 0.1], [T.x - 0.36 + k * 0.38, T.y - 0.1], [T.x - 0.36 + k * 0.38, T.y + 0.14], [T.x - 0.6 + k * 0.38, T.y + 0.14]], z, z + hgt, ["#7e140d", "#e8382d", "#f0a24a", "#f5c51b"][k])); }
+          if (f === 2) { ["#f5c51b", "#f0a24a", "#e8382d"].forEach((cc, k) => isoLine(o, [[T.x - 0.7, T.y + 0.5 - k * 0.12], [T.x - 0.2, T.y + 0.2 - k * 0.12], [T.x + 0.2, T.y - 0.1 - k * 0.12], [T.x + 0.7, T.y - 0.6 - k * 0.12]], z, { stroke: cc, "stroke-width": 9 }, cg)); }
+          if (f === 3) { for (let k = 0; k < 3; k++) { isoLine(o, [[T.x - 0.2, T.y - 0.45 + k * 0.42], [T.x + 0.65, T.y - 0.45 + k * 0.42]], z, { stroke: "#f2efe6", "stroke-width": 4 }, cg); isoLine(o, [[T.x - 0.65, T.y - 0.45 + k * 0.42], [T.x - 0.52, T.y - 0.33 + k * 0.42], [T.x - 0.32, T.y - 0.6 + k * 0.42]], z, { stroke: "#f5c51b", "stroke-width": 5 }, cg); } }
+          // tag
+          const tp = P(o, T.x - 0.9, T.y - 0.8, 0.14);
+          const tg = el("g", { opacity: 0 }, svg);
+          el("line", { x1: tp[0], y1: tp[1], x2: tp[0], y2: tp[1] - 70, stroke: "#5a6380", "stroke-width": 2 }, tg);
+          el("rect", { x: tp[0] - 10, y: tp[1] - 140, width: 268, height: 74, rx: 10, fill: "#262e42", stroke: "#4a5470", "stroke-width": 1.5 }, tg);
+          const a = el("text", { x: tp[0] + 6, y: tp[1] - 110, "font-family": "GeistMono", "font-size": 22, "font-weight": 600, fill: "#f5c51b" }, tg); a.textContent = F.tag;
+          const b = el("text", { x: tp[0] + 6, y: tp[1] - 80, "font-family": "Archivo", "font-size": 22, fill: "#a7aec0" }, tg); b.textContent = F.sub;
+          tl.to(g, { opacity: 1, y: -18, duration: 0.45, ease: "back.out(2)" }, F.at);
+          recolor(pr, "#2e3a57", F.at, 0.3);
+          pr.faces.forEach((fc) => tl.to(fc.e, { attr: { stroke: "#f5c51b" }, duration: 0.3 }, F.at));
+          tl.to(cg, { opacity: 1, duration: 0.35 }, F.at + 0.05);
+          tl.fromTo(tg, { opacity: 0, y: 16 }, { opacity: 1, y: -18, duration: 0.4 }, F.at + 0.05);
+          fpos[f] = P(o, T.x, T.y, 0.14);
+        });
+        // headline list
+        typeLine("s6-head", "Entre medias, añade pequeñas cards", S.s6, { cls: "sub", curEnd: t(60) });
+        const L1 = typeLine("s6-head", "casos reales,", t(60), { curEnd: t(62) });
+        const L2 = typeLine("s6-head", "datos,", t(62), { curEnd: t(63) });
+        const L3 = typeLine("s6-head", "resultados", t(63), { curEnd: t(64) });
+        const L4 = typeLine("s6-head", "o consejos.", t(64), { curEnd: t(70) - 0.3 });
+        dim(L1, t(62)); dim(L2, t(63)); dim(L3, t(64));
+        tl.to("#s6-head", { opacity: 0, duration: 0.25 }, t(70) - 0.3);
+        typeLine("s6-quote", "y le hagan pensar:", t(70) - 0.2, { cls: "sub", cursor: false, cps: 60 });
+        typeLine("s6-quote", "«Vale, esto", t(70), { cls: "gold", style: "font-size:96px;", cps: 18, curEnd: t(71) });
+        typeLine("s6-quote", "tiene sentido.»", t(71), { cls: "gold", style: "font-size:96px;", cps: 22, curEnd: S.s7 });
+        // gold connector through the four cards + checks
+        const lift = fpos.map((p) => [p[0], p[1] - 18]);
+        const con = el("polyline", { points: pts([lift[2], lift[0], lift[3], lift[1]]), fill: "none", stroke: "#f5c51b", "stroke-width": 4, "stroke-dasharray": "1", "stroke-dashoffset": 1, pathLength: 1, opacity: 0.95 }, svg);
+        tl.to(con, { attr: { "stroke-dashoffset": 0 }, duration: 0.9, ease: "power2.inOut" }, t(70) + 0.1);
+        lift.forEach((p, k) => {
+          const cg = el("g", { opacity: 0 }, svg);
+          el("circle", { cx: p[0], cy: p[1] - 4, r: 24, fill: "#f5c51b" }, cg);
+          el("polyline", { points: `${p[0] - 10},${p[1] - 4} ${p[0] - 2},${p[1] + 5} ${p[0] + 12},${p[1] - 12}`, fill: "none", stroke: "#131722", "stroke-width": 5, "stroke-linecap": "round", "stroke-linejoin": "round" }, cg);
+          tl.fromTo(cg, { opacity: 0, scale: 0, svgOrigin: `${p[0]} ${p[1]}` }, { opacity: 1, scale: 1, svgOrigin: `${p[0]} ${p[1]}`, duration: 0.35, ease: "back.out(3)" }, t(71) + k * 0.12);
+        });
+        iris("#f3f1ec", t(74) - 0.58, S.s7);
+      }
+
+      /* ================= S7 · hex-block city recoloured by the answers ================= */
+      {
+        const svg = $("s7-svg"), o = { cx: 540, cy: 1180, s: 56 }, R = 0.6, G = 1.08;
+        typeLine("s7-head", "Después,", S.s7, { cls: "sub", curEnd: t(75) });
+        const l2 = typeLine("s7-head", "según sus respuestas,", t(75), { curEnd: t(80) });
+        dim(l2, t(80), "#8f897b");
+        typeLine("s7-head", "un resultado personalizado.", t(80), { style: "font-size:58px;", curEnd: S.s8 });
+        tl.fromTo("#s7-chips", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, S.s7 + 0.3);
+        [0, 1, 2].forEach((k) => tl.to("#s7-c" + k, { backgroundColor: "#f5c51b", borderColor: "#f5c51b", duration: 0.2 }, t(76) + k * 0.35));
+        const cells = [];
+        for (let q = -7; q <= 7; q++) for (let r = -9; r <= 9; r++) {
+          const x = 1.5 * R * q * G, y = Math.sqrt(3) * R * (r + q / 2) * G;
+          if (Math.hypot(x, y) > 6.0) continue;
+          cells.push({ x, y, h: 0.3 + rnd() * 0.5 + Math.max(0, 0.6 - Math.hypot(x, y) / 10) });
+        }
+        cells.sort((a, b) => a.x + a.y - (b.x + b.y));
+        let sel = cells[0], best = 1e9;
+        cells.forEach((c) => { const d = Math.hypot(c.x - 0.4, c.y + 0.9); if (d < best) { best = d; sel = c; } });
+        const PAL1 = ["#f7d774", "#f5c51b", "#f0a24a", "#e8742d", "#c8452a"], PAL2 = ["#4f9a5b", "#7fb257", "#b9c45a", "#f5c51b", "#f0a24a"];
+        cells.forEach((c) => {
+          const g = el("g", {}, svg);
+          c.pr = prism(g, o, polyN(6, R, 0, c.x, c.y), 0, c.h, "#f7f5f0", { stroke: "#d6d1c6", sw: 1 });
+          c.g = g;
+          const k = (c.x + c.y + 9) / 18;
+          tl.fromTo(g, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, S.s7 + 0.05 + k * 0.7);
+          const f1 = Math.sin(c.x * 0.7) + Math.cos(c.y * 0.6) + rnd() * 0.8;
+          recolor(c.pr, PAL1[Math.max(0, Math.min(4, Math.floor((f1 + 2) / 4.8 * 5)))], t(76) + k * 0.5, 0.35);
+          const f2 = Math.cos(c.x * 0.5 + 1) + Math.sin(c.y * 0.8) + rnd() * 0.7;
+          recolor(c.pr, PAL2[Math.max(0, Math.min(4, Math.floor((f2 + 2) / 4.7 * 5)))], t(78) + 0.2 + k * 0.5, 0.35);
+          if (c !== sel) tl.to(g, { opacity: 0.32, duration: 0.4 }, t(80));
+        });
+        // the selected block = this lead's result
+        svg.appendChild(sel.g);
+        recolor(sel.pr, "#f5c51b", t(80), 0.3);
+        tl.to(sel.g, { y: -46, duration: 0.5, ease: "back.out(2)" }, t(80));
+        const mp = P(o, sel.x, sel.y, sel.h);
+        const mk = el("g", { opacity: 0 }, svg);
+        el("line", { x1: mp[0], y1: mp[1] - 50, x2: mp[0], y2: mp[1] - 150, stroke: "#161a24", "stroke-width": 3 }, mk);
+        el("circle", { cx: mp[0], cy: mp[1] - 170, r: 26, fill: "#161a24" }, mk);
+        el("circle", { cx: mp[0], cy: mp[1] - 170, r: 10, fill: "#f5c51b" }, mk);
+        el("rect", { x: mp[0] + 40, y: mp[1] - 196, width: 210, height: 52, rx: 10, fill: "#161a24" }, mk);
+        const mt = el("text", { x: mp[0] + 145, y: mp[1] - 161, "text-anchor": "middle", "font-family": "GeistMono", "font-size": 24, "font-weight": 600, fill: "#fff" }, mk); mt.textContent = "LEAD #257";
+        tl.fromTo(mk, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(2)" }, t(80) + 0.25);
+        const lead = el("polyline", { points: `${mp[0]},${mp[1] - 40} ${mp[0]},${1540}`, fill: "none", stroke: "#161a24", "stroke-width": 2.5, "stroke-dasharray": "8 8", opacity: 0 }, svg);
+        tl.to(lead, { opacity: 0.6, duration: 0.3 }, t(81));
+        tl.fromTo("#s7-card", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, t(81));
+        counter($("s7-pct"), 0, 87, t(81) + 0.1, 1.0);
+      }
+
+      /* ================= S8 · gold frame, dark octagon ================= */
+      {
+        const svg = $("s8-svg");
+        const big = el("polygon", { points: pts(polyN(8, 600, OCT, 540, 960)), fill: "#131722" }, svg);
+        tl.fromTo(big, { scale: 0.08, rotation: -30, svgOrigin: "540 960" }, { scale: 1, rotation: 0, svgOrigin: "540 960", duration: 0.6, ease: "expo.out" }, S.s8);
+        const ring = el("polygon", { points: pts(polyN(8, 74, OCT, 540, 960)), fill: "none", stroke: "#f2efe6", "stroke-width": 3, opacity: 0.8 }, svg);
+        const dot = el("circle", { cx: 540, cy: 960, r: 26, fill: "#fff" }, svg);
+        tl.fromTo(ring, { scale: 0, svgOrigin: "540 960" }, { scale: 1, svgOrigin: "540 960", duration: 0.5, ease: "back.out(2)" }, S.s8 + 0.25);
+        tl.fromTo(dot, { scale: 0, svgOrigin: "540 960" }, { scale: 1, svgOrigin: "540 960", duration: 0.4, ease: "back.out(3)" }, S.s8 + 0.35);
+        tl.to(ring, { scale: 1.35, opacity: 0, svgOrigin: "540 960", duration: 0.6 }, t(88));
+        tl.fromTo("#s8-sub", { opacity: 0 }, { opacity: 1, duration: 0.3 }, S.s8 + 0.2);
+        typeLine("s8-txt", "la parte importante.", t(86) - 0.1, { cps: 40, cursor: false });
+        tl.to(["#s8-sub", "#s8-txt"], { opacity: 0, duration: 0.15 }, S.s9 - 0.42);
+        tl.to(dot, { scale: 50, svgOrigin: "540 960", duration: 0.48, ease: "power3.in" }, S.s9 - 0.48);
+        tl.to(dot, { attr: { fill: "#f3f1ec" }, duration: 0.3 }, S.s9 - 0.4);
+      }
+
+      /* ================= S9 · lead card + traceability tree ================= */
+      {
+        typeLine("s9-head", "Las últimas cards", S.s9, { cls: "sub", curEnd: t(95) });
+        typeLine("s9-head", "→ hacia tu producto", t(95), { curEnd: t(100) });
+        const svg = $("s9-svg"), o = { cx: 250, cy: 760, s: 120 };
+        const hx = el("g", {}, svg);
+        prism(hx, o, polyN(6, 0.95, 0), 0, 1.0, "#f5c51b", { stroke: "#c99d0a", sw: 1.2 });
+        { const p = P(o, 0, 0, 1.0); el("ellipse", { cx: p[0], cy: p[1], rx: 34, ry: 19, fill: "#161a24" }, hx); el("ellipse", { cx: p[0], cy: p[1], rx: 13, ry: 7.5, fill: "#fff" }, hx); }
+        tl.fromTo(hx, { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, S.s9 + 0.15);
+        const cl = el("polyline", { points: "330,620 470,620", fill: "none", stroke: "#f5c51b", "stroke-width": 4, opacity: 0 }, svg);
+        tl.to(cl, { opacity: 1, duration: 0.3 }, t(92));
+        tl.fromTo("#s9-card", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, t(92));
+        counter($("s9-pct"), 0, 87, t(95), 1.0);
+        const bars = $("s9-bars");
+        [["Perfil", 0.92], ["Objetivo", 0.85], ["Problema", 0.81]].forEach(([n, v], k) => {
+          const row = div("display:flex;align-items:center;gap:16px;margin-bottom:16px;", bars);
+          div("width:150px;font-size:26px;color:#5b6070;", row, n);
+          const track = div("flex:1;height:16px;border-radius:8px;background:#efe9de;", row);
+          const fill = div(`height:100%;width:${v * 100}%;border-radius:8px;background:${k === 0 ? "#161a24" : "#f5c51b"};transform-origin:0 50%;transform:scaleX(0);`, track);
+          tl.to(fill, { scaleX: 1, duration: 0.6, ease: "power3.out" }, t(96) + k * 0.15);
+        });
+        // tree: spine + elbows
+        tl.fromTo("#s9-tlabel", { opacity: 0 }, { opacity: 1, duration: 0.3 }, t(100) - 0.2);
+        const spine = el("line", { x1: 130, y1: 1000, x2: 130, y2: 1000, stroke: "#161a24", "stroke-width": 3 }, svg);
+        const root9 = el("circle", { cx: 130, cy: 1000, r: 9, fill: "#161a24", opacity: 0 }, svg); tl.to(root9, { opacity: 1, duration: 0.2 }, t(100) - 0.3);
+        const ys = [1107, 1337, 1567], ats = [t(100), t(108), t(115)];
+        ys.forEach((y, k) => {
+          tl.to(spine, { attr: { y2: y }, duration: 0.35, ease: "power2.out" }, ats[k] - 0.3);
+          const arm = el("line", { x1: 130, y1: y, x2: 130, y2: y, stroke: "#161a24", "stroke-width": 3 }, svg);
+          tl.to(arm, { attr: { x2: 210 }, duration: 0.2 }, ats[k] - 0.05);
+          const nd = el("circle", { cx: 130, cy: y, r: 9, fill: "#f5c51b", stroke: "#161a24", "stroke-width": 3, opacity: 0 }, svg);
+          tl.to(nd, { opacity: 1, duration: 0.1 }, ats[k] - 0.05);
+          tl.fromTo("#s9-n" + (k + 1), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, ats[k]);
+        });
+        const ticks = $("s9-ticks");
+        ["Perfil ✓", "Objetivo ✓", "Problema ✓"].forEach((s, k) => {
+          const c = div("padding:4px 14px;border-radius:999px;background:#161a24;color:#f5c51b;font-size:22px;font-family:GeistMono;opacity:0;", ticks, s);
+          tl.fromTo(c, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, t(103) + k * 0.25);
+        });
+        tl.fromTo("#s9-price", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.5)" }, t(110));
+        // countdown, real seconds from "contador"
+        const clk = $("s9-clock");
+        const o2 = { v: 900 };
+        tl.to(o2, { v: 900 - (S.s10 - t(115)), duration: S.s10 - t(115), ease: "none", onUpdate: () => { const s = Math.ceil(o2.v); clk.textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); } }, t(115));
+        tl.fromTo("#s9-prog", { scaleX: 1 }, { scaleX: 0.72, duration: S.s10 - t(115), ease: "none" }, t(115));
+        tl.fromTo("#s9-btn", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.5)" }, t(120));
+        iris("#131722", t(121) - 0.5, S.s10);
+      }
+
+      /* ================= S10 · bullets + plate filling gold ================= */
+      {
+        $("s10-oct").setAttribute("points", pts(polyN(8, 25, OCT)));
+        tl.fromTo("#s10-logo", { opacity: 0 }, { opacity: 1, duration: 0.4 }, S.s10 + 0.1);
+        const items = [["No solo captas el lead", t(124)], ["Lo segmentas", t(128)], ["Lo educas", t(130)], ["Lo llevas a la compra", t(132)]];
+        const list = $("s10-list"), rows = [];
+        items.forEach(([txt, at], k) => {
+          const b = div(`top:${320 + k * 112}px;opacity:0;`, list); b.className = "bul";
+          b.innerHTML = `<span class="dot"></span>${txt}<div class="ul"></div>`;
+          tl.fromTo(b, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, at);
+          tl.fromTo(b.querySelector(".ul"), { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power3.out" }, at + 0.1);
+          rows.push({ b, at });
+        });
+        rows.forEach((r, k) => { if (k < rows.length - 1) { const nx = rows[k + 1].at; tl.to(r.b, { color: "#586075", duration: 0.3 }, nx); tl.to(r.b.querySelector(".ul"), { opacity: 0, duration: 0.3 }, nx); tl.to(r.b.querySelector(".dot"), { backgroundColor: "#586075", duration: 0.3 }, nx); } });
+        const svg = $("s10-svg"), o = { cx: 540, cy: 1400, s: 50 };
+        const plate = el("g", {}, svg);
+        prism(plate, o, polyN(8, 7.6, OCT), -0.4, 0, "#1e2433", { stroke: "#39415a", sw: 1.5 });
+        tl.fromTo(plate, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6 }, S.s10 + 0.05);
+        const R = 0.55, cells = [];
+        for (let q = -9; q <= 9; q++) for (let r = -10; r <= 10; r++) {
+          const x = 1.5 * R * q * 1.1, y = Math.sqrt(3) * R * (r + q / 2) * 1.1;
+          if (Math.hypot(x, y) > 6.6) continue;
+          cells.push({ x, y, d: Math.hypot(x, y), a: Math.atan2(y, x) });
+        }
+        cells.sort((a, b) => a.x + a.y - (b.x + b.y));
+        const SEG = ["#3a3424", "#3b2b2a", "#24323a"];
+        cells.forEach((c) => {
+          c.pr = prism(svg, o, polyN(6, R, 0, c.x, c.y), 0, 0.08, "#232a3b", { stroke: "#39415a", sw: 1 });
+          tl.fromTo(c.pr.g, { opacity: 0 }, { opacity: 1, duration: 0.3 }, S.s10 + 0.2 + c.d * 0.06);
+          const seg = Math.floor(((c.a + Math.PI) / (2 * Math.PI)) * 3) % 3;
+          recolor(c.pr, SEG[seg], t(128) + c.d * 0.04, 0.3);
+          c.pr.faces.forEach((fc) => tl.to(fc.e, { attr: { stroke: ["#8a6f1c", "#8a3a33", "#3b6a7a"][seg] }, duration: 0.3 }, t(128) + c.d * 0.04));
+          recolor(c.pr, "#f5c51b", t(133) + c.d * 0.13, 0.35);
+          c.pr.faces.forEach((fc) => tl.to(fc.e, { attr: { stroke: "#c99d0a" }, duration: 0.35 }, t(133) + c.d * 0.13));
+        });
+        // "lo educas": small cards pop up over a dozen cells
+        const pick = cells.filter((_, i) => i % 9 === 4);
+        pick.forEach((c, k) => {
+          const g = el("g", {}, svg);
+          prism(g, o, [[c.x - 0.32, c.y - 0.22], [c.x + 0.32, c.y - 0.22], [c.x + 0.32, c.y + 0.22], [c.x - 0.32, c.y + 0.22]], 0.6, 0.66, "#f2efe6");
+          tl.fromTo(g, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35, ease: "back.out(2)" }, t(130) + k * 0.05);
+          tl.to(g, { y: 40, opacity: 0, duration: 0.4, ease: "power2.in" }, t(133) + c.d * 0.13 - 0.2);
+        });
+        tl.to(["#s10-list", "#s10-logo", svg], { opacity: 0, duration: 0.35 }, S.s11 - 0.35);
+      }
+
+      /* ================= S11 · end card ================= */
+      {
+        tl.fromTo("#s11-lock", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, S.s11);
+        tl.fromTo("#s11-sub", { opacity: 0 }, { opacity: 1, duration: 0.4 }, S.s11 + 0.3);
+        tl.fromTo("#s11-pill", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, S.s11 + 0.7);
+        tl.to("#s11-pill", { scale: 1.06, duration: 0.15, yoyo: true, repeat: 1 }, 55.9);
+        tl.fromTo("#s11-cta2", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, S.s11 + 1.1);
+        tl.to("#fade", { opacity: 1, duration: 0.5 }, END - 0.5);
+      }
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

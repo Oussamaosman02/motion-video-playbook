@@ -1,0 +1,16 @@
+On-screen copy (no voiceover). Base script → beats, with the time each beat starts.
+
+0.0  S0  cold open slates: "Misma landing." / "Pide una demo." / "Esperando."   (file names: landing_para_todos.html, pedir_una_demo.pdf, lead_sin_respuesta.jpg)
+3.0  S1  "¿Vendes tu SaaS mandando a todos a" / "la misma landing?" + mosaic of visitor tiles, tilt + zoom-through
+8.0  S2  (music drop) logo mark + SaaS IN House + "Haz esto."
+10.0 S3  search bar appears; placeholder "Prueba «pedir una demo»" → types "crear un Quiz Funnel"
+         "En lugar de pedir una demo," / "crea un Quiz Funnel."
+14.0 S4  bar: "5 a 8 preguntas"; huge "5–8" "preguntas para saber" chips: quién es · qué quiere · su problema; 2×4 question tiles
+18.5 S5  red takeover; bar: "añadir cards entre preguntas"; "No solo preguntas." "Entre medias, cards que convencen."
+22.5 S6  value cards (caso real ×2 demos, dato 68%, resultado +32% — all "ejemplo"; consejo) + «Vale, esto tiene sentido.»
+26.5 S7  bar: "resultado personalizado"; network of 6 profiles → "Tu resultado · Plan Growth"; "Según sus respuestas, un resultado personalizado."
+30.5 S8  dark slate: "Y aquí viene la parte importante."
+32.0 S9  "Las últimas cards llevan a tu producto." panel: por qué encaja / oferta específica / contador; −30% plan Growth (ejemplo), 14:59 countdown, cursor clicks "Canjear"
+37.0 S10 "Así no solo captas el lead." (struck) → "Lo segmentas." (ink) → "Lo educas." (light) → "Y lo llevas a la compra." (red)
+40.4 S11 tile orbit "Todo tu funnel. Un solo quiz." → 41.85 end card: logo, "Del lead a la compra, en un quiz.", [Comenta «QUIZ»] [saasinhouse.com]
+44.0 end

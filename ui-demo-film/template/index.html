@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --bg: #ecebe7; --ink: #111113; --muted: #6f6b64; --screen: #f7f6f3; --row: #e9e7e2;
+        --red: #e8382d; --red-txt: #c42a20; --red-deep: #7e140d; --red-soft: #fde6e3; --cream: #f2efe6; --gold: #f5c51b;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Archivo", sans-serif; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .full { position: absolute; inset: 0; }
+      .abs { position: absolute; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+      .w { display: inline-block; }
+      /* headline captions (the script lives here: the reference has no voice) */
+      .cap { position: absolute; left: 60px; right: 60px; top: 150px; height: 380px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+      .hl { font-size: 66px; font-weight: 800; line-height: 1.08; letter-spacing: -0.025em; }
+      .sub { margin-top: 22px; font-size: 34px; font-weight: 500; color: var(--muted); line-height: 1.25; }
+      .red { color: var(--red); }
+      /* app icon */
+      .icon { position: absolute; background: linear-gradient(160deg, #e8382d, #b8241a); border-radius: 26%; display: flex; align-items: center; justify-content: center; color: var(--cream); box-shadow: 0 30px 60px rgba(150, 30, 20, 0.28), inset 0 2px 0 rgba(255,255,255,0.35); }
+      /* pills */
+      .pill { display: inline-flex; align-items: center; gap: 22px; height: 110px; padding: 0 52px; border-radius: 999px; font-size: 40px; font-weight: 700; }
+      .gi { display: grid; grid-template-columns: 14px 14px; gap: 5px; }
+      .gi i { width: 14px; height: 14px; border-radius: 3px; background: currentColor; display: block; }
+      /* phone */
+      .phone { position: absolute; width: 600px; height: 1220px; border-radius: 90px; background: #0e0e10; padding: 16px; box-shadow: 0 60px 110px rgba(60, 40, 20, 0.2), inset 0 0 0 3px #2c2c30; }
+      .screen { position: relative; width: 568px; height: 1188px; border-radius: 74px; background: var(--screen); overflow: hidden; }
+      .island { position: absolute; left: 214px; top: 22px; width: 140px; height: 40px; border-radius: 20px; background: #0e0e10; }
+      .sbar { position: absolute; left: 66px; top: 28px; font-size: 26px; font-weight: 700; }
+      .layer { position: absolute; inset: 0; }
+      .lbl { font-size: 22px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+      .bar { position: absolute; left: 40px; width: 488px; height: 12px; border-radius: 8px; background: #e2dfd8; overflow: hidden; }
+      .bar i { display: block; height: 100%; width: 100%; background: var(--red); transform-origin: left center; }
+      .opt { position: absolute; left: 40px; width: 488px; height: 96px; border-radius: 22px; background: #fff; border: 2px solid #e2dfd8; display: flex; align-items: center; padding: 0 30px; font-size: 34px; font-weight: 650; overflow: hidden; }
+      .opt .sel { position: absolute; inset: -2px; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+      .q-title { position: absolute; left: 40px; width: 488px; font-size: 50px; font-weight: 800; line-height: 1.08; letter-spacing: -0.02em; }
+      .row { position: absolute; left: 32px; width: 504px; height: 84px; border-radius: 22px; background: var(--row); display: flex; align-items: center; padding: 0 24px 0 20px; gap: 18px; }
+      .row .acc { width: 7px; height: 54px; border-radius: 4px; }
+      .row .k { font-size: 18px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+      .row .t { font-size: 28px; font-weight: 700; margin-top: 2px; white-space: nowrap; }
+      .row .ck { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; border: 3px solid #c9c5bd; flex: none; }
+      .ins { background: var(--red-soft); }
+      .ins .k { color: var(--red-txt); }
+      .ins .flash { position: absolute; inset: 0; border-radius: 22px; background: var(--red); }
+      .av { border-radius: 50%; overflow: hidden; flex: none; background: #d9d6cf; }
+      .av img { width: 100%; height: 100%; display: block; }
+      .selbox { position: absolute; left: 26px; width: 516px; height: 96px; border-radius: 26px; border: 4px solid var(--red); box-shadow: 0 0 0 6px rgba(232,56,45,0.15); }
+      .toolbar { position: absolute; left: 40px; width: 488px; height: 54px; border-radius: 16px; background: var(--red); color: #fff; display: flex; align-items: center; padding: 0 18px; gap: 16px; font-size: 22px; font-weight: 700; box-shadow: 0 10px 24px rgba(200,40,30,0.3); }
+      .toolbar .sep { width: 2px; height: 26px; background: rgba(255,255,255,0.35); }
+      .toolbar .plus { margin-left: auto; width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; font-size: 32px; line-height: 1; }
+      .tabbar { position: absolute; left: 104px; top: 1060px; width: 360px; height: 96px; border-radius: 48px; background: #111; display: flex; align-items: center; justify-content: space-around; padding: 0 20px; }
+      .tabbar i { display: block; width: 30px; height: 30px; border-radius: 8px; border: 3px solid #f2efe6; }
+      .tabbar i.on { width: 86px; height: 58px; border-radius: 29px; background: var(--red); border: none; }
+      .card { position: absolute; left: 32px; width: 504px; border-radius: 30px; background: #fff; box-shadow: 0 10px 30px rgba(40,30,20,0.06); }
+      .ok { display: flex; align-items: center; gap: 16px; font-size: 26px; font-weight: 600; line-height: 1.2; margin-top: 18px; }
+      .ok b { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+      .btn { position: absolute; left: 40px; width: 488px; height: 108px; border-radius: 54px; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; box-shadow: 0 14px 30px rgba(200,40,30,0.3); }
+      /* cursor + click ripples */
+      #cur { position: absolute; left: 0; top: 0; width: 60px; height: 72px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25)); }
+      .rip { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 4px solid rgba(232,56,45,0.7); }
+      /* chapter footer like the reference ("02 Drag, swap, add, delete" + progress dashes) */
+      .chap { position: absolute; left: 56px; top: 1838px; font-size: 30px; font-weight: 600; color: #3a3833; }
+      .chap span { color: #6f6b64; margin-right: 14px; font-variant-numeric: tabular-nums; }
+      .dash { position: absolute; top: 1854px; height: 5px; border-radius: 3px; background: #c9c5bd; }
+      /* mini phones for triptych / grid */
+      .mini { position: absolute; transform-origin: 0 0; }
+      .grad { background: radial-gradient(circle at 18% 22%, #ff9b8c 0, transparent 42%), radial-gradient(circle at 82% 30%, #e8382d 0, transparent 46%), radial-gradient(circle at 30% 80%, #f05a6e 0, transparent 45%), radial-gradient(circle at 78% 82%, #ffc6b9 0, transparent 46%), #f3b2a6; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="46" data-width="1080" data-height="1920">
+      <!-- audio: music bed + UI SFX (no voice, like the reference) -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="46" data-track-index="10" data-volume="0.85"></audio>
+      <audio id="a-pop0" src="assets/pop.mp3" data-start="0.2" data-duration="0.5" data-track-index="11" data-volume="0.8"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="2.3" data-duration="1.2" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="a-pop1" src="assets/pop.mp3" data-start="6.6" data-duration="0.5" data-track-index="13" data-volume="0.7"></audio>
+      <audio id="a-t1" src="assets/tick.mp3" data-start="7.4" data-duration="0.5" data-track-index="14" data-volume="0.8"></audio>
+      <audio id="a-wh2" src="assets/whoosh.mp3" data-start="7.9" data-duration="1.2" data-track-index="15" data-volume="0.5"></audio>
+      <audio id="a-t2" src="assets/tick.mp3" data-start="10.0" data-duration="0.5" data-track-index="16" data-volume="0.8"></audio>
+      <audio id="a-t3" src="assets/tick.mp3" data-start="11.3" data-duration="0.5" data-track-index="17" data-volume="0.8"></audio>
+      <audio id="a-t4" src="assets/tick.mp3" data-start="12.6" data-duration="0.5" data-track-index="18" data-volume="0.8"></audio>
+      <audio id="a-wh3" src="assets/whoosh.mp3" data-start="13.5" data-duration="1.2" data-track-index="19" data-volume="0.35"></audio>
+      <audio id="a-t5" src="assets/tick.mp3" data-start="16.0" data-duration="0.5" data-track-index="20" data-volume="0.7"></audio>
+      <audio id="a-p2" src="assets/pop.mp3" data-start="16.85" data-duration="0.5" data-track-index="21" data-volume="0.7"></audio>
+      <audio id="a-t6" src="assets/tick.mp3" data-start="18.0" data-duration="0.5" data-track-index="22" data-volume="0.7"></audio>
+      <audio id="a-p3" src="assets/pop.mp3" data-start="18.7" data-duration="0.5" data-track-index="23" data-volume="0.7"></audio>
+      <audio id="a-t7" src="assets/tick.mp3" data-start="19.4" data-duration="0.5" data-track-index="24" data-volume="0.7"></audio>
+      <audio id="a-p4" src="assets/pop.mp3" data-start="20.0" data-duration="0.5" data-track-index="25" data-volume="0.7"></audio>
+      <audio id="a-p5" src="assets/pop.mp3" data-start="20.8" data-duration="0.5" data-track-index="26" data-volume="0.8"></audio>
+      <audio id="a-wh4" src="assets/whoosh.mp3" data-start="21.9" data-duration="1.2" data-track-index="27" data-volume="0.45"></audio>
+      <audio id="a-t8" src="assets/tick.mp3" data-start="23.4" data-duration="0.5" data-track-index="28" data-volume="0.7"></audio>
+      <audio id="a-t9" src="assets/tick.mp3" data-start="24.5" data-duration="0.5" data-track-index="29" data-volume="0.7"></audio>
+      <audio id="a-t10" src="assets/tick.mp3" data-start="25.6" data-duration="0.5" data-track-index="30" data-volume="0.7"></audio>
+      <audio id="a-wh5" src="assets/whoosh.mp3" data-start="26.5" data-duration="1.2" data-track-index="31" data-volume="0.55"></audio>
+      <audio id="a-t11" src="assets/tick.mp3" data-start="29.6" data-duration="0.5" data-track-index="32" data-volume="0.6"></audio>
+      <audio id="a-t12" src="assets/tick.mp3" data-start="30.0" data-duration="0.5" data-track-index="33" data-volume="0.6"></audio>
+      <audio id="a-t13" src="assets/tick.mp3" data-start="30.4" data-duration="0.5" data-track-index="34" data-volume="0.6"></audio>
+      <audio id="a-p6" src="assets/pop.mp3" data-start="31.0" data-duration="0.5" data-track-index="35" data-volume="0.8"></audio>
+      <audio id="a-p7" src="assets/pop.mp3" data-start="32.0" data-duration="0.5" data-track-index="36" data-volume="0.8"></audio>
+      <audio id="a-t14" src="assets/tick.mp3" data-start="34.0" data-duration="0.5" data-track-index="37" data-volume="0.9"></audio>
+      <audio id="a-p8" src="assets/pop.mp3" data-start="34.4" data-duration="0.5" data-track-index="38" data-volume="0.8"></audio>
+      <audio id="a-wh6" src="assets/whoosh.mp3" data-start="35.9" data-duration="1.2" data-track-index="39" data-volume="0.6"></audio>
+      <audio id="a-p9" src="assets/pop.mp3" data-start="36.6" data-duration="0.5" data-track-index="40" data-volume="0.7"></audio>
+      <audio id="a-t15" src="assets/tick.mp3" data-start="38.6" data-duration="0.5" data-track-index="41" data-volume="0.7"></audio>
+      <audio id="a-t16" src="assets/tick.mp3" data-start="39.2" data-duration="0.5" data-track-index="42" data-volume="0.7"></audio>
+      <audio id="a-t17" src="assets/tick.mp3" data-start="39.8" data-duration="0.5" data-track-index="43" data-volume="0.7"></audio>
+      <audio id="a-wh7" src="assets/whoosh.mp3" data-start="40.9" data-duration="1.2" data-track-index="44" data-volume="0.5"></audio>
+      <audio id="a-p10" src="assets/pop.mp3" data-start="41.3" data-duration="0.5" data-track-index="45" data-volume="0.8"></audio>
+
+      <!-- ============ S1 · app icon intro + hook ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="5.2" data-track-index="1">
+        <div id="s1-intro" class="full">
+          <div id="s1-icon" class="icon" style="left: 425px; top: 640px; width: 230px; height: 230px;"><span class="px" style="font-size: 104px; letter-spacing: 0.02em; margin-top: 12px;">IN</span></div>
+          <div class="center" style="top: 908px;"><div id="s1-pre" style="font-size: 32px; color: var(--muted); font-weight: 500;">Presentamos</div></div>
+          <div class="center" style="top: 952px;"><div id="s1-title" style="font-size: 116px; font-weight: 800; letter-spacing: -0.035em;">Quiz Funnel</div></div>
+          <div class="center" style="top: 1092px;"><div id="s1-by" style="font-size: 48px; font-weight: 700; color: var(--red); letter-spacing: -0.01em;">by SaaS in House</div></div>
+        </div>
+        <div class="center" style="top: 700px;">
+          <div id="s1-hook" class="hl" style="font-size: 82px; width: 960px; text-align: center;"></div>
+        </div>
+      </section>
+
+      <!-- ============ S2 · "haz esto": demo pill vs quiz pill ============ -->
+      <section id="s2" class="scene clip" data-start="5.2" data-duration="3.1" data-track-index="1">
+        <div class="center" style="top: 820px;">
+          <div id="s2-demo" class="pill" style="background: #dcd9d2; color: #5d5a54; position: relative;">
+            <span style="display: inline-block; width: 30px; height: 30px; border: 4px solid currentColor; border-radius: 7px;"></span>Pedir una demo
+            <i id="s2-strike" style="position: absolute; left: 36px; right: 36px; top: 53px; height: 5px; background: var(--red); border-radius: 3px; transform-origin: left center;"></i>
+          </div>
+        </div>
+        <div class="center" style="top: 1010px;">
+          <div id="s2-quiz" class="pill" style="background: var(--ink); color: var(--cream); box-shadow: 0 24px 50px rgba(0,0,0,0.22);">
+            <span class="gi"><i></i><i></i><i></i><i style="background: var(--red);"></i></span>Crear Quiz Funnel
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S3 · phone: questions, then editor inserting value cards ============ -->
+      <section id="s3" class="scene clip" data-start="8.3" data-duration="13.7" data-track-index="1">
+        <div id="s3-phone" class="phone" style="left: 240px; top: 560px;">
+          <div class="screen">
+            <!-- quiz -->
+            <div id="quiz" class="layer">
+              <div class="lbl abs" style="left: 40px; top: 108px;">Pregunta <span id="st1">1</span><span id="st2" style="display:none">2</span><span id="st3" style="display:none">3</span> de 8</div>
+              <div class="lbl abs" style="right: 40px; top: 108px; color: var(--red-txt);">1 min</div>
+              <div class="bar" style="top: 156px;"><i id="qbar"></i></div>
+              <div id="q1" class="layer">
+                <div class="q-title" style="top: 222px;">¿Quién eres?</div>
+                <div class="opt" style="top: 420px;">Founder SaaS<div id="q1s" class="sel"><span>Founder SaaS</span><span>✓</span></div></div>
+                <div class="opt" style="top: 532px;">Agencia</div>
+                <div class="opt" style="top: 644px;">Freelance</div>
+              </div>
+              <div id="q2" class="layer">
+                <div class="q-title" style="top: 222px;">¿Qué quieres conseguir?</div>
+                <div class="opt" style="top: 420px;">Menos churn</div>
+                <div class="opt" style="top: 532px;">Más demos<div id="q2s" class="sel"><span>Más demos</span><span>✓</span></div></div>
+                <div class="opt" style="top: 644px;">Subir precios</div>
+              </div>
+              <div id="q3" class="layer">
+                <div class="q-title" style="top: 222px;">¿Cuál es tu principal problema?</div>
+                <div class="opt" style="top: 420px;">Pocas visitas</div>
+                <div class="opt" style="top: 532px;">Ventas lentas</div>
+                <div class="opt" style="top: 644px;">Leads fríos<div id="q3s" class="sel"><span>Leads fríos</span><span>✓</span></div></div>
+              </div>
+              <div class="abs" style="left: 40px; top: 830px; width: 488px; font-size: 26px; color: var(--muted); line-height: 1.3;">Quién es · qué quiere conseguir · cuál es su principal problema</div>
+            </div>
+            <!-- editor -->
+            <div id="edit" class="layer">
+              <div class="lbl abs" style="left: 40px; top: 96px;">Editor</div>
+              <div class="abs" style="left: 40px; top: 128px; font-size: 56px; font-weight: 800; letter-spacing: -0.03em;">Mi Quiz Funnel</div>
+              <div class="abs" style="right: 36px; top: 132px; width: 62px; height: 62px; border-radius: 50%; background: var(--red); color: #fff; font-size: 44px; display: flex; align-items: center; justify-content: center;">+</div>
+              <div class="abs" style="left: 40px; top: 196px; font-size: 24px; color: var(--muted);">5 preguntas · <span id="nc0">0 cards</span><span id="nc1" style="display:none">1 card</span><span id="nc2" style="display:none">2 cards</span><span id="nc3" style="display:none">3 cards</span></div>
+              <div id="R0" class="row" style="top: 240px;"><i class="acc" style="background:#4f7cff"></i><div><div class="k">Pregunta 1</div><div class="t">¿Quién eres?</div></div><i class="ck"></i></div>
+              <div id="R1" class="row" style="top: 334px;"><i class="acc" style="background:#ff8a3d"></i><div><div class="k">Pregunta 2</div><div class="t">¿Qué quieres conseguir?</div></div><i class="ck"></i></div>
+              <div id="R2" class="row" style="top: 428px;"><i class="acc" style="background:#f06292"></i><div><div class="k">Pregunta 3</div><div class="t">Tu principal problema</div></div><i class="ck"></i></div>
+              <div id="R3" class="row" style="top: 522px;"><i class="acc" style="background:#36b37e"></i><div><div class="k">Pregunta 4</div><div class="t">Tamaño del equipo</div></div><i class="ck"></i></div>
+              <div id="R4" class="row" style="top: 616px;"><i class="acc" style="background:#9b6bff"></i><div><div class="k">Pregunta 5</div><div class="t">Herramientas actuales</div></div><i class="ck"></i></div>
+              <div id="I1" class="row ins" style="top: 428px;"><div class="av" style="width: 56px; height: 56px;"><img src="assets/av2.png" alt="" /></div><div><div class="k">Caso real</div><div class="t">+38% demos en 60 días</div></div><i class="flash"></i></div>
+              <div id="I2" class="row ins" style="top: 616px;"><b style="width: 56px; height: 56px; border-radius: 16px; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; flex: none;">7/10</b><div><div class="k">Dato</div><div class="t">no piden demo al llegar</div></div><i class="flash"></i></div>
+              <div id="I3" class="row ins" style="top: 804px;"><b style="width: 56px; height: 56px; border-radius: 16px; background: var(--ink); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 32px; flex: none;">!</b><div><div class="k">Consejo</div><div class="t">Una idea por card</div></div><i class="flash"></i></div>
+              <div id="sel1" class="selbox" style="top: 328px;"></div>
+              <div id="sel2" class="selbox" style="top: 516px;"></div>
+              <div id="sel3" class="selbox" style="top: 704px;"></div>
+              <div id="tb1" class="toolbar" data-layout-allow-overlap style="top: 268px;">⋮⋮ Card<i class="sep"></i>↑ ↓<i class="sep"></i>Swap<i class="sep"></i>Duplicar<span class="plus">+</span></div>
+              <div id="tb2" class="toolbar" data-layout-allow-overlap style="top: 456px;">⋮⋮ Card<i class="sep"></i>↑ ↓<i class="sep"></i>Swap<i class="sep"></i>Duplicar<span class="plus">+</span></div>
+              <div id="tb3" class="toolbar" data-layout-allow-overlap style="top: 644px;">⋮⋮ Card<i class="sep"></i>↑ ↓<i class="sep"></i>Swap<i class="sep"></i>Duplicar<span class="plus">+</span></div>
+              <div class="tabbar"><i></i><i class="on"></i><i></i><i style="border-radius: 50%;"></i></div>
+            </div>
+            <div class="island"></div><div class="sbar">9:41</div>
+          </div>
+        </div>
+        <div class="center" style="top: 1490px;">
+          <div id="s3-pill" data-layout-allow-overlap class="pill" style="background: #fff; height: 120px; font-size: 44px; box-shadow: 0 24px 60px rgba(40,30,20,0.22);"><span class="red" style="font-size: 64px; line-height: 1; margin-top: 18px;">“</span>Vale, esto tiene sentido.</div>
+        </div>
+      </section>
+
+      <!-- ============ S5 · three personalized results ============ -->
+      <section id="s5" class="scene clip" data-start="22" data-duration="5.4" data-track-index="1">
+        <div id="s5-ring" class="abs" style="left: 42px; top: 632px; width: 316px; height: 626px; border-radius: 52px; border: 5px solid var(--red); box-shadow: 0 0 0 8px rgba(232,56,45,0.14);"></div>
+        <div id="m0" class="mini" style="left: 50px; top: 640px;"></div>
+        <div id="m1" class="mini" style="left: 390px; top: 640px;"></div>
+        <div id="m2" class="mini" style="left: 730px; top: 640px;"></div>
+        <div class="center" style="top: 1330px;">
+          <div id="s5-pill" class="pill" style="background: var(--ink); color: var(--cream); height: 96px; font-size: 34px; gap: 18px;">⇄ Según sus respuestas <span style="display: inline-flex; gap: 10px; margin-left: 8px;"><i id="d0" style="width:16px;height:16px;border-radius:50%;background:var(--red);display:block"></i><i id="d1" style="width:16px;height:16px;border-radius:50%;background:#5b5953;display:block"></i><i id="d2" style="width:16px;height:16px;border-radius:50%;background:#5b5953;display:block"></i></span></div>
+        </div>
+        <div class="center" style="top: 1470px;"><div id="s5-names" style="display: flex; gap: 0; font-size: 28px; color: var(--muted); font-weight: 600;"><span style="width: 340px; text-align: center;">Founder solo</span><span style="width: 340px; text-align: center;">Equipo de ventas</span><span style="width: 340px; text-align: center;">Agencia B2B</span></div></div>
+      </section>
+
+      <!-- ============ S6 · last cards: fit, offer, countdown ============ -->
+      <section id="s6" class="scene clip" data-start="27.4" data-duration="8.6" data-track-index="1">
+        <div id="s6-phone" class="phone" style="left: 240px; top: 560px;">
+          <div class="screen">
+            <div id="s6-res" class="layer"></div>
+            <div id="offer" class="layer" style="background: var(--screen);">
+              <div class="lbl abs" style="left: 40px; top: 100px;">Card 8 de 8</div>
+              <div class="bar" style="top: 140px;"><i></i></div>
+              <div class="abs" style="left: 40px; top: 178px; display: flex; align-items: center; gap: 18px;">
+                <div class="av" style="width: 70px; height: 70px;"><img src="assets/av1.png" alt="" /></div>
+                <div style="font-size: 42px; font-weight: 800; letter-spacing: -0.02em;">Laura, esto es para ti</div>
+              </div>
+              <div id="cA" class="card" style="top: 282px; height: 300px; padding: 28px 30px;">
+                <div style="font-size: 30px; font-weight: 800;">Por qué encaja contigo</div>
+                <div id="ok1" class="ok"><b>✓</b>Leads fríos → los calientas con cards</div>
+                <div id="ok2" class="ok"><b>✓</b>Quieres demos → agenda en el resultado</div>
+                <div id="ok3" class="ok"><b>✓</b>Equipo pequeño → listo en 1 semana</div>
+              </div>
+              <div id="cB" class="card" style="top: 604px; height: 220px; padding: 28px 32px; background: var(--ink); color: var(--cream);">
+                <div class="px" style="font-size: 22px; color: #ff6a5e;">Oferta para ti</div>
+                <div style="font-size: 46px; font-weight: 800; letter-spacing: -0.03em; margin-top: 14px; white-space: nowrap;">−30% plan Growth</div>
+                <div style="font-size: 24px; color: #c9c7cf; margin-top: 8px;">3 primeros meses · ejemplo</div>
+              </div>
+              <div id="cC" class="card" style="top: 846px; height: 136px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; border: 3px solid var(--red);">
+                <div style="font-size: 30px; font-weight: 700;">Caduca en</div>
+                <div id="cd" style="font-size: 72px; font-weight: 800; color: var(--red-txt); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;">15:00</div>
+              </div>
+              <div id="s6-btn" class="btn" style="top: 1012px;">Canjear oferta →</div>
+            </div>
+            <div class="island"></div><div class="sbar">9:41</div>
+            <div id="toast" data-layout-allow-overlap class="abs" style="left: 84px; top: 80px; width: 400px; height: 90px; border-radius: 45px; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 30px; font-weight: 700;"><b data-layout-allow-overlap style="width: 40px; height: 40px; border-radius: 50%; background: #2fbf71; display: flex; align-items: center; justify-content: center; font-size: 24px;">✓</b>Oferta canjeada</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ S7 · grid of funnel screens, dim, payoff ============ -->
+      <section id="s7" class="scene clip grad" data-start="36" data-duration="5" data-track-index="1">
+        <div id="s7-grid" class="abs" data-layout-ignore style="left: 540px; top: 960px; width: 0; height: 0;"></div>
+        <div id="s7-dim" class="full" style="background: rgba(12, 10, 10, 0.74);"></div>
+        <div class="center" style="top: 820px;">
+          <div id="s7-pill" class="pill" style="background: #fff; height: 130px; font-size: 52px; font-weight: 800; box-shadow: 0 30px 70px rgba(80,20,10,0.35);">Así no solo captas el lead.</div>
+        </div>
+        <div class="full" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; color: #fff;">
+          <div id="p1" style="font-size: 104px; font-weight: 800; letter-spacing: -0.035em;">Lo <span style="color: #ff5a4e;">segmentas</span>,</div>
+          <div id="p2" style="font-size: 104px; font-weight: 800; letter-spacing: -0.035em;">lo <span style="color: #ff5a4e;">educas</span></div>
+          <div id="p3" style="font-size: 72px; font-weight: 800; letter-spacing: -0.03em; text-align: center; line-height: 1.08;">y lo llevas <span style="color: #ff5a4e;">directo a la compra.</span></div>
+        </div>
+      </section>
+
+      <!-- ============ S8 · end card ============ -->
+      <section id="s8" class="scene clip" data-start="41" data-duration="5" data-track-index="1">
+        <div class="center" style="top: 560px;"><div id="s8-h" style="font-size: 70px; font-weight: 800; letter-spacing: -0.03em;">Monta tu Quiz Funnel</div></div>
+        <div id="s8-icon" class="icon" style="left: 440px; top: 730px; width: 200px; height: 200px;"><span class="px" style="font-size: 90px; letter-spacing: 0.02em; margin-top: 10px;">IN</span></div>
+        <div class="center" style="top: 990px;">
+          <div id="s8-lock" style="display: flex; align-items: center; gap: 18px; font-size: 76px; font-weight: 800; letter-spacing: -0.03em;">SaaS <span class="px" style="font-size: 44px; background: var(--red); color: var(--cream); padding: 12px 16px 6px; border-radius: 12px; box-shadow: 6px 6px 0 var(--red-deep); letter-spacing: 0.04em;">IN</span> House</div>
+        </div>
+        <div class="center" style="top: 1105px;"><div id="s8-url" style="font-size: 34px; color: var(--muted);">saasinhouse.com</div></div>
+        <div class="center" style="top: 1260px;">
+          <div id="s8-cta" class="pill" style="background: var(--ink); color: var(--cream); height: 120px; font-size: 44px;">Comenta <span class="red">«QUIZ»</span></div>
+        </div>
+      </section>
+
+      <!-- ============ overlay: captions, chapters, cursor ============ -->
+      <section id="ui" class="scene clip" data-start="0" data-duration="46" data-track-index="5" style="pointer-events: none;">
+        <div id="c1" class="cap"><div class="hl">Haz esto.</div></div>
+        <div id="c2" class="cap"><div class="hl">En lugar de pedir una demo, <span class="red">crea un Quiz Funnel.</span></div></div>
+        <div id="c3" class="cap"><div class="hl">Primero, entre <span class="red">5 y 8 preguntas</span></div><div class="sub">quién es, qué quiere conseguir<br />y cuál es su principal problema</div></div>
+        <div id="c4" class="cap"><div class="hl">Pero no hagas<br />solo preguntas.</div></div>
+        <div id="c5" class="cap"><div class="hl">Entre medias, <span class="red">cards</span> con casos reales, datos o consejos</div></div>
+        <div id="c6" class="cap"><div class="hl">Después, según sus respuestas, un <span class="red">resultado personalizado</span></div></div>
+        <div id="c7" class="cap"><div class="hl">Y aquí viene<br />la parte importante.</div></div>
+        <div id="c8" class="cap"><div class="hl">Las últimas cards lo llevan <span class="red">hacia tu producto</span></div><div class="sub">por qué encaja · oferta específica · tiempo limitado</div></div>
+        <div id="chaps">
+          <div id="h1" class="chap"><span>01</span>Preguntas que segmentan</div>
+          <div id="h2" class="chap"><span>02</span>Cards de valor entre medias</div>
+          <div id="h3" class="chap"><span>03</span>Resultado personalizado</div>
+          <div id="h4" class="chap"><span>04</span>Encaje, oferta y contador</div>
+          <div id="dashes"></div>
+        </div>
+        <div id="rips"></div>
+        <svg id="cur" viewBox="0 0 30 36"><path d="M2 2 L2 28 L9 21.5 L13.5 32 L18 30 L13.6 19.8 L23 19.8 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" /></svg>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const END = 46;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+
+      /* ---------- helpers ---------- */
+      const inUp = (sel, t, d = 0.45, y = 30) => tl.fromTo(sel, { opacity: 0, y, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: d, ease: "power3.out" }, t);
+      const popIn = (sel, t, s = 0.6) => tl.fromTo(sel, { opacity: 0, scale: s }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2.2)" }, t);
+      function cap(id, t0, t1) {
+        tl.fromTo(id, { opacity: 0, y: 26, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "power3.out" }, t0);
+        tl.to(id, { opacity: 0, y: -22, filter: "blur(8px)", duration: 0.28, ease: "power2.in" }, t1 - 0.28);
+      }
+      const cur = (x, y, t, d = 0.45) => tl.to("#cur", { x, y, duration: d, ease: "power3.inOut" }, t);
+      let nrip = 0;
+      function click(x, y, t) {
+        tl.to("#cur", { scale: 0.8, duration: 0.08, yoyo: true, repeat: 1, transformOrigin: "0 0" }, t);
+        const r = document.createElement("div");
+        r.className = "rip"; r.id = "rip" + nrip++; r.style.left = x + "px"; r.style.top = y + "px";
+        $("rips").appendChild(r);
+        tl.fromTo(r, { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 0.6, duration: 0.06 }, t);
+        tl.to(r, { opacity: 0, scale: 1.3, duration: 0.4, ease: "power2.out" }, t + 0.06);
+      }
+      const show = (id, t) => tl.set(id, { display: "inline" }, t);
+      const hide = (id, t) => tl.set(id, { display: "none" }, t);
+
+      /* ---------- mini phone screens (built once, reused in triptych + grid) ---------- */
+      const PERS = [
+        { who: "Founder solo", plan: "Starter", bg: "#e8382d", fg: "#fff", av: "av4", bars: [82, 46, 58] },
+        { who: "Equipo de ventas", plan: "Growth", bg: "#111113", fg: "#f2efe6", av: "av1", bars: [64, 88, 72] },
+        { who: "Agencia B2B", plan: "Partner", bg: "#f5c51b", fg: "#111113", av: "av3", bars: [70, 60, 90] },
+      ];
+      const shell = (inner) => `<div class="phone" style="left:0;top:0;box-shadow:0 40px 80px rgba(60,40,20,.18),inset 0 0 0 3px #2c2c30"><div class="screen">${inner}<div class="island"></div><div class="sbar">9:41</div></div></div>`;
+      function resultScreen(i) {
+        const p = PERS[i];
+        const bars = ["Captación", "Activación", "Conversión"].map((k, j) => `<div style="position:absolute;left:40px;top:${690 + j * 92}px;width:488px"><div style="display:flex;justify-content:space-between;font-size:26px;font-weight:600"><span>${k}</span><span style="color:#6f6b64">${p.bars[j]}%</span></div><div style="margin-top:10px;height:14px;border-radius:8px;background:#e2dfd8"><div style="height:100%;width:${p.bars[j]}%;border-radius:8px;background:${i === 2 ? "#111113" : p.bg}"></div></div></div>`).join("");
+        return `<div class="px" style="position:absolute;left:0;right:0;top:104px;text-align:center;font-size:22px;color:#c42a20">Tu resultado</div>
+          <div class="av" style="position:absolute;left:214px;top:150px;width:140px;height:140px"><img src="assets/${p.av}.png" alt=""></div>
+          <div style="position:absolute;left:0;right:0;top:312px;text-align:center;font-size:40px;font-weight:800;letter-spacing:-.02em">${p.who}</div>
+          <div style="position:absolute;left:0;right:0;top:368px;text-align:center;font-size:26px;color:#6f6b64">Tu plan ideal</div>
+          <div style="position:absolute;left:40px;top:420px;width:488px;height:220px;border-radius:36px;background:${p.bg};color:${p.fg};padding:34px 36px">
+            <div style="font-size:24px;font-weight:700;opacity:.8">RECOMENDADO PARA TI</div>
+            <div style="font-size:96px;font-weight:800;letter-spacing:-.04em;margin-top:6px">${p.plan}</div></div>
+          ${bars}
+          <div style="position:absolute;left:40px;top:1010px;width:488px;height:104px;border-radius:52px;background:#111113;color:#f2efe6;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800">Ver mi plan →</div>`;
+      }
+      const QS = [["¿Quién eres?", ["Founder SaaS", "Agencia", "Freelance"], 0], ["¿Qué quieres conseguir?", ["Menos churn", "Más demos", "Subir precios"], 1], ["¿Cuál es tu principal problema?", ["Pocas visitas", "Ventas lentas", "Leads fríos"], 2], ["¿Cuántos sois en el equipo?", ["1–3", "4–10", "Más de 10"], 1]];
+      function quizScreen(k) {
+        const [q, opts, s] = QS[k];
+        return `<div class="lbl" style="position:absolute;left:40px;top:108px">Pregunta ${k + 1} de 8</div><div class="bar" style="top:156px"><i style="width:${(k + 1) * 12.5}%"></i></div>
+          <div class="q-title" style="top:222px">${q}</div>` + opts.map((o, j) => `<div class="opt" style="top:${420 + j * 112}px;${j === s ? "background:#e8382d;color:#fff;border-color:#e8382d" : ""}">${o}</div>`).join("");
+      }
+      function cardScreen(k) {
+        const C = [["Caso real", "+38% demos en 60 días", "Un SaaS B2B cambió su landing por un quiz de 6 preguntas."], ["Dato", "7 de 10", "visitantes no piden demo en su primera visita."], ["Consejo", "Una idea por card", "Corto, visual y con un dato que se recuerde."]][k];
+        return `<div class="px" style="position:absolute;left:40px;top:108px;font-size:22px;color:#c42a20">${C[0]}</div>
+          <div style="position:absolute;left:32px;top:160px;width:504px;height:560px;border-radius:40px;background:${k === 1 ? "#e8382d" : "#fff"};color:${k === 1 ? "#fff" : "#111"};padding:44px 40px">
+          <div style="font-size:${k === 1 ? 130 : 64}px;font-weight:800;letter-spacing:-.04em;line-height:1">${C[1]}</div><div style="font-size:32px;margin-top:30px;line-height:1.25;opacity:.8">${C[2]}</div></div>
+          <div style="position:absolute;left:40px;top:1010px;width:488px;height:104px;border-radius:52px;background:#111113;color:#f2efe6;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800">Siguiente →</div>`;
+      }
+      PERS.forEach((p, i) => ($("m" + i).innerHTML = shell(resultScreen(i))));
+      $("s6-res").innerHTML = resultScreen(1);
+
+      // grid: 7 x 7 mini phones of every funnel screen
+      const GW = 600, GH = 1220, GAP = 70, COLS = 7, ROWS = 7;
+      const screens = [() => quizScreen(0), () => cardScreen(0), () => resultScreen(0), () => quizScreen(1), () => cardScreen(1), () => resultScreen(1), () => quizScreen(2), () => cardScreen(2), () => resultScreen(2), () => quizScreen(3)];
+      let gh = "";
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++) {
+          const x = (c - (COLS - 1) / 2) * (GW + GAP) - GW / 2, y = (r - (ROWS - 1) / 2) * (GH + GAP) - GH / 2 + (c % 2 ? 260 : -120);
+          gh += `<div class="mini" style="left:${x}px;top:${y}px">${shell(screens[(r * 3 + c * 2) % screens.length]())}</div>`;
+        }
+      $("s7-grid").innerHTML = gh;
+
+      // progress dashes (bottom-right, like the reference)
+      for (let i = 0; i < 4; i++) {
+        const d = document.createElement("div");
+        d.className = "dash"; d.id = "dash" + i; d.style.left = 840 + i * 50 + "px"; d.style.width = "40px";
+        $("dashes").appendChild(d);
+      }
+
+      /* ---------- S1: icon, title, hook ---------- */
+      tl.fromTo("#s1-icon", { opacity: 0, scale: 0.2, rotation: -12 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(2.2)" }, 0.2);
+      inUp("#s1-pre", 0.75, 0.4, 16);
+      inUp("#s1-title", 0.9, 0.5, 24);
+      tl.fromTo("#s1-by", { opacity: 0, filter: "blur(18px)", scale: 1.1 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.8, ease: "power2.out" }, 1.25);
+      tl.to("#s1-intro", { y: -120, opacity: 0, filter: "blur(10px)", duration: 0.4, ease: "power2.in" }, 2.3);
+      const HOOK = ["¿Quieres", "vender", "tu", "SaaS", "sin", "mandar", "a", "todo", "el", "mundo", "a", "la", "misma", "landing?"];
+      $("s1-hook").innerHTML = HOOK.map((w, i) => `<span class="w${i >= 12 ? " red" : ""}" id="hw${i}">${w}</span>`).join(" ");
+      HOOK.forEach((w, i) => inUp("#hw" + i, 2.65 + i * 0.1, 0.35, 18));
+      tl.to("#s1-hook", { opacity: 0, y: -40, filter: "blur(8px)", duration: 0.3, ease: "power2.in" }, 4.9);
+
+      /* ---------- S2: haz esto ---------- */
+      cap("#c1", 5.2, 6.45);
+      cap("#c2", 6.45, 8.3);
+      popIn("#s2-demo", 5.35, 0.8);
+      tl.set("#cur", { x: 820, y: 1500, opacity: 0 }, 0);
+      tl.to("#cur", { opacity: 1, duration: 0.2 }, 5.6);
+      cur(700, 890, 5.6, 0.5);
+      tl.fromTo("#s2-strike", { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, 6.15);
+      tl.to("#s2-demo", { opacity: 0.45, scale: 0.94, duration: 0.3 }, 6.3);
+      popIn("#s2-quiz", 6.6, 0.5);
+      cur(700, 1080, 6.95, 0.45);
+      click(700, 1080, 7.4);
+      tl.to("#s2-quiz", { scale: 0.93, duration: 0.08, yoyo: true, repeat: 1 }, 7.4);
+      tl.to("#s2-quiz", { scale: 1.6, opacity: 0, filter: "blur(10px)", duration: 0.35, ease: "power2.in" }, 7.9);
+      tl.to("#s2-demo", { opacity: 0, duration: 0.25 }, 7.9);
+      cur(930, 1560, 7.75, 0.5);
+
+      /* ---------- S3: questions ---------- */
+      cap("#c3", 8.5, 15.3);
+      tl.fromTo("#s3-phone", { y: 1300, rotation: 4 }, { y: 0, rotation: 0, duration: 0.8, ease: "expo.out" }, 8.3);
+      tl.fromTo("#qbar", { scaleX: 0 }, { scaleX: 0.125, duration: 0.5, ease: "power2.out" }, 9.0);
+      tl.set("#edit", { opacity: 0 }, 0);
+      tl.set(["#q2", "#q3"], { opacity: 0 }, 0);
+      tl.set(["#q1s", "#q2s", "#q3s"], { opacity: 0 }, 0);
+      const qx = [[1050, 10.0], [1162, 11.3], [1274, 12.6]];
+      qx.forEach(([y, t], i) => {
+        cur(650, y + 6, t - 0.5, 0.45);
+        click(650, y + 6, t);
+        tl.fromTo("#q" + (i + 1) + "s", { opacity: 0, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 0.28, ease: "power2.out" }, t);
+        tl.to("#qbar", { scaleX: 0.125 * (i + 2), duration: 0.35, ease: "power2.out" }, t + 0.2);
+        if (i < 2) {
+          tl.to("#q" + (i + 1), { x: -620, opacity: 0, duration: 0.4, ease: "power3.in" }, t + 0.45);
+          tl.fromTo("#q" + (i + 2), { x: 620, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, t + 0.7);
+          hide("#st" + (i + 1), t + 0.7); show("#st" + (i + 2), t + 0.7);
+        }
+      });
+      cur(940, 1560, 13.05, 0.5);
+
+      /* ---------- S3: editor, insert value cards ---------- */
+      tl.to("#quiz", { opacity: 0, scale: 0.94, duration: 0.35, ease: "power2.in" }, 13.5);
+      tl.fromTo("#edit", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 13.75);
+      tl.to("#s3-phone", { scale: 1.04, duration: 1.2, ease: "sine.inOut" }, 13.75);
+      tl.to("#s3-phone", { scale: 1, duration: 0.6, ease: "sine.inOut" }, 15.0);
+      cap("#c4", 15.3, 17.15);
+      cap("#c5", 17.15, 22.0);
+      ["#I1", "#I2", "#I3", "#sel1", "#sel2", "#sel3", "#tb1", "#tb2", "#tb3"].forEach((s) => tl.set(s, { opacity: 0 }, 0));
+      // abs coords: screen origin (256,576); slot k top = 240 + 94k (screen)
+      const ins = [
+        { sel: 1, row: "#R1", tSel: 16.0, tPlus: 16.85, I: "#I1", shifts: [["#R2", 94], ["#R3", 94], ["#R4", 94]], nc: 1 },
+        { sel: 3, row: "#R2", tSel: 18.0, tPlus: 18.7, I: "#I2", shifts: [["#R3", 188], ["#R4", 188]], nc: 2 },
+        { sel: 5, row: "#R3", tSel: 19.4, tPlus: 20.0, I: "#I3", shifts: [["#R4", 282]], nc: 3 },
+      ];
+      ins.forEach((o, i) => {
+        const rowY = 576 + 240 + 94 * o.sel + 42, plusY = 576 + 240 + 94 * o.sel - 66 + 27;
+        cur(660, rowY + 8, o.tSel - 0.45, 0.42);
+        click(660, rowY + 8, o.tSel);
+        tl.fromTo("#sel" + (i + 1), { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.18 }, o.tSel);
+        tl.fromTo("#tb" + (i + 1), { opacity: 0, y: 12, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(2)" }, o.tSel + 0.08);
+        cur(746, plusY + 6, o.tSel + 0.35, 0.36);
+        click(746, plusY + 6, o.tPlus);
+        tl.to(["#sel" + (i + 1), "#tb" + (i + 1)], { opacity: 0, duration: 0.15 }, o.tPlus + 0.12);
+        o.shifts.forEach(([r, y]) => tl.to(r, { y, duration: 0.4, ease: "power3.inOut" }, o.tPlus + 0.05));
+        tl.fromTo(o.I, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.42, ease: "back.out(2)" }, o.tPlus + 0.15);
+        tl.fromTo(o.I + " .flash", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power1.in" }, o.tPlus + 0.5);
+        hide("#nc" + (o.nc - 1), o.tPlus + 0.2); show("#nc" + o.nc, o.tPlus + 0.2);
+      });
+      cur(930, 1620, 20.35, 0.5);
+      tl.fromTo("#s3-pill", { opacity: 0, y: 40, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2)" }, 20.8);
+      tl.to("#s3-pill", { scale: 1.04, duration: 0.3, yoyo: true, repeat: 1, ease: "sine.inOut" }, 21.3);
+      tl.to("#s3-phone", { y: -40, opacity: 0, scale: 0.92, duration: 0.35, ease: "power2.in" }, 21.65);
+      tl.to("#s3-pill", { opacity: 0, duration: 0.25 }, 21.7);
+
+      /* ---------- S5: three results ---------- */
+      cap("#c6", 22.0, 27.4);
+      ["#m0", "#m1", "#m2"].forEach((m, i) => tl.fromTo(m, { opacity: 0, y: 160, scale: 0.5 }, { opacity: 1, y: 0, scale: 0.5, duration: 0.6, ease: "expo.out" }, 22.1 + i * 0.12));
+      tl.fromTo("#s5-pill", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 22.6);
+      tl.fromTo("#s5-names", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 22.8);
+      tl.fromTo("#s5-ring", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 23.4);
+      cur(250, 1000, 22.9, 0.5);
+      click(250, 1000, 23.4);
+      cur(590, 1000, 24.05, 0.45); click(590, 1000, 24.5);
+      tl.to("#s5-ring", { x: 340, duration: 0.35, ease: "power3.inOut" }, 24.45);
+      tl.set("#d0", { background: "#5b5953" }, 24.5); tl.set("#d1", { background: "#e8382d" }, 24.5);
+      cur(930, 1000, 25.15, 0.45); click(930, 1000, 25.6);
+      tl.to("#s5-ring", { x: 680, duration: 0.35, ease: "power3.inOut" }, 25.55);
+      tl.set("#d1", { background: "#5b5953" }, 25.6); tl.set("#d2", { background: "#e8382d" }, 25.6);
+      tl.to("#s5-ring", { x: 340, duration: 0.35, ease: "power3.inOut" }, 26.15);
+      cur(980, 1650, 26.1, 0.45);
+      // zoom the middle phone into the full-size phone of S6 (left 240, top 560)
+      tl.to("#s5-ring", { opacity: 0, duration: 0.2 }, 26.5);
+      tl.to(["#m0", "#m2", "#s5-pill", "#s5-names"], { opacity: 0, duration: 0.3 }, 26.5);
+      tl.to("#m1", { scale: 1, x: -150, y: -80, duration: 0.85, ease: "power3.inOut" }, 26.55);
+
+      /* ---------- S6: fit, offer, countdown ---------- */
+      cap("#c7", 27.4, 29.0);
+      cap("#c8", 29.0, 36.0);
+      tl.set(["#offer", "#toast"], { opacity: 0 }, 0);
+      tl.fromTo("#offer", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 28.6);
+      tl.to("#s6-res", { opacity: 0, duration: 0.3 }, 28.65);
+      tl.set(["#ok1", "#ok2", "#ok3", "#cB", "#cC", "#s6-btn"], { opacity: 0 }, 0);
+      ["#ok1", "#ok2", "#ok3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 29.6 + i * 0.4));
+      tl.fromTo("#cB", { opacity: 0, y: 60, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 31.0);
+      tl.fromTo("#cC", { opacity: 0, y: 60, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 32.0);
+      tl.fromTo("#s6-btn", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 32.5);
+      const cd = { v: 900 };
+      tl.to(cd, { v: 896, duration: 4, ease: "none", onUpdate: () => { const s = Math.ceil(cd.v - 0.001); $("cd").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); } }, 32.0);
+      tl.to("#cC", { boxShadow: "0 0 0 10px rgba(232,56,45,0.18)", duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 32.6);
+      cur(640, 1660, 33.4, 0.55);
+      click(640, 1660, 34.0);
+      tl.to("#s6-btn", { scale: 0.94, duration: 0.09, yoyo: true, repeat: 1 }, 34.0);
+      tl.fromTo("#toast", { opacity: 0, y: -60, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(2)" }, 34.4);
+      cur(960, 1700, 34.9, 0.6);
+      tl.to("#cur", { opacity: 0, duration: 0.2 }, 35.5);
+      tl.to("#s6-phone", { scale: 0.85, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power2.in" }, 35.65);
+
+      /* ---------- chapters + dashes ---------- */
+      const CH = [[8.4, 15.3], [15.3, 22.0], [22.0, 27.4], [27.4, 35.9]];
+      CH.forEach(([a, b], i) => {
+        tl.fromTo("#h" + (i + 1), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35 }, a);
+        tl.to("#h" + (i + 1), { opacity: 0, duration: 0.2 }, b - 0.2);
+        tl.set("#dash" + i, { background: "#111113" }, a);
+        if (i < 3) tl.set("#dash" + i, { background: "#c9c5bd" }, b);
+      });
+      tl.set("#dashes", { opacity: 0 }, 0);
+      tl.set("#dashes", { opacity: 1 }, 8.4);
+      tl.set("#dashes", { opacity: 0 }, 35.9);
+
+      /* ---------- S7: grid pull-back, dim, payoff ---------- */
+      tl.fromTo("#s7-grid", { scale: 1.05, rotation: -10 }, { scale: 0.36, rotation: -6, duration: 2.4, ease: "expo.out" }, 36.0);
+      tl.to("#s7-grid", { scale: 0.33, y: -60, duration: 2.6, ease: "none" }, 38.4);
+      tl.fromTo("#s7-pill", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, 36.6);
+      tl.to("#s7-pill", { opacity: 0, y: -40, duration: 0.3, ease: "power2.in" }, 38.2);
+      tl.fromTo("#s7-dim", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 38.2);
+      ["#p1", "#p2", "#p3"].forEach((s, i) => inUp(s, 38.6 + i * 0.6, 0.45, 40));
+
+      /* ---------- S8: end card ---------- */
+      inUp("#s8-h", 41.1, 0.5, 30);
+      tl.fromTo("#s8-icon", { opacity: 0, scale: 0.3, rotation: -12 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.55, ease: "back.out(2.2)" }, 41.3);
+      tl.fromTo("#s8-lock", { opacity: 0, filter: "blur(16px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.6 }, 41.7);
+      inUp("#s8-url", 42.0, 0.4, 14);
+      tl.fromTo("#s8-cta", { opacity: 0, y: 40, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2)" }, 42.4);
+      tl.to("#s8-cta", { scale: 1.05, duration: 0.6, yoyo: true, repeat: 3, ease: "sine.inOut" }, 43.2);
+
+      tl.set({}, {}, END);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

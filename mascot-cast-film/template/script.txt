@@ -1,0 +1,13 @@
+On-screen text (music only, no narration). Base Quiz Funnel script, condensed to Cue-style two-line captions:
+S1  ¿Quieres vender / tu SaaS?
+S2  sin mandar a todo el mundo / a la misma landing?
+S3  Haz esto.
+S4  En lugar de pedir / una demo,  →  crea un / Quiz Funnel.
+S5  Primero, de 5 a 8 / preguntas.  →  Quién es. / Qué quiere.  →  Y cuál es su / principal problema.
+S6  Pero no hagas / solo preguntas.
+S7  Entre medias, / cards que convencen.  →  “Vale, esto / tiene sentido.”
+S8  Según sus respuestas, / un resultado personalizado.
+S9  Y aquí viene…  →  …la parte / importante.
+S10 Por qué / encaja contigo.  →  Una oferta / específica.  →  Y un contador: / tiempo limitado.
+S11 Así no solo / captas el lead.  →  Lo segmentas, lo educas / y lo llevas a la compra.
+S12 Dale un / quiz.  →  SaaS IN House · Quiz Funnels que venden tu SaaS · comenta «quiz»

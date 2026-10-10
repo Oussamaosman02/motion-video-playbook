@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --bg: #f6f6f4; --ink: #16141b; --muted: #67646e; --line: #e9e7e2;
+        --red: #e8382d; --red-small: #c42a20; --red-deep: #7e140d; --gold: #f5c51b; --green: #1f9d55;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Archivo", sans-serif; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .full { position: absolute; inset: 0; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+
+      /* captions (Cue style): 1-2 lines, line 1 ink, line 2 accent; words rise out of a mask */
+      .cap { position: absolute; left: 80px; right: 80px; font-weight: 640; letter-spacing: -0.035em; line-height: 1.08; }
+      .cap.c { text-align: center; }
+      .cap .ln { display: block; }
+      .wm { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.04em 0.12em; margin-bottom: -0.12em; }
+      .wi { display: inline-block; }
+      .acc { color: var(--red); }
+      .dark .cap, .cap.white { color: #fff; }
+      .cap.white { text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35); }
+      .cap.white .acc { color: #ff9a90; }
+
+      /* mascots (pure SVG, built by mascot()) */
+      .m { position: absolute; }
+      .m svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 10px 14px rgba(40, 30, 20, 0.12)); }
+
+      /* UI */
+      .card { position: absolute; background: #fff; border-radius: 32px; box-shadow: 0 24px 70px rgba(40, 30, 20, 0.10), 0 0 0 1px rgba(30, 20, 10, 0.05); }
+      .phone { position: absolute; background: #fff; border-radius: 86px; border: 14px solid #141318; box-shadow: 0 40px 100px rgba(20, 15, 10, 0.22); overflow: hidden; }
+      .notch { position: absolute; left: 50%; top: 22px; width: 170px; height: 46px; margin-left: -85px; border-radius: 30px; background: #141318; }
+      .sbar { position: absolute; left: 48px; right: 48px; top: 28px; display: flex; justify-content: space-between; font-size: 26px; font-weight: 700; }
+      .chrome { height: 58px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 24px; }
+      .chrome i { width: 14px; height: 14px; border-radius: 50%; background: #e4e0d7; display: block; }
+      .url { margin-left: 18px; flex: 1; height: 34px; border-radius: 10px; background: #f3f1ec; color: var(--muted); font-size: 20px; display: flex; align-items: center; padding: 0 16px; }
+      .btn { display: flex; align-items: center; justify-content: center; background: var(--ink); color: #fff; border-radius: 999px; font-weight: 700; }
+      .chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; font-size: 22px; font-weight: 700; background: #f1efea; color: var(--ink); }
+      .chip.red { background: var(--red-small); color: #fff; }
+      .chip.green { background: #e3f6ea; color: #15703b; }
+      .tag { font-size: 20px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+      .opt { position: relative; height: 96px; border: 2px solid var(--line); border-radius: 22px; display: flex; align-items: center; padding: 0 28px; font-size: 34px; font-weight: 620; background: #fff; overflow: hidden; margin-top: 18px; }
+      .opt .sel { position: absolute; inset: 0; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+      .q { position: absolute; left: 40px; right: 40px; top: 250px; }
+      .qt { font-size: 46px; font-weight: 760; letter-spacing: -0.03em; line-height: 1.08; }
+      .seg { flex: 1; height: 12px; border-radius: 8px; background: #efebe3; overflow: hidden; }
+      .seg i { display: block; height: 100%; background: var(--red); transform-origin: left center; transform: scaleX(0); }
+      .tap { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; background: rgba(22, 20, 27, 0.25); opacity: 0; }
+      .row { display: flex; align-items: center; gap: 22px; padding: 22px 30px; border-bottom: 1px solid var(--line); }
+      .row .who { font-size: 32px; font-weight: 720; letter-spacing: -0.02em; }
+      .row .what { font-size: 25px; color: var(--muted); margin-top: 4px; }
+      .row .av { width: 84px; height: 84px; position: relative; flex: none; }
+      .ok { width: 46px; height: 46px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; flex: none; }
+      .lbl { position: absolute; transform: translateX(-50%); padding: 6px 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.94); font-size: 22px; font-weight: 720; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); }
+      .appicon { display: flex; align-items: center; justify-content: center; background: linear-gradient(150deg, #ff5a4c, #c42a20); color: #fff8f0; font-family: "Silkscreen", monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="54.5" data-width="1080" data-height="1920">
+      <!-- audio: music only (like the Cue film); SFX carry absolute times -->
+      <audio id="mus" src="assets/music_cut.mp3" data-start="0" data-duration="54.5" data-track-index="10" data-volume="0.85"></audio>
+      <audio id="wh1" src="assets/whoosh.mp3" data-start="3.3" data-duration="1.0" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="wh2" src="assets/whoosh.mp3" data-start="9.5" data-duration="1.0" data-track-index="12" data-volume="0.4"></audio>
+      <audio id="wh3" src="assets/whoosh.mp3" data-start="14.1" data-duration="1.0" data-track-index="13" data-volume="0.4"></audio>
+      <audio id="wh4" src="assets/whoosh.mp3" data-start="22.7" data-duration="1.0" data-track-index="14" data-volume="0.4"></audio>
+      <audio id="wh5" src="assets/whoosh.mp3" data-start="29.5" data-duration="1.0" data-track-index="15" data-volume="0.4"></audio>
+      <audio id="wh6" src="assets/whoosh.mp3" data-start="37.1" data-duration="1.0" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="wh7" src="assets/whoosh.mp3" data-start="44.9" data-duration="1.0" data-track-index="17" data-volume="0.4"></audio>
+      <audio id="pop1" src="assets/pop.mp3" data-start="0.9" data-duration="0.5" data-track-index="18" data-volume="0.5"></audio>
+      <audio id="pop2" src="assets/pop.mp3" data-start="8.3" data-duration="0.5" data-track-index="19" data-volume="0.55"></audio>
+      <audio id="pop3" src="assets/pop.mp3" data-start="12.1" data-duration="0.5" data-track-index="20" data-volume="0.5"></audio>
+      <audio id="pop4" src="assets/pop.mp3" data-start="23.6" data-duration="0.5" data-track-index="21" data-volume="0.5"></audio>
+      <audio id="pop5" src="assets/pop.mp3" data-start="24.6" data-duration="0.5" data-track-index="22" data-volume="0.5"></audio>
+      <audio id="pop6" src="assets/pop.mp3" data-start="25.6" data-duration="0.5" data-track-index="23" data-volume="0.5"></audio>
+      <audio id="pop7" src="assets/pop.mp3" data-start="30.3" data-duration="0.5" data-track-index="24" data-volume="0.45"></audio>
+      <audio id="pop8" src="assets/pop.mp3" data-start="39.8" data-duration="0.5" data-track-index="25" data-volume="0.5"></audio>
+      <audio id="pop9" src="assets/pop.mp3" data-start="45.6" data-duration="0.5" data-track-index="26" data-volume="0.5"></audio>
+      <audio id="pop10" src="assets/pop.mp3" data-start="50.0" data-duration="0.5" data-track-index="27" data-volume="0.5"></audio>
+      <audio id="clk1" src="assets/click.mp3" data-start="15.9" data-duration="0.5" data-track-index="28" data-volume="0.6"></audio>
+      <audio id="clk2" src="assets/click.mp3" data-start="18.1" data-duration="0.5" data-track-index="29" data-volume="0.6"></audio>
+      <audio id="clk3" src="assets/click.mp3" data-start="20.2" data-duration="0.5" data-track-index="30" data-volume="0.6"></audio>
+      <audio id="clk4" src="assets/click.mp3" data-start="43.4" data-duration="0.5" data-track-index="31" data-volume="0.6"></audio>
+      <audio id="tck" src="assets/tick.mp3" data-start="41.6" data-duration="1.5" data-track-index="32" data-volume="0.45"></audio>
+      <audio id="chm" src="assets/chime.mp3" data-start="51.8" data-duration="2.0" data-track-index="33" data-volume="0.6"></audio>
+
+      <!-- ============ S1 · hook + cast ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="3.4" data-track-index="1">
+        <div class="cap c" id="s1-cap" style="top: 560px; font-size: 128px;"></div>
+        <div id="s1-cast" class="full"></div>
+      </section>
+
+      <!-- ============ S2 · everyone gets the same landing ============ -->
+      <section id="s2" class="scene clip" data-start="3.4" data-duration="4.6" data-track-index="1">
+        <div class="cap c" id="s2-cap" style="top: 320px; font-size: 66px;"></div>
+        <div id="s2-land" class="card" style="left: 150px; top: 640px; width: 780px; height: 520px; overflow: hidden;">
+          <div class="chrome"><i></i><i></i><i></i><div class="url">tusaas.com</div></div>
+          <div style="padding: 48px 52px;">
+            <div style="font-size: 50px; font-weight: 760; letter-spacing: -0.03em; line-height: 1.08;">La plataforma que todo el mundo necesita</div>
+            <div style="font-size: 28px; color: var(--muted); margin-top: 18px;">Para todos. Igual para todos.</div>
+          </div>
+          <div class="btn" style="position: absolute; left: 52px; top: 390px; width: 300px; height: 84px; font-size: 32px; background: var(--red);">Pedir demo</div>
+          <div id="s2-zero" class="chip" style="position: absolute; left: 380px; top: 404px; font-size: 26px;">0 clics</div>
+        </div>
+        <div id="s2-cast" class="full"></div>
+      </section>
+
+      <!-- ============ S3 · "Haz esto." ============ -->
+      <section id="s3" class="scene clip" data-start="8.0" data-duration="1.6" data-track-index="1">
+        <div class="cap c" id="s3-cap" style="top: 620px; font-size: 156px;"></div>
+        <div class="m" id="s3-hero" data-k="tri" data-c="#e8382d" style="left: 410px; top: 1000px; width: 260px; height: 260px;"></div>
+      </section>
+
+      <!-- ============ S4 · no demo → quiz funnel ============ -->
+      <section id="s4" class="scene clip" data-start="9.6" data-duration="4.6" data-track-index="1">
+        <div class="cap" id="s4-cap" style="top: 280px; font-size: 92px; height: 220px;"></div>
+        <svg class="full" style="pointer-events: none;" viewBox="0 0 1080 1920"><path id="s4-strike" d="M76 436 C 260 424 420 432 490 420" stroke="#e8382d" stroke-width="14" fill="none" stroke-linecap="round" /></svg>
+        <div id="s4-demo" class="card" style="left: 70px; top: 1000px; width: 300px; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;">
+          <div class="btn" style="width: 230px; height: 76px; font-size: 30px; background: var(--red);">Pedir demo</div>
+          <div class="tag">landing</div>
+        </div>
+        <svg class="full" viewBox="0 0 1080 1920"><path id="s4-x" d="M110 1030 L330 1190 M330 1030 L110 1190" stroke="#16141b" stroke-width="12" fill="none" stroke-linecap="round" /></svg>
+        <div class="m" id="s4-hero" data-k="tri" data-c="#e8382d" style="left: 420px; top: 1000px; width: 240px; height: 240px;"></div>
+        <div id="s4-quiz" class="card" style="left: 720px; top: 960px; width: 290px; height: 300px; padding: 30px 28px;">
+          <div class="tag" style="color: var(--red-small);">Quiz · 1/8</div>
+          <div style="font-size: 30px; font-weight: 760; margin-top: 12px; line-height: 1.1;">¿Quién eres?</div>
+          <div style="height: 40px; border-radius: 12px; background: #f1efea; margin-top: 20px;"></div>
+          <div style="height: 40px; border-radius: 12px; background: var(--red); margin-top: 12px;"></div>
+          <div style="height: 40px; border-radius: 12px; background: #f1efea; margin-top: 12px;"></div>
+        </div>
+        <div class="center" style="top: 1380px;"><div id="s4-name" class="chip red" style="font-size: 34px; padding: 14px 30px;">Quiz Funnel</div></div>
+      </section>
+
+      <!-- ============ S5 · 5–8 questions answered on a phone ============ -->
+      <section id="s5" class="scene clip" data-start="14.2" data-duration="6.8" data-track-index="1">
+        <div class="cap" id="s5-cap" style="top: 230px; font-size: 84px;"></div>
+        <div id="s5-phone" class="phone" style="left: 250px; top: 640px; width: 580px; height: 1220px;">
+          <div class="notch"></div>
+          <div class="sbar"><span>9:41</span><span>●●●</span></div>
+          <div style="position: absolute; left: 40px; right: 40px; top: 120px; display: flex; align-items: center; gap: 14px;">
+            <div class="tag" style="color: var(--red-small);">Pregunta <span id="s5-n">1</span>/8</div>
+          </div>
+          <div style="position: absolute; left: 40px; right: 40px; top: 170px; display: flex; gap: 8px;">
+            <div class="seg"><i id="sg1"></i></div><div class="seg"><i id="sg2"></i></div><div class="seg"><i id="sg3"></i></div><div class="seg"><i></i></div>
+            <div class="seg"><i></i></div><div class="seg"><i></i></div><div class="seg"><i></i></div><div class="seg"><i></i></div>
+          </div>
+          <div class="q" id="q1">
+            <div class="qt">¿Quién eres?</div>
+            <div class="opt">Founder<div class="sel" id="q1s">Founder <span>✓</span></div></div>
+            <div class="opt">Marketing</div>
+            <div class="opt">Ventas</div>
+          </div>
+          <div class="q" id="q2">
+            <div class="qt">¿Qué quieres conseguir?</div>
+            <div class="opt">Más ventas</div>
+            <div class="opt">Más demos<div class="sel" id="q2s">Más demos <span>✓</span></div></div>
+            <div class="opt">Menos churn</div>
+          </div>
+          <div class="q" id="q3">
+            <div class="qt">¿Tu principal problema?</div>
+            <div class="opt">Poco tráfico</div>
+            <div class="opt">Leads fríos<div class="sel" id="q3s">Leads fríos <span>✓</span></div></div>
+            <div class="opt">Nadie compra</div>
+          </div>
+          <div id="s5-next" class="btn" style="position: absolute; left: 40px; right: 40px; top: 1010px; height: 96px; font-size: 32px;">Siguiente →</div>
+          <div class="tag" style="position: absolute; left: 0; right: 0; top: 920px; text-align: center;">≈ 1 minuto · sin registro</div>
+          <div class="tap" id="tap1" style="left: 260px; top: 420px;"></div>
+          <div class="tap" id="tap2" style="left: 260px; top: 590px;"></div>
+          <div class="tap" id="tap3" style="left: 260px; top: 590px;"></div>
+        </div>
+        <div class="m" id="s5-hero" data-k="tri" data-c="#e8382d" style="left: 760px; top: 560px; width: 160px; height: 160px;"></div>
+      </section>
+
+      <!-- ============ S6 · "Pero no hagas solo preguntas." ============ -->
+      <section id="s6" class="scene clip" data-start="21.0" data-duration="1.8" data-track-index="1">
+        <div class="cap c" id="s6-cap" style="top: 720px; font-size: 118px;"></div>
+      </section>
+
+      <!-- ============ S7 · cards in between ============ -->
+      <section id="s7" class="scene clip" data-start="22.8" data-duration="6.8" data-track-index="1">
+        <div class="cap" id="s7-cap" style="top: 230px; font-size: 84px;"></div>
+        <div id="s7-c1" class="card" style="left: 80px; top: 640px; width: 760px; height: 250px; padding: 34px 40px;">
+          <div class="tag" style="color: var(--red-small);">Caso real · ejemplo</div>
+          <div style="font-size: 64px; font-weight: 780; letter-spacing: -0.03em; margin-top: 10px;">4 → 19 demos/mes</div>
+          <div style="font-size: 26px; color: var(--muted); margin-top: 6px;">SaaS B2B de 6 personas</div>
+          <div class="ok" id="s7-k1" style="position: absolute; right: 30px; top: 30px;">✓</div>
+        </div>
+        <div id="s7-c2" class="card" style="left: 240px; top: 940px; width: 760px; height: 250px; padding: 34px 40px;">
+          <div class="tag" style="color: var(--red-small);">Dato · ejemplo</div>
+          <div style="font-size: 64px; font-weight: 780; letter-spacing: -0.03em; margin-top: 10px;">7 de cada 10</div>
+          <div style="font-size: 26px; color: var(--muted); margin-top: 6px;">terminan el quiz si ven su resultado</div>
+          <div class="ok" id="s7-k2" style="position: absolute; right: 30px; top: 30px;">✓</div>
+        </div>
+        <div id="s7-c3" class="card" style="left: 80px; top: 1240px; width: 760px; height: 250px; padding: 34px 40px;">
+          <div class="tag" style="color: var(--red-small);">Consejo</div>
+          <div style="font-size: 50px; font-weight: 780; letter-spacing: -0.03em; margin-top: 12px; line-height: 1.05;">Responde en &lt;5 min</div>
+          <div class="ok" id="s7-k3" style="position: absolute; right: 30px; top: 30px;">✓</div>
+        </div>
+        <div class="m" id="s7-m1" data-k="star" data-c="#f5c51b" style="left: 820px; top: 690px; width: 170px; height: 170px;"></div>
+        <div class="m" id="s7-m2" data-k="heart" data-c="#8a5cf6" style="left: 70px; top: 990px; width: 170px; height: 170px;"></div>
+        <div class="m" id="s7-m3" data-k="circle" data-c="#22c79a" style="left: 820px; top: 1290px; width: 170px; height: 170px;"></div>
+        <div class="center" style="top: 1600px;"><div id="s7-sum" class="chip" style="font-size: 30px; padding: 14px 28px;">pregunta · card · pregunta · card</div></div>
+      </section>
+
+      <!-- ============ S8 · personalised result per lead (the "Agents" list) ============ -->
+      <section id="s8" class="scene clip" data-start="29.6" data-duration="5.0" data-track-index="1">
+        <div class="cap" id="s8-cap" style="top: 230px; font-size: 78px;"></div>
+        <div id="s8-list" class="card" style="left: 90px; top: 620px; width: 900px; height: 905px; overflow: hidden;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 36px 30px 18px;">
+            <div style="font-size: 52px; font-weight: 800; letter-spacing: -0.03em;">Resultados</div>
+            <div class="chip">ejemplo</div>
+          </div>
+          <div class="row" id="s8-r1"><div class="av"><div class="m" data-k="square" data-c="#2a2733" style="inset: 0;"></div></div><div style="flex: 1;"><div class="who">Founder</div><div class="what">Plan Growth · encaja con su equipo</div></div><div class="chip green">listo</div></div>
+          <div class="row" id="s8-r2"><div class="av"><div class="m" data-k="heart" data-c="#8a5cf6" style="inset: 0;"></div></div><div style="flex: 1;"><div class="who">Marketing</div><div class="what">Kit de captación · plantillas</div></div><div class="chip green">listo</div></div>
+          <div class="row" id="s8-r3"><div class="av"><div class="m" data-k="star" data-c="#f5c51b" style="inset: 0;"></div></div><div style="flex: 1;"><div class="who">Ventas</div><div class="what">Demo guiada de 15 min</div></div><div class="chip green">listo</div></div>
+          <div class="row" id="s8-r4"><div class="av"><div class="m" data-k="drop" data-c="#ff7a59" style="inset: 0;"></div></div><div style="flex: 1;"><div class="who">Agencia</div><div class="what">Plan Partner · multi-cliente</div></div><div class="chip green">listo</div></div>
+          <div class="row" id="s8-r5"><div class="av"><div class="m" data-k="circle" data-c="#22c79a" style="inset: 0;"></div></div><div style="flex: 1;"><div class="who">CTO</div><div class="what">Integraciones y API primero</div></div><div class="chip green">listo</div></div>
+          <div class="row" id="s8-r6" style="border-bottom: 0;"><div class="av"><div class="m" data-k="gear" data-c="#9a97a3" style="inset: 0;"></div></div><div style="flex: 1;"><div class="who">Operaciones</div><div class="what">Automatiza el onboarding</div></div><div class="chip green">listo</div></div>
+        </div>
+      </section>
+
+      <!-- ============ S9 · dark: "Y aquí viene la parte importante." ============ -->
+      <section id="s9" class="scene clip dark" data-start="34.6" data-duration="2.6" data-track-index="1" style="background: #0b0a0d;">
+        <div class="center" style="top: 600px;"><div id="s9-ic" class="appicon" style="width: 170px; height: 170px; border-radius: 44px; font-size: 110px; font-family: Archivo, sans-serif; font-weight: 800;">?</div></div>
+        <div class="cap c" id="s9-cap" style="top: 860px; font-size: 92px;"></div>
+      </section>
+
+      <!-- ============ S10 · fit + offer + countdown on a phone over a dusk desk ============ -->
+      <section id="s10" class="scene clip" data-start="37.2" data-duration="7.8" data-track-index="1">
+        <img id="s10-bg" data-layout-allow-overflow src="assets/dusk.jpg" alt="" style="position: absolute; left: -40px; top: -60px; width: 1160px; height: 2060px; object-fit: cover;" />
+        <div class="full" style="background: linear-gradient(to bottom, rgba(5, 8, 20, 0.62) 0%, rgba(5, 8, 20, 0.15) 34%, rgba(5, 8, 20, 0.25) 100%);"></div>
+        <div class="cap white" id="s10-cap" style="top: 200px; font-size: 84px;"></div>
+        <div id="s10-phone" class="phone" style="left: 250px; top: 600px; width: 580px; height: 1240px;">
+          <div class="notch"></div>
+          <div class="sbar"><span>9:41</span><span>●●●</span></div>
+          <div style="position: absolute; left: 40px; right: 40px; top: 110px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div class="m" data-k="square" data-c="#2a2733" style="position: relative; width: 70px; height: 70px;"></div>
+              <div><div style="font-size: 34px; font-weight: 800;">Tu plan, Founder</div><div class="tag" style="font-size: 17px;">según tus respuestas</div></div>
+            </div>
+            <div style="font-size: 26px; font-weight: 750; margin-top: 30px;">Por qué encaja contigo</div>
+            <div id="s10-f1" style="display: flex; gap: 16px; align-items: center; margin-top: 16px; font-size: 28px; font-weight: 600;"><div class="ok" style="width: 40px; height: 40px; font-size: 22px;">✓</div>Equipo de 2 a 10 personas</div>
+            <div id="s10-f2" style="display: flex; gap: 16px; align-items: center; margin-top: 14px; font-size: 28px; font-weight: 600;"><div class="ok" style="width: 40px; height: 40px; font-size: 22px;">✓</div>Quieres más demos</div>
+            <div id="s10-f3" style="display: flex; gap: 16px; align-items: center; margin-top: 14px; font-size: 28px; font-weight: 600;"><div class="ok" style="width: 40px; height: 40px; font-size: 22px;">✓</div>Tus leads llegan fríos</div>
+            <div id="s10-offer" style="margin-top: 34px; border-radius: 28px; background: #fff3f1; border: 2px solid #ffd3cf; padding: 26px 28px; position: relative;">
+              <div class="tag" style="color: var(--red-small); font-size: 17px;">Oferta de ejemplo</div>
+              <div style="font-size: 40px; font-weight: 800; margin-top: 6px;">Plan Growth</div>
+              <div style="display: flex; align-items: baseline; gap: 16px; margin-top: 6px;">
+                <div style="font-size: 32px; color: var(--muted); text-decoration: line-through;">99€</div>
+                <div style="font-size: 58px; font-weight: 820; letter-spacing: -0.03em;">69€<span style="font-size: 26px; font-weight: 600;">/mes</span></div>
+              </div>
+              <div class="chip red" style="position: absolute; right: 24px; top: 24px; font-size: 26px;">−30%</div>
+            </div>
+            <div id="s10-cd" style="margin-top: 26px; text-align: center;">
+              <div class="tag" style="font-size: 18px;">Termina en</div>
+              <div id="s10-t" style="font-size: 92px; font-weight: 820; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.05; margin-top: 8px;">14:59</div>
+            </div>
+          </div>
+          <div id="s10-go" class="btn" style="position: absolute; left: 40px; right: 40px; top: 1050px; height: 100px; font-size: 34px;">Canjear oferta</div>
+          <div id="s10-done" data-layout-allow-overlap class="btn" style="position: absolute; left: 40px; right: 40px; top: 1050px; height: 100px; font-size: 34px; background: var(--green);">✓ Oferta canjeada</div>
+          <div class="tap" id="tap4" style="left: 276px; top: 1100px;"></div>
+        </div>
+      </section>
+
+      <!-- ============ S11 · the office: segment, educate, buy ============ -->
+      <section id="s11" class="scene clip" data-start="45.0" data-duration="4.6" data-track-index="1">
+        <img id="s11-bg" data-layout-allow-overflow src="assets/office.jpg" alt="" style="position: absolute; left: -30px; top: -40px; width: 1140px; height: 2020px; object-fit: cover;" />
+        <div class="full" style="background: linear-gradient(to bottom, rgba(246, 246, 244, 0.85) 0%, rgba(246, 246, 244, 0.55) 26%, rgba(246, 246, 244, 0) 44%);"></div>
+        <div class="cap" id="s11-cap" style="top: 200px; font-size: 80px;"></div>
+        <div id="s11-cast" class="full"></div>
+      </section>
+
+      <!-- ============ S12 · "Dale un quiz." + cast + logo ============ -->
+      <section id="s12" class="scene clip" data-start="49.6" data-duration="4.9" data-track-index="1">
+        <div class="cap c" id="s12-cap" style="top: 640px; font-size: 128px;"></div>
+        <div id="s12-cast" class="full"></div>
+        <div class="center" style="top: 640px;"><div class="m" id="s12-hero" data-k="tri" data-c="#e8382d" style="position: relative; width: 200px; height: 200px;"></div></div>
+        <div class="center" style="top: 900px;">
+          <div id="s12-word" style="display: flex; align-items: center; gap: 22px;">
+            <div style="font-size: 108px; font-weight: 880; font-stretch: 118%; letter-spacing: -0.02em; line-height: 1;">SaaS</div>
+            <div class="px" style="font-size: 56px; background: var(--red-small); color: #fff; padding: 14px 18px 8px; border-radius: 14px; box-shadow: 6px 6px 0 var(--red-deep);">IN</div>
+            <div style="font-size: 108px; font-weight: 880; font-stretch: 118%; letter-spacing: -0.02em; line-height: 1;">House</div>
+          </div>
+        </div>
+        <div class="center" style="top: 1100px;"><div id="s12-sub" style="font-size: 44px; font-weight: 600; color: var(--muted); letter-spacing: -0.02em;">Quiz Funnels que venden tu SaaS</div></div>
+        <div class="center" style="top: 1220px;"><div id="s12-cta" class="px" style="height: 110px; padding: 0 50px; display: flex; align-items: center; border-radius: 26px; background: var(--ink); color: #fff; font-size: 40px;">comenta «quiz»</div></div>
+      </section>
+    </div>
+
+    <script>
+      const END = 54.5;
+      const tl = gsap.timeline({ paused: true });
+
+      /* ---------- mascots: flat shapes + googly eyes, all SVG ---------- */
+      const COL = { red: "#e8382d", gold: "#f5c51b", purple: "#8a5cf6", coral: "#ff7a59", mint: "#22c79a", ink: "#2a2733", grey: "#9a97a3", sky: "#3aa0ff" };
+      function starPts(cx, cy, R, r) {
+        const p = [];
+        for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r : R; p.push((cx + rr * Math.cos(a)).toFixed(1) + "," + (cy + rr * Math.sin(a)).toFixed(1)); }
+        return p.join(" ");
+      }
+      function gearPath() {
+        let d = "";
+        for (let i = 0; i <= 96; i++) { const a = (i / 96) * Math.PI * 2, r = 41 + 6 * Math.cos(a * 8); d += (i ? "L" : "M") + (50 + r * Math.cos(a)).toFixed(2) + " " + (52 + r * Math.sin(a)).toFixed(2); }
+        return d + "Z";
+      }
+      const SHAPES = {
+        tri: { body: (c) => `<path d="M50 8 C54 8 57 10 59 14 L94 80 C97 87 93 93 85 93 L15 93 C7 93 3 87 6 80 L41 14 C43 10 46 8 50 8Z" fill="${c}"/>`, ey: 64, ex: 10, er: 9 },
+        star: { body: (c) => `<polygon points="${starPts(50, 55, 46, 22)}" fill="${c}" stroke="${c}" stroke-width="9" stroke-linejoin="round"/>`, ey: 56, ex: 8.5, er: 7.5 },
+        heart: { body: (c) => `<path d="M50 92 C20 72 5 54 5 35 C5 18 18 8 31 8 C40 8 46 13 50 21 C54 13 60 8 69 8 C82 8 95 18 95 35 C95 54 80 72 50 92Z" fill="${c}"/>`, ey: 42, ex: 12, er: 9 },
+        drop: { body: (c) => `<path d="M50 5 C64 26 88 42 88 63 C88 82 71 95 50 95 C29 95 12 82 12 63 C12 42 36 26 50 5Z" fill="${c}"/>`, ey: 62, ex: 11, er: 9.5 },
+        circle: { body: (c) => `<circle cx="50" cy="52" r="44" fill="${c}"/>`, ey: 48, ex: 13, er: 10 },
+        square: { body: (c) => `<rect x="7" y="9" width="86" height="86" rx="24" fill="${c}"/>`, ey: 48, ex: 13, er: 10 },
+        gear: { body: (c) => `<path d="${gearPath()}" fill="${c}"/>`, ey: 50, ex: 12, er: 9.5 },
+        bag: { body: (c) => `<path d="M35 30 V22 Q35 13 44 13 H56 Q65 13 65 22 V30" stroke="${c}" stroke-width="7" fill="none"/><rect x="8" y="28" width="84" height="64" rx="16" fill="${c}"/>`, ey: 58, ex: 13, er: 10 },
+      };
+      let mid = 0;
+      function mascot(el) {
+        const s = SHAPES[el.dataset.k], c = el.dataset.c, n = "mm" + mid++;
+        el.dataset.mid = n;
+        const eye = (x) => `<g><ellipse cx="${x}" cy="${s.ey}" rx="${s.er}" ry="${s.er * 1.18}" fill="#fff"/><circle class="pup" cx="${x + s.er * 0.22}" cy="${s.ey + s.er * 0.25}" r="${s.er * 0.58}" fill="#16141b"/><circle cx="${x + s.er * 0.42}" cy="${s.ey - s.er * 0.05}" r="${s.er * 0.18}" fill="#fff"/></g>`;
+        el.innerHTML = `<svg viewBox="0 0 100 100">${s.body(c)}<g class="eyes" id="${n}-e">${eye(50 - s.ex)}${eye(50 + s.ex)}</g><path d="M45 ${s.ey + s.er * 1.6} Q50 ${s.ey + s.er * 2.05} 55 ${s.ey + s.er * 1.6}" stroke="#16141b" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>`;
+      }
+      // a cast row: [kind, colour] list spread across the width
+      const CAST = [["drop", COL.coral], ["star", COL.gold], ["bag", COL.sky], ["tri", COL.red], ["circle", COL.mint], ["heart", COL.purple], ["square", COL.ink], ["gear", COL.grey]];
+      function castRow(hostId, y, size, n, prefix) {
+        const host = document.getElementById(hostId);
+        const gap = (1080 - 80) / n;
+        const els = [];
+        for (let i = 0; i < n; i++) {
+          const d = document.createElement("div");
+          d.className = "m"; d.id = `${prefix}${i}`;
+          d.dataset.k = CAST[i % CAST.length][0]; d.dataset.c = CAST[i % CAST.length][1];
+          d.style.cssText = `left:${40 + gap * i + (gap - size) / 2}px; top:${y}px; width:${size}px; height:${size}px;`;
+          host.appendChild(d); els.push(d);
+        }
+        return els;
+      }
+      castRow("s1-cast", 1080, 112, 8, "s1m");
+      castRow("s2-cast", 1300, 112, 8, "s2m");
+      castRow("s12-cast", 940, 112, 8, "s12m");
+      // office: mascots sitting at desks with segment labels
+      const DESK = [["square", COL.ink, 150, 1470, 170, "Founder"], ["heart", COL.purple, 760, 1470, 170, "Marketing"], ["star", COL.gold, 410, 1230, 120, "Ventas"], ["drop", COL.coral, 640, 1170, 110, "Agencia"], ["circle", COL.mint, 250, 1140, 100, "CTO"], ["gear", COL.grey, 860, 1130, 110, "Ops"]];
+      const office = document.getElementById("s11-cast");
+      DESK.forEach(([k, c, x, y, s, name], i) => {
+        const d = document.createElement("div");
+        d.className = "m"; d.id = "s11m" + i; d.dataset.k = k; d.dataset.c = c;
+        d.style.cssText = `left:${x}px; top:${y}px; width:${s}px; height:${s}px;`;
+        office.appendChild(d);
+        const l = document.createElement("div");
+        l.className = "lbl"; l.id = "s11l" + i; l.textContent = name;
+        l.style.cssText = `left:${x + s / 2}px; top:${y + s + 8}px;`;
+        office.appendChild(l);
+      });
+      document.querySelectorAll(".m").forEach(mascot);
+      const eyesOf = (sel) => "#" + document.querySelector(sel).dataset.mid + "-e";
+      const pupsOf = (sel) => "#" + document.querySelector(sel).dataset.mid + "-e .pup";
+      const blink = (sel, at) => tl.to(eyesOf(sel), { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.07, yoyo: true, repeat: 1 }, at);
+      const look = (sel, at, x, y, d = 0.25) => tl.to(pupsOf(sel), { x, y, duration: d, ease: "power2.out" }, at);
+      const bob = (sel, at, n = 3, amp = -14) => tl.to(sel, { y: amp, duration: 0.32, yoyo: true, repeat: n * 2 - 1, ease: "sine.inOut" }, at);
+      const hop = (sel, at) => tl.to(sel, { y: -46, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" }, at);
+      const mpop = (sel, at, d = 0.5) => tl.fromTo(sel, { scale: 0, rotation: -14, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: d, ease: "back.out(2.4)" }, at);
+
+      /* ---------- captions: lines of words rise out of a mask ---------- */
+      let cid = 0;
+      // lines: [["text", accent?], ...]; returns the group element
+      function cap(hostId, lines, at, outAt, stagger = 0.07) {
+        const host = document.getElementById(hostId);
+        const g = document.createElement("div");
+        g.id = `${hostId}-g${cid++}`;
+        g.style.position = "absolute"; g.style.left = "0"; g.style.right = "0"; g.style.top = "0";
+        let k = 0;
+        lines.forEach(([text, acc]) => {
+          const ln = document.createElement("span");
+          ln.className = "ln" + (acc ? " acc" : "");
+          text.split(" ").forEach((word) => {
+            const m = document.createElement("span"); m.className = "wm"; m.setAttribute("data-layout-allow-overflow", "");
+            const i = document.createElement("span"); i.className = "wi"; i.textContent = word;
+            m.appendChild(i); ln.appendChild(m); ln.appendChild(document.createTextNode(" "));
+            tl.fromTo(i, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.42, ease: "power3.out" }, at + k++ * stagger);
+          });
+          g.appendChild(ln);
+        });
+        host.appendChild(g);
+        if (outAt) tl.to(g, { opacity: 0, filter: "blur(10px)", y: -10, duration: 0.22 }, outAt);
+        return g;
+      }
+      const pop = (sel, at, from = {}) =>
+        tl.fromTo(sel, { opacity: 0, y: 50, scale: 0.94, filter: "blur(8px)", ...from }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.5, ease: "back.out(1.5)" }, at);
+      const out = (sel, at, d = 0.25) => tl.to(sel, { opacity: 0, filter: "blur(10px)", duration: d }, at);
+      function draw(id, at, dur) {
+        const p = document.getElementById(id);
+        const L = Math.ceil(p.getTotalLength()) + 2;
+        p.style.strokeDasharray = L;
+        tl.fromTo(p, { strokeDashoffset: L }, { strokeDashoffset: 0, duration: dur, ease: "power1.inOut" }, at);
+      }
+      const tap = (id, at) => tl.fromTo(id, { opacity: 0.9, scale: 0.3 }, { opacity: 0, scale: 1.5, duration: 0.45, ease: "power2.out", immediateRender: false }, at);
+
+      /* ---------- S1 · hook ---------- */
+      cap("s1-cap", [["¿Quieres vender"], ["tu SaaS?", true]], 0.15, 3.15);
+      for (let i = 0; i < 8; i++) { mpop(`#s1m${i}`, 0.9 + ((i * 3) % 8) * 0.07); bob(`#s1m${i}`, 1.6 + i * 0.05, 2, -12); }
+      for (let i = 0; i < 8; i++) { look(`#s1m${i}`, 2.1, i < 4 ? 3 : -3, -1); blink(`#s1m${i}`, 2.6 + (i % 3) * 0.12); }
+      tl.to("#s1-cast", { opacity: 0, y: 40, duration: 0.25 }, 3.15);
+
+      /* ---------- S2 · same landing for everyone ---------- */
+      cap("s2-cap", [["sin mandar a todo el mundo"], ["a la misma landing?", true]], 3.45, 7.75, 0.06);
+      pop("#s2-land", 3.6, { scale: 0.85 });
+      for (let i = 0; i < 8; i++) { mpop(`#s2m${i}`, 4.0 + i * 0.06, 0.4); look(`#s2m${i}`, 4.5, (540 - (90 + i * 125)) / 120, -4); }
+      // everyone gets the same page → bored eyes
+      for (let i = 0; i < 8; i++) tl.to(eyesOf(`#s2m${i}`), { scaleY: 0.45, y: 3, transformOrigin: "50% 100%", duration: 0.3 }, 6.0 + (i % 4) * 0.08);
+      pop("#s2-zero", 6.3, { y: 0, scale: 0.6 });
+      tl.to("#s2-land", { x: -12, duration: 0.06, yoyo: true, repeat: 5 }, 6.4);
+      tl.to(["#s2-land", "#s2-cast"], { opacity: 0, y: 30, filter: "blur(8px)", duration: 0.25 }, 7.75);
+
+      /* ---------- S3 · "Haz esto." ---------- */
+      cap("s3-cap", [["Haz esto."]], 8.05, 9.4, 0.12);
+      mpop("#s3-hero", 8.3, 0.55);
+      tl.to(eyesOf("#s3-hero") + " g:first-child", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.08, yoyo: true, repeat: 1, repeatDelay: 0.25 }, 8.9);
+      hop("#s3-hero", 9.0);
+
+      /* ---------- S4 · no demo → quiz funnel ---------- */
+      cap("s4-cap", [["En lugar de pedir"], ["una demo,", true]], 9.65, 11.85, 0.08);
+      draw("s4-strike", 10.85, 0.35);
+      out("#s4-strike", 11.85, 0.2);
+      mpop("#s4-hero", 9.8);
+      pop("#s4-demo", 10.0, { x: -60, y: 0 });
+      look("#s4-hero", 10.3, -4, 1);
+      draw("s4-x", 11.0, 0.3);
+      tl.to("#s4-demo", { opacity: 0.35, scale: 0.92, duration: 0.3 }, 11.3);
+      tl.to(eyesOf("#s4-hero"), { scaleY: 0.5, transformOrigin: "50% 100%", duration: 0.15, yoyo: true, repeat: 1, repeatDelay: 0.4 }, 11.1);
+      cap("s4-cap", [["crea un"], ["Quiz Funnel.", true]], 11.95, 14.0, 0.1);
+      pop("#s4-quiz", 12.1, { x: 60, y: 0, rotation: 6 });
+      look("#s4-hero", 12.2, 4, 0);
+      hop("#s4-hero", 12.4); hop("#s4-hero", 12.85);
+      pop("#s4-name", 12.6, { y: 30 });
+      blink("#s4-hero", 13.4);
+      out(["#s4-demo", "#s4-quiz", "#s4-hero", "#s4-name", "#s4-x"], 13.95);
+
+      /* ---------- S5 · 5–8 questions ---------- */
+      cap("s5-cap", [["Primero, de 5 a 8"], ["preguntas.", true]], 14.25, 16.35);
+      cap("s5-cap", [["Quién es."], ["Qué quiere.", true]], 16.45, 18.55);
+      cap("s5-cap", [["Y cuál es su"], ["principal problema.", true]], 18.65, 20.8);
+      pop("#s5-phone", 14.3, { y: 160, scale: 1 });
+      mpop("#s5-hero", 14.8);
+      tl.to("#sg1", { scaleX: 1, duration: 0.3 }, 14.7);
+      tl.set(["#q2", "#q3"], { opacity: 0 }, 14.2);
+      look("#s5-hero", 15.2, -4, 4);
+      const answer = (n, at) => { tap(`#tap${n}`, at); tl.fromTo(`#q${n}s`, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.22 }, at); };
+      const swap = (from, to, at, n) => {
+        tl.to(`#q${from}`, { x: -80, opacity: 0, duration: 0.25 }, at);
+        tl.fromTo(`#q${to}`, { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" }, at + 0.15);
+        tl.set("#s5-n", { textContent: n }, at + 0.15);
+        tl.to(`#sg${n}`, { scaleX: 1, duration: 0.3 }, at + 0.15);
+      };
+      tl.set("#q1s, #q2s, #q3s", { clipPath: "inset(0 100% 0 0)" }, 14.2);
+      answer(1, 15.9); swap(1, 2, 16.6, 2);
+      answer(2, 18.1); swap(2, 3, 18.8, 3);
+      answer(3, 20.2);
+      hop("#s5-hero", 16.0); blink("#s5-hero", 17.2); hop("#s5-hero", 18.2); blink("#s5-hero", 19.4); hop("#s5-hero", 20.3);
+      out(["#s5-phone", "#s5-hero"], 20.8);
+
+      /* ---------- S6 ---------- */
+      cap("s6-cap", [["Pero no hagas"], ["solo preguntas.", true]], 21.05, 22.6, 0.1);
+
+      /* ---------- S7 · cards between questions ---------- */
+      cap("s7-cap", [["Entre medias,"], ["cards que convencen.", true]], 22.85, 26.85);
+      pop("#s7-c1", 23.5, { x: -80, y: 0 }); mpop("#s7-m1", 23.6);
+      pop("#s7-c2", 24.5, { x: 80, y: 0 }); mpop("#s7-m2", 24.6);
+      pop("#s7-c3", 25.5, { x: -80, y: 0 }); mpop("#s7-m3", 25.6);
+      look("#s7-m1", 24.0, -5, 1); look("#s7-m2", 25.0, 5, 1); look("#s7-m3", 26.0, -5, 1);
+      cap("s7-cap", [["“Vale, esto"], ["tiene sentido.”", true]], 26.95, 29.4);
+      [1, 2, 3].forEach((n, i) => { tl.fromTo(`#s7-k${n}`, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(3)" }, 27.3 + i * 0.25); bob(`#s7-m${n}`, 27.4 + i * 0.12, 3, -16); look(`#s7-m${n}`, 27.3, 0, -3); });
+      pop("#s7-sum", 28.0, { y: 30 });
+      out(["#s7-c1", "#s7-c2", "#s7-c3", "#s7-m1", "#s7-m2", "#s7-m3", "#s7-sum"], 29.35);
+
+      /* ---------- S8 · a different result for each lead ---------- */
+      cap("s8-cap", [["Según sus respuestas,"], ["un resultado personalizado.", true]], 29.65, 34.4, 0.06);
+      pop("#s8-list", 29.9, { y: 120, scale: 1 });
+      for (let i = 1; i <= 6; i++) tl.fromTo(`#s8-r${i}`, { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 30.3 + (i - 1) * 0.42);
+      out("#s8-list", 34.35);
+
+      /* ---------- S9 · dark beat ---------- */
+      tl.fromTo("#s9-ic", { scale: 0.3, opacity: 0, rotation: -15 }, { scale: 1, opacity: 1, rotation: 0, duration: 0.5, ease: "back.out(2.2)" }, 34.7);
+      cap("s9-cap", [["Y aquí viene…"]], 34.75, 35.75, 0.1);
+      cap("s9-cap", [["…la parte"], ["importante.", true]], 35.85, 37.05, 0.1);
+      tl.set("#s9-ic", { textContent: "!" }, 35.85);
+      tl.to("#s9-ic", { scale: 1.15, duration: 0.12, yoyo: true, repeat: 1 }, 35.85);
+
+      /* ---------- S10 · fit → offer → countdown ---------- */
+      tl.fromTo("#s10-bg", { scale: 1.12, filter: "blur(6px)" }, { scale: 1.0, filter: "blur(3px)", duration: 7.8, ease: "none" }, 37.2);
+      pop("#s10-phone", 37.3, { y: 200, scale: 1 });
+      cap("s10-cap", [["Por qué"], ["encaja contigo.", true]], 37.35, 39.45);
+      [1, 2, 3].forEach((n, i) => tl.fromTo(`#s10-f${n}`, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.3 }, 38.0 + i * 0.35));
+      cap("s10-cap", [["Una oferta"], ["específica.", true]], 39.55, 41.45);
+      pop("#s10-offer", 39.8, { y: 40 });
+      cap("s10-cap", [["Y un contador:"], ["tiempo limitado.", true]], 41.55, 44.8);
+      pop("#s10-cd", 41.5, { y: 30 });
+      ["14:58", "14:57", "14:56", "14:55"].forEach((t, i) => tl.set("#s10-t", { textContent: t }, 42.0 + i * 0.85));
+      tl.to("#s10-t", { color: "#c42a20", duration: 0.2 }, 42.0);
+      tl.set("#s10-done", { opacity: 0 }, 37.2);
+      tap("#tap4", 43.4);
+      tl.to("#s10-go", { scale: 0.94, duration: 0.08, yoyo: true, repeat: 1 }, 43.4);
+      tl.fromTo("#s10-done", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 43.6);
+      out("#s10-phone", 44.8);
+
+      /* ---------- S11 · office: segment, educate, buy ---------- */
+      tl.fromTo("#s11-bg", { scale: 1.08 }, { scale: 1.0, duration: 4.6, ease: "none" }, 45.0);
+      cap("s11-cap", [["Así no solo"], ["captas el lead.", true]], 45.05, 46.85);
+      DESK.forEach((_, i) => { mpop(`#s11m${i}`, 45.5 + i * 0.12, 0.45); tl.fromTo(`#s11l${i}`, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, 45.75 + i * 0.12); });
+      cap("s11-cap", [["Lo segmentas, lo educas"], ["y lo llevas a la compra.", true]], 46.95, 49.4, 0.06);
+      const STATUS = [["segmentado", 47.2], ["educado", 47.9], ["compra ✓", 48.6]];
+      STATUS.forEach(([txt, at], j) => DESK.forEach((_, i) => {
+        if (j === 0) tl.set(`#s11l${i}`, { textContent: txt, color: "#16141b" }, at + i * 0.05);
+        if (j === 1) tl.set(`#s11l${i}`, { textContent: txt, color: "#c42a20" }, at + i * 0.05);
+        if (j === 2 && i < 4) tl.set(`#s11l${i}`, { textContent: txt, color: "#15703b" }, at + i * 0.05);
+      }));
+      [0, 1, 2, 3].forEach((i) => hop(`#s11m${i}`, 48.65 + i * 0.05));
+      DESK.forEach((_, i) => blink(`#s11m${i}`, 46.5 + (i % 3) * 0.2));
+
+      /* ---------- S12 · "Dale un quiz." → logo ---------- */
+      cap("s12-cap", [["Dale un"], ["quiz.", true]], 49.65, 51.55, 0.12);
+      tl.set("#s12-cap", { y: -100 }, 49.6);
+      for (let i = 0; i < 8; i++) { mpop(`#s12m${i}`, 50.0 + i * 0.08, 0.45); blink(`#s12m${i}`, 50.9 + (i % 4) * 0.1); }
+      tl.to("#s12-cast", { opacity: 0, y: 30, duration: 0.25 }, 51.55);
+      mpop("#s12-hero", 51.7, 0.55);
+      tl.to("#s12-hero", { y: -40, scale: 0.6, duration: 0.4, ease: "power2.inOut" }, 52.0);
+      tl.fromTo("#s12-word", { opacity: 0, y: 30, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, 51.9);
+      tl.fromTo("#s12-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45 }, 52.3);
+      tl.fromTo("#s12-cta", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 52.7);
+      tl.to("#s12-cta", { scale: 1.05, duration: 0.4, yoyo: true, repeat: 1, ease: "sine.inOut" }, 53.3);
+      blink("#s12-hero", 53.6);
+
+      tl.set({}, {}, END);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

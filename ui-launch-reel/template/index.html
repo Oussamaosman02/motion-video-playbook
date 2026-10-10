@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "GeistPixel"; src: url("assets/GeistPixel-Square.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Geist"; src: url("assets/Geist-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "GeistMono"; src: url("assets/GeistMono-Variable.ttf") format("truetype"); font-weight: 100 900; }
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        /* launch-reel look: light paper, ink text, ONE accent colour (brand red) */
+        --bg: #f6f5f1; --ink: #0b0b10; --muted: #75727c; --line: #e7e4dd; --card: #ffffff;
+        --ac: #e8382d; --ac-soft: #fbe4e0; --ac-deep: #7e140d; --cool: #e7eaec; --gold: #f5c51b; --cream: #f2efe6;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Geist", sans-serif; }
+      .scene { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
+      .full { position: absolute; inset: 0; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+      /* pixel headline, mixed case, one accent phrase */
+      .hl { font-family: "GeistPixel", monospace; font-size: 84px; line-height: 1.12; letter-spacing: -0.01em; text-align: center; padding: 0 70px; }
+      .hl b, .ac { font-weight: 400; color: var(--ac); }
+      .hl.big { font-size: 116px; }
+      .wd { display: inline-block; white-space: nowrap; }
+      .ch { opacity: 0; }
+      .mono { font-family: "GeistMono", monospace; }
+      .px { font-family: "GeistPixel", monospace; }
+        .stack { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+      .foot { font-family: "Geist", sans-serif; font-size: 24px; color: var(--muted); text-align: center; }
+      /* cards */
+      .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 26px; box-shadow: 0 30px 70px rgba(30, 25, 20, 0.10), 0 2px 0 rgba(0,0,0,0.03); }
+      .tile { position: absolute; width: 300px; height: 300px; background: #fff; border-radius: 64px; box-shadow: 0 30px 60px rgba(30,25,20,0.14); display: flex; align-items: center; justify-content: center; }
+      .tile img { width: 76%; height: 76%; object-fit: contain; }
+      .chip { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 999px; font-family: "GeistMono", monospace; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; }
+      .chip-ex { background: #f1efe9; color: var(--muted); }
+      .winner { position: absolute; background: var(--ac); color: var(--cream); font-family: "GeistPixel", monospace; font-size: 34px; padding: 10px 22px; border-radius: 10px; transform: rotate(-6deg); box-shadow: 0 10px 24px rgba(232,56,45,0.35); }
+      .row { display: flex; align-items: center; gap: 22px; padding: 52px 40px; border-top: 1px solid var(--line); }
+      .num { font-family: "GeistPixel", monospace; font-size: 40px; color: var(--muted); width: 64px; }
+      .q { font-size: 42px; font-weight: 600; flex: 1; }
+      .ans { position: relative; height: 76px; padding: 0 24px; border-radius: 16px; border: 2px solid var(--line); display: flex; align-items: center; gap: 12px; font-size: 29px; font-weight: 600; color: var(--muted); overflow: hidden; }
+      .ans .fill { position: absolute; inset: 0; background: var(--ac); transform-origin: left center; }
+      .ans span { position: relative; }
+      .bar { height: 14px; border-radius: 8px; background: #efece6; overflow: hidden; }
+      .bar i { display: block; height: 100%; width: 100%; background: var(--ac); transform-origin: left center; border-radius: 8px; }
+      .hlt { background-image: linear-gradient(rgba(245,197,27,0.55), rgba(245,197,27,0.55)); background-repeat: no-repeat; background-size: 0% 100%; padding: 0 4px; }
+      .post { position: absolute; width: 470px; padding: 30px; }
+      .post .who { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+      .av { width: 62px; height: 62px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: "GeistPixel", monospace; font-size: 26px; color: #fff; }
+      .post .n { font-size: 24px; font-weight: 700; }
+      .post .s { font-size: 19px; color: var(--muted); }
+      .post p { font-size: 29px; line-height: 1.36; }
+      .check { width: 44px; height: 44px; border-radius: 50%; background: var(--ac); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; flex: none; }
+      .kv { display: flex; align-items: center; gap: 22px; padding: 44px 0; border-top: 1px solid var(--line); }
+      .kv .k { width: 230px; font-size: 26px; color: var(--muted); }
+      .kv .v { font-size: 36px; font-weight: 650; flex: 1; }
+      .btn { display: inline-flex; align-items: center; justify-content: center; background: var(--ac); color: #fff; border-radius: 16px; font-weight: 700; }
+      /* comparison table */
+      .tbl { position: absolute; left: 60px; width: 960px; overflow: hidden; }
+      .tbar { height: 74px; background: var(--ink); color: var(--cream); display: flex; align-items: center; gap: 16px; padding: 0 28px; font-family: "GeistMono", monospace; font-size: 26px; }
+      .tbar .dot { width: 14px; height: 14px; border-radius: 4px; background: var(--ac); }
+      .tr { display: flex; align-items: center; height: 120px; border-top: 1px solid var(--line); position: relative; }
+      .tr .c0 { width: 360px; padding-left: 30px; font-size: 30px; font-weight: 650; display: flex; align-items: center; gap: 14px; }
+      .tr .c0 img { width: 54px; height: 54px; object-fit: contain; }
+      .tr .c { width: 150px; text-align: center; font-family: "GeistPixel", monospace; font-size: 46px; }
+      .th { height: 80px; }
+      .th .c { font-family: "GeistMono", monospace; font-size: 22px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .yes { color: var(--ac); } .no { color: #c9c5bd; }
+      .conf { position: absolute; width: 14px; height: 22px; border-radius: 3px; }
+      /* VS */
+      .vs { font-family: "GeistPixel", monospace; font-size: 220px; line-height: 1; color: var(--ink); text-shadow: -6px 0 0 rgba(232,56,45,0.75), 6px 0 0 rgba(40,190,200,0.55); }
+      /* wordmark (saasinhouse.com Nav) */
+      .logo { display: flex; align-items: center; gap: 18px; font-family: "Archivo", sans-serif; font-weight: 860; font-stretch: 112%; font-size: 92px; letter-spacing: -0.02em; color: var(--ink); }
+      .logo .in { font-family: "Silkscreen", monospace; font-size: 56px; background: var(--ac); color: var(--cream); padding: 8px 16px 10px; border-radius: 8px; letter-spacing: 0.06em; }
+      .term { position: absolute; left: 110px; width: 860px; height: 96px; background: var(--ink); border-radius: 18px; color: var(--cream); font-family: "GeistMono", monospace; font-size: 30px; display: flex; align-items: center; padding: 0 30px; gap: 10px; }
+      .cur { display: inline-block; width: 16px; height: 34px; background: var(--ac); vertical-align: middle; }
+      .tinyic { width: 70px; height: 70px; object-fit: contain; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="43.5" data-width="1080" data-height="1920">
+      <!-- audio: music bed + UI SFX (the reference has no voice: the script lives on screen) -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="43.5" data-track-index="10" data-volume="0.75"></audio>
+      <audio id="a-type1" src="assets/type.mp3" data-start="0.2" data-duration="1.6" data-track-index="11" data-volume="0.45"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="4.95" data-duration="0.8" data-track-index="12" data-volume="0.6"></audio>
+      <audio id="a-gl1" src="assets/glitch.mp3" data-start="5.55" data-duration="0.6" data-track-index="13" data-volume="0.55"></audio>
+      <audio id="a-ding1" src="assets/ding.mp3" data-start="7.3" data-duration="1.0" data-track-index="14" data-volume="0.6"></audio>
+      <audio id="a-tk1" src="assets/tick.mp3" data-start="10.35" data-duration="0.5" data-track-index="15" data-volume="0.7"></audio>
+      <audio id="a-tk2" src="assets/tick.mp3" data-start="11.45" data-duration="0.5" data-track-index="16" data-volume="0.7"></audio>
+      <audio id="a-tk3" src="assets/tick.mp3" data-start="12.55" data-duration="0.5" data-track-index="17" data-volume="0.7"></audio>
+      <audio id="a-pop1" src="assets/pop.mp3" data-start="16.6" data-duration="0.5" data-track-index="18" data-volume="0.6"></audio>
+      <audio id="a-pop2" src="assets/pop.mp3" data-start="17.5" data-duration="0.5" data-track-index="19" data-volume="0.6"></audio>
+      <audio id="a-pop3" src="assets/pop.mp3" data-start="18.4" data-duration="0.5" data-track-index="20" data-volume="0.6"></audio>
+      <audio id="a-ding2" src="assets/ding.mp3" data-start="19.9" data-duration="1.0" data-track-index="21" data-volume="0.55"></audio>
+      <audio id="a-tk4" src="assets/tick.mp3" data-start="22.9" data-duration="0.5" data-track-index="22" data-volume="0.6"></audio>
+      <audio id="a-tk5" src="assets/tick.mp3" data-start="23.5" data-duration="0.5" data-track-index="23" data-volume="0.6"></audio>
+      <audio id="a-tk6" src="assets/tick.mp3" data-start="24.1" data-duration="0.5" data-track-index="24" data-volume="0.6"></audio>
+      <audio id="a-wh2" src="assets/whoosh.mp3" data-start="28.0" data-duration="0.8" data-track-index="25" data-volume="0.5"></audio>
+      <audio id="a-wh3" src="assets/whoosh.mp3" data-start="29.3" data-duration="0.8" data-track-index="26" data-volume="0.5"></audio>
+      <audio id="a-wh4" src="assets/whoosh.mp3" data-start="30.6" data-duration="0.8" data-track-index="27" data-volume="0.5"></audio>
+      <audio id="a-tk7" src="assets/tick.mp3" data-start="34.0" data-duration="0.5" data-track-index="28" data-volume="0.5"></audio>
+      <audio id="a-tk8" src="assets/tick.mp3" data-start="34.5" data-duration="0.5" data-track-index="29" data-volume="0.5"></audio>
+      <audio id="a-tk9" src="assets/tick.mp3" data-start="35.0" data-duration="0.5" data-track-index="30" data-volume="0.5"></audio>
+      <audio id="a-tk10" src="assets/tick.mp3" data-start="35.5" data-duration="0.5" data-track-index="31" data-volume="0.5"></audio>
+      <audio id="a-conf" src="assets/confetti.mp3" data-start="36.1" data-duration="1.5" data-track-index="32" data-volume="0.7"></audio>
+      <audio id="a-type2" src="assets/type.mp3" data-start="38.2" data-duration="1.6" data-track-index="33" data-volume="0.4"></audio>
+      <audio id="a-pop4" src="assets/pop.mp3" data-start="40.0" data-duration="0.5" data-track-index="34" data-volume="0.7"></audio>
+      <audio id="a-type3" src="assets/type.mp3" data-start="40.7" data-duration="1.6" data-track-index="35" data-volume="0.4"></audio>
+
+      <!-- ============ S1 · typed hook ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="3.6" data-track-index="1">
+        <div class="center" style="top: 610px;"><div id="h1" class="hl">¿Quieres vender tu SaaS sin mandar a todo el mundo a la <b>misma landing</b>?</div></div>
+        <div id="s1-row" class="center" style="top: 1150px; gap: 26px;">
+          <img class="tinyic s1i" src="assets/ic_landing.png" alt="" /><img class="tinyic s1i" src="assets/ic_landing.png" alt="" /><img class="tinyic s1i" src="assets/ic_landing.png" alt="" /><img class="tinyic s1i" src="assets/ic_landing.png" alt="" /><img class="tinyic s1i" src="assets/ic_landing.png" alt="" />
+        </div>
+        <div id="s1-foot" class="center foot" style="top: 1250px;">mismo mensaje · mismo botón · para todos</div>
+      </section>
+
+      <!-- ============ S2 · "Haz esto." ============ -->
+      <section id="s2" class="scene clip" data-start="3.6" data-duration="1.4" data-track-index="1">
+        <div class="center" style="top: 860px;"><div id="h2" class="hl big">Haz <b>esto</b>.</div></div>
+      </section>
+
+      <!-- ============ S3 · VS split ============ -->
+      <section id="s3" class="scene clip" data-start="5.0" data-duration="4.0" data-track-index="1">
+        <div id="s3-top" class="full" style="background: linear-gradient(180deg, #e2e6e9, #eef0f1); clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%);"></div>
+        <div id="s3-bot" class="full" style="background: linear-gradient(0deg, #f9d9d3, #fcebe7); clip-path: polygon(0 58%, 100% 46%, 100% 100%, 0 100%);"></div>
+        <div id="s3-a" class="full">
+          <div class="tile" style="left: 120px; top: 190px;"><img src="assets/ic_landing.png" alt="" /></div>
+          <div class="px" style="position: absolute; left: 470px; top: 250px; font-size: 64px;">Pedir una demo</div>
+          <div style="position: absolute; left: 472px; top: 340px; font-size: 30px; color: var(--muted);">directamente · a todo el mundo</div>
+        </div>
+        <div id="s3-b" class="full">
+          <div id="s3-btile" class="tile" style="right: 120px; top: 1330px;"><img src="assets/ic_quiz.png" alt="" /></div>
+          <div class="px" style="position: absolute; right: 470px; top: 1390px; font-size: 64px; text-align: right;">Crea un<br /><span class="ac">Quiz Funnel</span></div>
+          <div style="position: absolute; right: 472px; top: 1560px; font-size: 30px; color: var(--muted); text-align: right;">primero preguntas · luego vendes</div>
+          <div id="s3-win" class="winner" style="right: 110px; top: 1290px;">GANADOR</div>
+        </div>
+        <div class="center" style="top: 800px;"><div id="s3-vs" class="vs">VS</div></div>
+      </section>
+
+      <!-- ============ S4 · 5–8 questions ============ -->
+      <section id="s4" class="scene clip" data-start="9.0" data-duration="5.2" data-track-index="1">
+        <div class="stack" style="top: 200px;"><div id="h4" class="hl">Primero, <b>5–8 preguntas</b>.</div><div class="foot" id="s4-sub">para saber quién es, qué quiere y qué le duele</div></div>
+        <div id="s4-card" class="card" style="left: 60px; top: 600px; width: 960px;">
+          <div style="display: flex; align-items: center; gap: 20px; padding: 30px 40px 26px;">
+            <img src="assets/ic_quiz.png" alt="" style="width: 64px; height: 64px; object-fit: contain;" />
+            <div class="mono" style="font-size: 26px; flex: 1;">quiz · <span id="s4-step">pregunta 1 de 7</span></div>
+            <div class="bar" style="width: 260px;"><i id="s4-prog"></i></div>
+          </div>
+          <div class="row s4r"><div class="num">01</div><div class="q">¿Quién eres?</div><div class="ans"><i class="fill"></i><span>Founder SaaS B2B</span></div></div>
+          <div class="row s4r"><div class="num">02</div><div class="q">¿Qué quieres conseguir?</div><div class="ans"><i class="fill"></i><span>Más demos</span></div></div>
+          <div class="row s4r"><div class="num">03</div><div class="q">¿Tu principal problema?</div><div class="ans"><i class="fill"></i><span>No compran</span></div></div>
+        </div>
+        <div id="s4-foot" class="center foot" style="top: 1420px;"><span class="mono">quién es · qué quiere · qué le duele</span></div>
+      </section>
+
+      <!-- ============ S5 · "Pero no hagas solo preguntas." ============ -->
+      <section id="s5" class="scene clip" data-start="14.2" data-duration="1.6" data-track-index="1">
+        <div class="center" style="top: 820px;"><div id="h5" class="hl big" style="font-size: 100px;">Pero no hagas solo <b>preguntas</b>.</div></div>
+      </section>
+
+      <!-- ============ S6 · proof cards between questions ============ -->
+      <section id="s6" class="scene clip" data-start="15.8" data-duration="5.6" data-track-index="1">
+        <div class="stack" style="top: 170px;"><div id="h6" class="hl">Entre medias, <b>cards que convencen</b>.</div><div class="foot" id="s6-sub">casos reales · datos · resultados · consejos</div></div>
+        <div id="p1" class="card post" style="left: 60px; top: 540px; transform: rotate(-2deg);">
+          <div class="who"><div class="av" style="background: var(--ink);">SB</div><div><div class="n">Caso real</div><div class="s">SaaS B2B · <span class="chip chip-ex" style="font-size: 15px; padding: 3px 10px;">ejemplo</span></div></div></div>
+          <p>Cambiaron la demo por un quiz y ahora las demos llegan <span class="hlt">ya cualificadas</span>.</p>
+        </div>
+        <div id="p2" class="card post" style="right: 60px; top: 790px; transform: rotate(2deg);">
+          <div class="who"><div class="av" style="background: var(--ac);">+</div><div><div class="n">Dato</div><div class="s">SaaS in House</div></div></div>
+          <p><span class="px" style="font-size: 76px; color: var(--ac);">+218</span><br /><span class="hlt">founders</span> ya construyen su SaaS con nosotros.</p>
+        </div>
+        <div id="p3" class="card post" style="left: 90px; top: 1130px; transform: rotate(-1deg);">
+          <div class="who"><div class="av" style="background: #9aa3a8;">✓</div><div><div class="n">Consejo</div><div class="s">después de la pregunta del problema</div></div></div>
+          <p>Enséñale <span class="hlt">un caso parecido al suyo</span>, justo cuando lo está pensando.</p>
+        </div>
+        <div id="s6-pill" class="center" style="top: 1560px;"><div class="card" style="position: relative; padding: 26px 44px; border-radius: 999px; font-size: 40px; font-weight: 600;">“Vale, <span class="ac">esto tiene sentido</span>.”</div></div>
+      </section>
+
+      <!-- ============ S7 · personalised result ============ -->
+      <section id="s7" class="scene clip" data-start="21.4" data-duration="4.2" data-track-index="1">
+        <div class="stack" style="top: 230px;"><div id="h7" class="hl">Resultado <b>personalizado</b>.</div><div class="foot" id="s7-sub">según sus respuestas</div></div>
+        <div id="s7-card" class="card" style="left: 80px; top: 640px; width: 920px; padding: 56px 56px 26px;">
+          <div class="mono" style="font-size: 24px; color: var(--muted); letter-spacing: 0.08em;">TU RESULTADO</div>
+          <div style="display: flex; align-items: center; gap: 22px; margin: 18px 0 30px;">
+            <div class="px" style="font-size: 62px; flex: 1; line-height: 1.05;">Founder SaaS B2B</div>
+            <div class="check" id="s7-ok" style="width: 64px; height: 64px; font-size: 36px;">✓</div>
+          </div>
+          <div class="kv s7r"><div class="k">Objetivo</div><div class="v">Más demos cualificadas</div><div class="check">✓</div></div>
+          <div class="kv s7r"><div class="k">Problema</div><div class="v">Leads que no compran</div><div class="check">✓</div></div>
+          <div class="kv s7r"><div class="k">Tu siguiente paso</div><div class="v">Quiz + oferta a medida</div><div class="check">✓</div></div>
+        </div>
+      </section>
+
+      <!-- ============ S8 · "la parte importante" ============ -->
+      <section id="s8" class="scene clip" data-start="25.6" data-duration="1.6" data-track-index="1">
+        <div class="center" style="top: 820px;"><div id="h8" class="hl big" style="font-size: 100px;">Y ahora, la parte <b>importante</b>.</div></div>
+      </section>
+
+      <!-- ============ S9 · last cards sell ============ -->
+      <section id="s9" class="scene clip" data-start="27.2" data-duration="5.8" data-track-index="1">
+        <div class="center" style="top: 210px;"><div id="h9" class="hl">Las últimas cards <b>venden</b>.</div></div>
+        <div id="c1" class="card" style="left: 80px; top: 420px; width: 920px; padding: 34px 40px; display: flex; gap: 30px; align-items: center;">
+          <img src="assets/ic_quiz.png" alt="" style="width: 130px; height: 130px; object-fit: contain;" />
+          <div><div class="mono" style="font-size: 22px; color: var(--muted); letter-spacing: 0.08em;">01 · POR QUÉ ENCAJA</div><div style="font-size: 34px; font-weight: 600; line-height: 1.3; margin-top: 8px;">Tu problema son los leads que no compran: <span class="ac">el quiz los filtra antes</span>.</div></div>
+        </div>
+        <div id="c2" class="card" style="left: 80px; top: 750px; width: 920px; padding: 34px 40px; display: flex; gap: 30px; align-items: center;">
+          <img src="assets/ic_gift.png" alt="" style="width: 130px; height: 130px; object-fit: contain;" />
+          <div style="flex: 1;"><div class="mono" style="font-size: 22px; color: var(--muted); letter-spacing: 0.08em;">02 · OFERTA ESPECÍFICA</div><div class="px" style="font-size: 60px; margin-top: 10px;">Plan Growth <span class="ac">−30%</span></div></div>
+          <div class="chip chip-ex" style="align-self: flex-start;">ejemplo</div>
+        </div>
+        <div id="c3" class="card" style="left: 80px; top: 1080px; width: 920px; padding: 34px 40px;">
+          <div style="display: flex; gap: 30px; align-items: center;">
+            <img src="assets/ic_timer.png" alt="" style="width: 130px; height: 130px; object-fit: contain;" />
+            <div style="flex: 1;"><div class="mono" style="font-size: 22px; color: var(--muted); letter-spacing: 0.08em;">03 · TIEMPO LIMITADO</div><div class="px" style="font-size: 88px; margin-top: 6px;"><span id="cd">14:59</span></div></div>
+          </div>
+          <div class="bar" style="margin: 22px 0 28px;"><i id="cd-bar"></i></div>
+          <div id="s9-btn" class="btn" style="width: 100%; height: 104px; font-size: 38px;">Canjear oferta →</div>
+        </div>
+      </section>
+
+      <!-- ============ S10 · comparison table + winner ============ -->
+      <section id="s10" class="scene clip" data-start="33.0" data-duration="5.0" data-track-index="1">
+        <div class="center" style="top: 230px;"><div id="h10" class="hl">Así no solo <b>captas el lead</b>.</div></div>
+        <div id="tbl" class="card tbl" style="top: 520px;">
+          <div class="tbar"><i class="dot"></i><span id="tb-txt">compara 3 formas de vender tu SaaS</span><i class="cur" id="tb-cur"></i></div>
+          <div class="tr th"><div class="c0"></div><div class="c">Capta</div><div class="c">Segmenta</div><div class="c">Educa</div><div class="c">Vende</div></div>
+          <div class="tr" id="r1"><div class="c0"><img src="assets/ic_landing.png" alt="" />Landing genérica</div><div class="c yes k0">✓</div><div class="c no k1">✕</div><div class="c no k2">✕</div><div class="c no k3">✕</div></div>
+          <div class="tr" id="r2"><div class="c0"><img src="assets/ic_timer.png" alt="" style="filter: grayscale(1);" />Demo directa</div><div class="c yes k0">✓</div><div class="c no k1">✕</div><div class="c no k2">✕</div><div class="c no k3">–</div></div>
+          <div class="tr" id="r3"><div class="c0"><img src="assets/ic_quiz.png" alt="" />Quiz Funnel</div><div class="c yes k0">✓</div><div class="c yes k1">✓</div><div class="c yes k2">✓</div><div class="c yes k3">✓</div></div>
+          <div class="foot" style="padding: 22px 0 26px; font-size: 22px; border-top: 1px solid var(--line);">comparación cualitativa · cómo funciona cada formato</div>
+        </div>
+        <div id="r3-ring" class="card" style="left: 44px; top: 912px; width: 992px; height: 136px; background: transparent; border: 4px solid var(--ac); box-shadow: 0 20px 50px rgba(232,56,45,0.25); border-radius: 20px;"></div>
+        <div id="s10-win" class="winner" data-layout-allow-overlap style="right: 46px; top: 872px;">GANADOR</div>
+        <div id="s10-sub" class="center" style="top: 1330px;"><div class="hl" style="font-size: 64px;">Lo <b>segmentas</b>, lo <b>educas</b><br />y lo llevas <b>a la compra</b>.</div></div>
+        <div id="conf" class="full" data-layout-allow-occlusion data-layout-allow-overlap></div>
+      </section>
+
+      <!-- ============ S11 · end lockup ============ -->
+      <section id="s11" class="scene clip" data-start="38.0" data-duration="5.5" data-track-index="1">
+        <div class="center" style="top: 560px;"><div id="h11" class="hl" style="font-size: 76px;">Tu SaaS, vendido con un <b>Quiz Funnel</b>.</div></div>
+        <div id="s11-logo" class="center" style="top: 860px;"><div class="logo"><span>SaaS</span><span class="in">IN</span><span>House</span></div></div>
+        <div id="s11-term" class="term" style="top: 1110px;"><span style="color: var(--ac);">$</span><span id="t-txt">comenta QUIZ — te enseño a montarlo</span><i class="cur" id="t-cur"></i></div>
+        <div id="s11-foot" class="center foot" style="top: 1250px;">saasinhouse.com · quiz funnels para SaaS</div>
+      </section>
+    </div>
+
+    <script>
+      const END = 43.5;
+      const tl = gsap.timeline({ paused: true });
+      let seed = 11;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      // split a headline into per-character spans (words stay unbroken, <b> accents kept)
+      function splitChars(el) {
+        const out = [];
+        const walk = (node, host) => {
+          [...node.childNodes].forEach((n) => {
+            if (n.nodeType === 3) {
+              n.textContent.split(/(\s+)/).forEach((tok) => {
+                if (!tok) return;
+                if (/^\s+$/.test(tok)) { host.appendChild(document.createTextNode(" ")); return; }
+                const wd = document.createElement("span");
+                wd.className = "wd";
+                [...tok].forEach((c) => { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; wd.appendChild(s); out.push(s); });
+                host.appendChild(wd);
+              });
+            } else if (n.nodeName === "BR") {
+              host.appendChild(document.createElement("br"));
+            } else {
+              const clone = n.cloneNode(false);
+              host.appendChild(clone);
+              walk(n, clone);
+            }
+          });
+        };
+        const tmp = el.cloneNode(true);
+        el.innerHTML = "";
+        walk(tmp, el);
+        return out;
+      }
+      // typewriter reveal: characters switch on one by one (the reference's signature)
+      // flow=true: hidden chars take no space, so a cursor placed after the text follows the typing
+      function typeIn(sel, t0, cps, flow = false) {
+        const chars = splitChars(document.querySelector(sel));
+        if (flow) chars.forEach((c) => { c.style.display = "none"; c.style.opacity = 1; });
+        chars.forEach((c, i) => tl.set(c, flow ? { display: "inline" } : { opacity: 1 }, t0 + i / cps));
+        return t0 + chars.length / cps;
+      }
+      function blink(sel, t0, t1) { for (let k = t0; k < t1; k += 0.5) tl.set(sel, { opacity: 0 }, k + 0.25).set(sel, { opacity: 1 }, k + 0.5); }
+      const up = (sel, at, d = 0.5, y = 60) => tl.fromTo(sel, { opacity: 0, y }, { opacity: 1, y: 0, duration: d, ease: "power3.out" }, at);
+      const pop = (sel, at) => tl.fromTo(sel, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2.4)" }, at);
+
+      // confetti burst (seeded, deterministic)
+      function confetti(host, at, n, cx, cy) {
+        const cols = ["#e8382d", "#f5c51b", "#0b0b10", "#9aa3a8", "#ff8a7a"];
+        const h = document.getElementById(host);
+        for (let i = 0; i < n; i++) {
+          const c = document.createElement("div");
+          c.className = "conf";
+          c.id = host + "-c" + i;
+          c.style.left = cx + "px"; c.style.top = cy + "px";
+          c.style.background = cols[i % cols.length];
+          h.appendChild(c);
+          const a = rnd() * Math.PI * 2, r = 180 + rnd() * 420;
+          const dx = Math.cos(a) * r, dy = Math.sin(a) * r * 0.7 - 160;
+          tl.set(c, { opacity: 0 }, 0);
+          tl.fromTo(c, { opacity: 1, x: 0, y: 0, rotation: 0, scale: 0.6 + rnd() * 0.8 }, { opacity: 1, x: dx, y: dy, rotation: rnd() * 360, duration: 0.55, ease: "power3.out" }, at);
+          tl.to(c, { y: dy + 380 + rnd() * 260, x: dx + (rnd() - 0.5) * 120, rotation: "+=" + (200 + rnd() * 300), opacity: 0, duration: 1.4 + rnd() * 0.6, ease: "power1.in" }, at + 0.55);
+        }
+      }
+
+      /* ---------- S1 hook ---------- */
+      const e1 = typeIn("#h1", 0.2, 34);
+      gsap.utils.toArray(".s1i").forEach((el, i) => pop(el, 2.35 + i * 0.08));
+      up("#s1-foot", 2.8, 0.4, 20);
+      tl.to("#s1-row", { y: -10, duration: 0.6, ease: "sine.inOut" }, 3.0);
+
+      /* ---------- S2 ---------- */
+      typeIn("#h2", 3.65, 22);
+      tl.fromTo("#h2", { scale: 1 }, { scale: 1.06, duration: 1.3, ease: "sine.out" }, 3.65);
+
+      /* ---------- S3 VS ---------- */
+      tl.fromTo("#s3-top", { xPercent: -100 }, { xPercent: 0, duration: 0.45, ease: "power3.out" }, 5.0);
+      tl.fromTo("#s3-bot", { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: "power3.out" }, 5.0);
+      tl.fromTo("#s3-a", { opacity: 0, x: -120 }, { opacity: 1, x: 0, duration: 0.55, ease: "power3.out" }, 5.15);
+      tl.fromTo("#s3-b", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.55, ease: "power3.out" }, 5.35);
+      tl.fromTo("#s3-vs", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "power4.out" }, 5.55);
+      [0, 0.06, 0.12, 0.18, 0.24].forEach((d, i) => tl.set("#s3-vs", { x: [14, -18, 9, -6, 0][i], skewX: [12, -10, 6, -3, 0][i] }, 5.6 + d));
+      tl.to("#s3-a", { opacity: 0.35, filter: "grayscale(1)", duration: 0.5 }, 7.2);
+      tl.to("#s3-btile", { scale: 1.08, duration: 0.35, ease: "back.out(3)" }, 7.25);
+      tl.fromTo("#s3-win", { opacity: 0, scale: 0.4, rotation: -20 }, { opacity: 1, scale: 1, rotation: -6, duration: 0.4, ease: "back.out(3)" }, 7.3);
+      tl.to("#s3-vs", { scale: 0.92, duration: 1.5, ease: "sine.inOut" }, 7.3);
+
+      /* ---------- S4 questions ---------- */
+      typeIn("#h4", 9.05, 40);
+      up("#s4-sub", 9.6, 0.4, 16);
+      up("#s4-card", 9.5, 0.6, 90);
+      tl.fromTo("#s4-prog", { scaleX: 0 }, { scaleX: 1 / 7, duration: 0.4 }, 9.8);
+      const steps = ["pregunta 1 de 7", "pregunta 2 de 7", "pregunta 3 de 7", "pregunta 4 de 7"];
+      gsap.utils.toArray(".s4r").forEach((r, i) => {
+        const at = 9.85 + i * 1.1;
+        tl.fromTo(r, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, at);
+        tl.fromTo(r.querySelector(".fill"), { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, at + 0.5);
+        tl.to(r.querySelector(".ans"), { color: "#ffffff", borderColor: "#e8382d", duration: 0.15 }, at + 0.55);
+        tl.to("#s4-prog", { scaleX: (i + 2) / 7, duration: 0.35, ease: "power2.out" }, at + 0.55);
+        tl.set("#s4-step", { textContent: steps[i + 1] }, at + 0.55);
+      });
+      up("#s4-foot", 13.0, 0.4, 16);
+
+      /* ---------- S5 ---------- */
+      typeIn("#h5", 14.25, 36);
+
+      /* ---------- S6 proof cards ---------- */
+      typeIn("#h6", 15.85, 42);
+      up("#s6-sub", 16.4, 0.4, 16);
+      ["#p1", "#p2", "#p3"].forEach((p, i) => {
+        tl.fromTo(p, { opacity: 0, y: 120, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)" }, 16.6 + i * 0.9);
+        tl.to(p + " .hlt", { backgroundSize: "100% 100%", duration: 0.5, ease: "power2.out" }, 17.05 + i * 0.9);
+      });
+      tl.fromTo("#s6-pill", { opacity: 0, y: 40, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(2.4)" }, 19.9);
+      tl.to(["#p1", "#p2", "#p3"], { opacity: 0.55, duration: 0.4 }, 19.9);
+
+      /* ---------- S7 result ---------- */
+      typeIn("#h7", 21.45, 36);
+      up("#s7-sub", 22.0, 0.4, 16);
+      up("#s7-card", 21.9, 0.6, 90);
+      pop("#s7-ok", 22.4);
+      gsap.utils.toArray(".s7r").forEach((r, i) => {
+        tl.fromTo(r, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 22.75 + i * 0.6);
+        pop(r.querySelector(".check"), 22.9 + i * 0.6);
+      });
+      tl.to("#s7-card", { scale: 1.03, duration: 1.2, ease: "sine.inOut" }, 24.4);
+
+      /* ---------- S8 ---------- */
+      typeIn("#h8", 25.65, 36);
+
+      /* ---------- S9 last cards ---------- */
+      typeIn("#h9", 27.25, 40);
+      up("#c1", 28.0, 0.55, 100);
+      up("#c2", 29.3, 0.55, 100);
+      up("#c3", 30.6, 0.55, 100);
+      const cd = { s: 899 };
+      tl.to(cd, { s: 897, duration: 2.0, ease: "none", onUpdate: () => {
+        const v = Math.ceil(cd.s);
+        document.getElementById("cd").textContent = String(Math.floor(v / 60)).padStart(2, "0") + ":" + String(v % 60).padStart(2, "0");
+      } }, 30.9);
+      tl.fromTo("#cd-bar", { scaleX: 1 }, { scaleX: 0.86, duration: 2.1, ease: "none" }, 30.9);
+      tl.to("#s9-btn", { scale: 1.04, duration: 0.25, yoyo: true, repeat: 3, ease: "sine.inOut" }, 31.6);
+
+      /* ---------- S10 table ---------- */
+      typeIn("#h10", 33.05, 40);
+      up("#tbl", 33.3, 0.55, 90);
+      blink("#tb-cur", 33.4, 37.9);
+      [0, 1, 2, 3].forEach((k) => tl.fromTo("#tbl .k" + k, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(3)", stagger: 0.07 }, 34.0 + k * 0.5));
+      tl.set(["#r3-ring", "#s10-win"], { opacity: 0 }, 33.0);
+      tl.to(["#r1", "#r2"], { opacity: 0.35, duration: 0.35 }, 36.0);
+      tl.fromTo("#r3-ring", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 36.05);
+      tl.fromTo("#s10-win", { opacity: 0, scale: 0.4, rotation: -24 }, { opacity: 1, scale: 1, rotation: -6, duration: 0.4, ease: "back.out(3)" }, 36.1);
+      confetti("conf", 36.1, 70, 540, 1010);
+      tl.fromTo("#s10-sub", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 36.6);
+
+      /* ---------- S11 end ---------- */
+      typeIn("#h11", 38.2, 30);
+      tl.fromTo("#s11-logo", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, 40.0);
+      tl.fromTo("#s11-logo .in", { rotation: -25, scale: 0 }, { rotation: 0, scale: 1, duration: 0.45, ease: "back.out(3)" }, 40.15);
+      up("#s11-term", 40.4, 0.45, 40);
+      typeIn("#t-txt", 40.7, 24, true);
+      blink("#t-cur", 40.5, 43.4);
+      up("#s11-foot", 42.2, 0.5, 16);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

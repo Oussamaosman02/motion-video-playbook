@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/Archivo.ttf") format("truetype"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Silkscreen"; src: url("assets/Silkscreen-700.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --bg: #09090b; --panel: #111114; --panel2: #16161a; --line: #24242a; --ink: #f4f3f0; --muted: #8b8a92; --dim: #55545c;
+        --red: #e8382d; --red-txt: #ff5a4e; --red-deep: #7e140d; --cream: #f2efe6;
+        --ok: #2fd47a; --ok-dim: #123d27; --bad: #ff5a4e; --bad-dim: #3d1512;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Archivo", sans-serif; }
+      .px { font-family: "Silkscreen", monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .abs { position: absolute; }
+      .center { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+      .w { display: inline-block; white-space: pre; }
+      .red { color: var(--red-txt); }
+      /* bottom glow (the reference's blue horizon, here in brand red) */
+      #glow { position: absolute; left: -300px; right: -300px; bottom: -520px; height: 1300px; border-radius: 50%;
+        background: radial-gradient(ellipse at 50% 60%, rgba(232,56,45,0.75) 0%, rgba(160,30,22,0.45) 30%, rgba(90,14,10,0.18) 55%, rgba(9,9,11,0) 72%); filter: blur(30px); }
+      #grain { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%); }
+      /* captions (the script lives on screen: the reference has no voice) */
+      .cap { position: absolute; left: 70px; right: 70px; top: 230px; height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 62px; font-weight: 650; line-height: 1.12; letter-spacing: -0.02em; }
+      .cap .sm { font-size: 34px; font-weight: 500; color: var(--muted); margin-top: 18px; letter-spacing: 0; }
+      .big { font-size: 84px; font-weight: 650; line-height: 1.1; letter-spacing: -0.03em; }
+      .chip-in { display: inline-flex; align-items: center; justify-content: center; width: 84px; height: 84px; border-radius: 24px; background: linear-gradient(160deg, #e8382d, #b8241a); color: var(--cream); font-size: 36px; vertical-align: -14px; box-shadow: 0 0 40px rgba(232,56,45,0.55); }
+      /* nodes */
+      .node { position: absolute; display: flex; align-items: center; gap: 22px; }
+      .node .av { width: 108px; height: 108px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px #1b1b20, 0 0 0 6px rgba(232,56,45,0.55), 0 0 40px rgba(232,56,45,0.35); flex: none; }
+      .node .nm { font-size: 38px; font-weight: 700; letter-spacing: 0.02em; }
+      .node .ps { font-size: 26px; color: var(--muted); margin-top: 2px; }
+      .av img { width: 100%; height: 100%; display: block; }
+      /* feed panel */
+      .panel { position: absolute; border-radius: 34px; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line), 0 40px 120px rgba(0,0,0,0.6); overflow: hidden; }
+      .phead { height: 104px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 2px solid var(--line); }
+      .phead b { font-size: 32px; font-weight: 700; }
+      .phead span { font-size: 24px; color: var(--muted); }
+      .live { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--ok); margin-right: 12px; box-shadow: 0 0 14px var(--ok); }
+      .lrow { position: absolute; left: 24px; right: 24px; height: 272px; border-radius: 26px; background: var(--panel2); box-shadow: inset 0 0 0 2px var(--line); padding: 28px 30px; }
+      .lrow .top { display: flex; align-items: center; gap: 24px; }
+      .lrow .av { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; flex: none; }
+      .lrow .nm { font-size: 36px; font-weight: 700; }
+      .lrow .ps { font-size: 24px; color: var(--muted); margin-top: 4px; }
+      .lrow .fit { margin-left: auto; text-align: right; }
+      .lrow .fit .v { font-size: 40px; font-weight: 750; color: var(--ok); font-variant-numeric: tabular-nums; }
+      .lrow .fit .k { font-size: 20px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+      .tags { display: flex; gap: 12px; margin-top: 22px; }
+      .tag { height: 46px; padding: 0 18px; border-radius: 12px; background: #1d1d22; font-size: 23px; font-weight: 600; display: flex; align-items: center; gap: 10px; color: #c9c8cf; white-space: nowrap; }
+      .tag i { font-style: normal; color: var(--muted); font-weight: 500; }
+      .lrow .bot { display: flex; align-items: center; gap: 14px; margin-top: 22px; font-size: 22px; color: var(--muted); }
+      .lrow .btn { margin-left: auto; height: 46px; padding: 0 20px; border-radius: 12px; background: #23232a; color: var(--ink); font-size: 22px; font-weight: 600; display: flex; align-items: center; }
+      .lrow .btn.pri { margin-left: 0; background: var(--red); }
+      #ring { position: absolute; left: 0; top: 0; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.9); box-shadow: 0 0 20px rgba(255,255,255,0.35); }
+      /* interleaved stack */
+      .qc { position: absolute; left: 90px; width: 900px; border-radius: 30px; background: var(--panel2); box-shadow: inset 0 0 0 2px var(--line); padding: 34px 40px; }
+      .qc .k { font-size: 22px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+      .qc .q { font-size: 44px; font-weight: 700; margin-top: 10px; letter-spacing: -0.01em; }
+      .qc .a { display: inline-flex; margin-top: 20px; height: 62px; padding: 0 26px; border-radius: 16px; background: var(--red); font-size: 30px; font-weight: 700; align-items: center; }
+      .vc { position: absolute; left: 150px; width: 780px; border-radius: 30px; background: linear-gradient(180deg, #1c1112, #141012); box-shadow: inset 0 0 0 2px rgba(232,56,45,0.6), 0 0 60px rgba(232,56,45,0.25); padding: 32px 40px; }
+      .vc .px { font-size: 22px; color: var(--red-txt); }
+      .vc .big2 { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; margin-top: 10px; line-height: 1; }
+      .vc .t { font-size: 28px; color: #bdbcc4; margin-top: 12px; line-height: 1.25; }
+      .quote { height: 110px; padding: 0 50px; border-radius: 999px; background: var(--ink); color: #111; font-size: 42px; font-weight: 700; display: inline-flex; align-items: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+      /* gates */
+      .gp { position: absolute; left: 60px; width: 960px; border-radius: 34px; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line), 0 40px 120px rgba(0,0,0,0.55); }
+      .gp .gh { height: 120px; text-align: center; padding-top: 26px; border-bottom: 2px solid var(--line); }
+      .gp .gh b { font-size: 34px; font-weight: 700; display: block; }
+      .gp .gh span { font-size: 24px; }
+      .gate { position: absolute; left: 100px; width: 880px; height: 100px; }
+      .gate .l { display: flex; justify-content: space-between; font-size: 28px; font-weight: 600; }
+      .gate .l .val { font-variant-numeric: tabular-nums; }
+      .gate .l .val i { font-style: normal; color: var(--muted); }
+      .track { position: relative; margin-top: 16px; height: 30px; border-radius: 6px; overflow: hidden;
+        background: repeating-linear-gradient(90deg, rgba(255,255,255,0.09) 0 4px, transparent 4px 9px); }
+      .fill { position: absolute; inset: 0; }
+      .fill.bad { background: repeating-linear-gradient(90deg, var(--bad) 0 4px, rgba(255,90,78,0.25) 4px 9px); }
+      .fill.ok { background: repeating-linear-gradient(90deg, var(--ok) 0 4px, rgba(47,212,122,0.25) 4px 9px); }
+      /* end card */
+      .lock { display: flex; align-items: center; gap: 20px; font-size: 92px; font-weight: 800; letter-spacing: -0.03em; }
+      .lock .in { font-family: "Silkscreen", monospace; font-size: 54px; background: var(--red); color: var(--cream); padding: 14px 18px 8px; border-radius: 14px; box-shadow: 6px 6px 0 var(--red-deep); letter-spacing: 0.04em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="38" data-width="1080" data-height="1920">
+      <!-- audio: music bed + UI SFX (no voice, like the reference) -->
+      <audio id="mus" src="assets/music.mp3" data-start="0" data-duration="38" data-track-index="10" data-volume="0.9"></audio>
+      <audio id="a-wh1" src="assets/whoosh.mp3" data-start="4.0" data-duration="1.2" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="a-sh1" src="assets/shimmer.mp3" data-start="6.5" data-duration="1.5" data-track-index="12" data-volume="0.6"></audio>
+      <audio id="a-p1" src="assets/pop.mp3" data-start="7.3" data-duration="0.5" data-track-index="13" data-volume="0.5"></audio>
+      <audio id="a-p2" src="assets/pop.mp3" data-start="7.7" data-duration="0.5" data-track-index="14" data-volume="0.5"></audio>
+      <audio id="a-p3" src="assets/pop.mp3" data-start="8.1" data-duration="0.5" data-track-index="15" data-volume="0.5"></audio>
+      <audio id="a-wh2" src="assets/whoosh.mp3" data-start="11.4" data-duration="1.2" data-track-index="16" data-volume="0.45"></audio>
+      <audio id="a-t1" src="assets/tick.mp3" data-start="16.3" data-duration="0.5" data-track-index="17" data-volume="0.8"></audio>
+      <audio id="a-wh3" src="assets/whoosh.mp3" data-start="17.3" data-duration="1.2" data-track-index="18" data-volume="0.45"></audio>
+      <audio id="a-p4" src="assets/pop.mp3" data-start="21.2" data-duration="0.5" data-track-index="19" data-volume="0.7"></audio>
+      <audio id="a-wh4" src="assets/whoosh.mp3" data-start="22.5" data-duration="1.2" data-track-index="20" data-volume="0.45"></audio>
+      <audio id="a-t2" src="assets/tick.mp3" data-start="27.3" data-duration="0.5" data-track-index="21" data-volume="0.8"></audio>
+      <audio id="a-t3" src="assets/tick.mp3" data-start="28.3" data-duration="0.5" data-track-index="22" data-volume="0.8"></audio>
+      <audio id="a-t4" src="assets/tick.mp3" data-start="29.3" data-duration="0.5" data-track-index="23" data-volume="0.8"></audio>
+      <audio id="a-wh5" src="assets/whoosh.mp3" data-start="30.3" data-duration="1.2" data-track-index="24" data-volume="0.4"></audio>
+      <audio id="a-imp" src="assets/impact.mp3" data-start="34.1" data-duration="1.5" data-track-index="25" data-volume="0.55"></audio>
+
+      <div id="glow"></div>
+
+      <!-- S1 hook: words arrive one by one with an inline chip (like "Why did my Agent [token] buy this?") -->
+      <section id="s1" class="scene">
+        <div class="cap big" id="hook" style="top: 640px; height: 520px;"></div>
+      </section>
+
+      <!-- S2/S3 signal: dot draws a wavy line, then it bursts into lines that reach the leads -->
+      <section id="s3" class="scene">
+        <div id="cam3" class="abs" style="left: 0; top: 0; width: 1080px; height: 1920px;">
+          <svg id="net" class="abs" width="1080" height="1920" viewBox="0 0 1080 1920" style="left: 0; top: 0; overflow: visible;">
+            <path id="wave" d="M110 960 L110 960" fill="none" stroke="#e9e8ee" stroke-width="3" stroke-linecap="round" />
+            <g id="burst" fill="none" stroke="#d9d8de" stroke-width="2.4" stroke-linecap="round"></g>
+          </svg>
+          <div id="dot" class="abs" style="left: 96px; top: 946px; width: 28px; height: 28px; border-radius: 50%; background: #ff6a5e; box-shadow: 0 0 18px 6px rgba(232,56,45,0.8), 0 0 60px 20px rgba(232,56,45,0.35);"></div>
+          <div id="nodes"></div>
+        </div>
+        <div id="c2" class="cap">Haz esto.</div>
+        <div id="c3a" class="cap">En lugar de pedir una demo…</div>
+        <div id="c3b" class="cap"><div>Crea un <span class="red">Quiz Funnel</span>.</div><div class="sm">Cada visita entra por su propio camino.</div></div>
+        <svg id="strike" class="abs" width="320" height="20" style="left: 650px; top: 372px;"><path d="M4 12 C80 6 200 16 316 8" fill="none" stroke="#e8382d" stroke-width="7" stroke-linecap="round" /></svg>
+      </section>
+
+      <!-- S4 feed: live leads answering the quiz, camera zooms into one -->
+      <section id="s4" class="scene">
+        <div id="c4" class="cap"><div>Entre <span class="red">5 y 8 preguntas</span>.</div><div class="sm">Quién es, qué quiere conseguir y cuál es su principal problema.</div></div>
+        <div id="cam4" class="abs" style="left: 60px; top: 600px; width: 960px; height: 1300px; transform-origin: 50% 0%;">
+          <div class="panel" style="left: 0; top: 0; width: 960px; height: 1300px;">
+            <div class="phead"><b><span class="live"></span>Quiz Funnel · en vivo</b><span>4 leads respondiendo</span></div>
+            <div id="rows"></div>
+          </div>
+          <div id="ring"></div>
+        </div>
+      </section>
+
+      <!-- S5 interleave: questions with value cards between them -->
+      <section id="s5" class="scene">
+        <div id="c5a" class="cap">Pero no hagas solo preguntas.</div>
+        <div id="c5b" class="cap"><div>Entre medias, <span class="red">cards de valor</span>.</div><div class="sm">Casos reales, datos, resultados o consejos.</div></div>
+        <div id="stackmask" class="abs" style="left: 0; top: 580px; width: 1080px; height: 1160px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 120px, #000 1000px, transparent 1160px);">
+          <div id="stack" class="abs" style="left: 0; top: 0; width: 1080px; height: 2000px;">
+            <div class="qc" style="top: 40px;"><div class="k">Pregunta 1 de 6</div><div class="q">¿Quién eres?</div><div class="a">Founder SaaS</div></div>
+            <div class="vc" style="top: 330px;"><div class="px">Caso real · ejemplo</div><div class="big2">+38% demos</div><div class="t">Un SaaS B2B cambió su landing por un quiz de 6 preguntas.</div></div>
+            <div class="qc" style="top: 640px;"><div class="k">Pregunta 2 de 6</div><div class="q">¿Qué quieres conseguir?</div><div class="a">Más demos cualificadas</div></div>
+            <div class="vc" style="top: 930px;"><div class="px">Dato · ejemplo</div><div class="big2">7 de 10</div><div class="t">visitantes no piden demo en su primera visita.</div></div>
+            <div class="qc" style="top: 1220px;"><div class="k">Pregunta 3 de 6</div><div class="q">¿Tu principal problema?</div><div class="a">Leads fríos</div></div>
+            <div class="vc" style="top: 1510px;"><div class="px">Consejo</div><div class="big2">Una idea por card</div><div class="t">Corta, visual y con un dato que se recuerde.</div></div>
+          </div>
+        </div>
+        <div class="center" style="top: 1690px;"><div id="quote" class="quote">“Vale, esto tiene sentido.”</div></div>
+      </section>
+
+      <!-- S6 gates: personalised result, then the last cards clear the path to the purchase -->
+      <section id="s6" class="scene">
+        <div id="c6a" class="cap"><div>Según sus respuestas,</div><div>un <span class="red">resultado personalizado</span>.</div></div>
+        <div id="c6b" class="cap">Y aquí viene la parte importante.</div>
+        <div id="c6c" class="cap"><div>Las últimas cards lo llevan</div><div>hacia <span class="red">tu producto</span>.</div></div>
+        <div id="gpA" class="gp" style="top: 560px; height: 450px;">
+          <div class="gh"><b>Pendiente</b><span style="color: var(--bad);">Lo que falta para comprar</span></div>
+          <div id="gdone" class="center" style="top: 230px; font-size: 34px; font-weight: 700; color: var(--ok);">✓ Listo para comprar</div>
+        </div>
+        <div id="gpB" class="gp" style="top: 1050px; height: 770px;">
+          <div class="gh"><b>Cumplido</b><span style="color: var(--ok);">Lo que ya sabes de él</span></div>
+        </div>
+        <div id="gates"></div>
+      </section>
+
+      <!-- S7 payoff -->
+      <section id="s7" class="scene">
+        <div id="p1" class="cap big" style="top: 700px; height: 400px;"></div>
+        <div id="p2" class="cap big" style="top: 700px; height: 400px;"></div>
+      </section>
+
+      <!-- S8 end card (mirrors "TrenchersAI / Open Entry Check and see…") -->
+      <section id="s8" class="scene">
+        <div class="center" style="top: 800px;"><div id="lock" class="lock">SaaS <span class="in">IN</span> House</div></div>
+        <div class="center" style="top: 980px;"><div id="sub" style="font-size: 36px; color: #c9c8cf; text-align: center; line-height: 1.35;">Comenta <b style="color: var(--ink);">«QUIZ»</b> y te enseño a montar<br />el Quiz Funnel de tu SaaS.</div></div>
+      </section>
+
+      <div id="grain" data-layout-ignore></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const END = 38;
+      const tl = gsap.timeline({ paused: true });
+      const $ = (id) => document.getElementById(id);
+      const NS = "http://www.w3.org/2000/svg";
+
+      /* ---------- helpers ---------- */
+      const blurIn = (sel, t, d = 0.45, y = 24) => tl.fromTo(sel, { opacity: 0, y, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: d, ease: "power3.out" }, t);
+      const blurOut = (sel, t, d = 0.3) => tl.to(sel, { opacity: 0, y: -18, filter: "blur(10px)", duration: d, ease: "power2.in" }, t);
+      function cap(id, t0, t1) { blurIn(id, t0); blurOut(id, t1 - 0.3); }
+      function scene(id, a, b) { if (a > 0) { gsap.set(id, { opacity: 0 }); tl.set(id, { opacity: 1 }, a); } tl.set(id, { opacity: 0 }, b); }
+      // words: build spans, reveal one by one (blur → sharp), like the reference headline
+      function words(host, parts, t0, step) {
+        $(host).innerHTML = "<div>" + parts.map((p, i) => `<span class="w" id="${host}w${i}">${p}${i < parts.length - 1 ? " " : ""}</span>`).join("") + "</div>";
+        parts.forEach((p, i) => tl.fromTo("#" + host + "w" + i, { opacity: 0, filter: "blur(14px)", y: 10 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.4, ease: "power2.out" }, t0 + i * step));
+        return parts.length;
+      }
+      function glow(t, o, s, d = 1.2) { tl.to("#glow", { opacity: o, scaleY: s, duration: d, ease: "sine.inOut" }, t); }
+
+      gsap.set("#glow", { opacity: 0.35, scaleY: 0.8, transformOrigin: "50% 100%" });
+
+      /* ---------- S1 hook 0–4.4 ---------- */
+      scene("#s1", 0, 4.4);
+      const nh = words("hook", ["¿Quieres", "vender", "tu", "SaaS", '<span class="chip-in px">IN</span>', "sin", "mandar", "a", "todo", "el", "mundo", "a", "la", "misma", '<span class="red">landing?</span>'], 0.25, 0.2);
+      glow(0.2, 0.55, 1.0, 2.5);
+      // everything blurs away except the last word, which shrinks toward the dot (the "this~" hand-off)
+      for (let i = 0; i < nh - 1; i++) tl.to("#hookw" + i, { opacity: 0, filter: "blur(12px)", duration: 0.35 }, 3.5 + i * 0.015);
+      tl.to("#hookw" + (nh - 1), { opacity: 0, scale: 0.4, x: -300, y: 120, filter: "blur(6px)", duration: 0.6, ease: "power2.in" }, 3.8);
+
+      /* ---------- S2/S3 signal 4.2–11.6 ---------- */
+      scene("#s3", 4.2, 11.6);
+      tl.fromTo("#dot", { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(3)" }, 4.25);
+      cap("#c2", 4.7, 6.5);
+      // wave: line extends to the right while a gaussian bump travels along it
+      const W = { len: 0, ph: 0, amp: 0 };
+      function waveD() {
+        const x0 = 110, x1 = 110 + W.len * 860; let d = `M${x0} 960`;
+        for (let x = x0; x <= x1; x += 6) {
+          const c = x0 + W.ph * 860, g = Math.exp(-Math.pow((x - c) / 70, 2));
+          d += ` L${x.toFixed(1)} ${(960 + Math.sin((x - c) / 18) * 46 * W.amp * g).toFixed(1)}`;
+        }
+        return d;
+      }
+      tl.to(W, { len: 1, duration: 1.1, ease: "power2.out", onUpdate: () => $("wave").setAttribute("d", waveD()) }, 4.45);
+      tl.to(W, { amp: 1, duration: 0.3, onUpdate: () => $("wave").setAttribute("d", waveD()) }, 4.9);
+      tl.to(W, { ph: 0.9, duration: 1.4, ease: "sine.inOut", onUpdate: () => $("wave").setAttribute("d", waveD()) }, 4.9);
+      tl.to(W, { amp: 0, duration: 0.3, onUpdate: () => $("wave").setAttribute("d", waveD()) }, 6.1);
+      tl.to("#wave", { opacity: 0, duration: 0.3 }, 6.5);
+      // burst: lines fan out from the dot to the six leads + decorative strays
+      const NODES = [
+        { x: 640, y: 620, av: "av1", n: "LAURA", p: "Founder SaaS" },
+        { x: 300, y: 760, av: "av3", n: "SOFÍA", p: "Freelance" },
+        { x: 720, y: 900, av: "av2", n: "MARCOS", p: "Agencia B2B" },
+        { x: 480, y: 1150, av: "av4", n: "DAVID", p: "Equipo de ventas" },
+        { x: 720, y: 1380, av: "av6", n: "PABLO", p: "Indie hacker" },
+        { x: 240, y: 1500, av: "av5", n: "CARMEN", p: "Consultora" },
+      ];
+      const STRAYS = [[1180, 520], [1200, 820], [1180, 1240], [1150, 1700], [900, 300], [600, 1900], [1250, 1050], [140, 1800]];
+      const targets = NODES.map((n) => [n.x + 54, n.y + 54]).concat(STRAYS);
+      targets.forEach(([tx, ty], i) => {
+        const p = document.createElementNS(NS, "path");
+        const mx = 110 + (tx - 110) * 0.45, sy = 960 + (ty - 960) * 0.15;
+        p.setAttribute("d", `M110 960 C ${mx} ${sy}, ${mx} ${ty}, ${tx} ${ty}`);
+        p.setAttribute("id", "bl" + i);
+        if (i >= NODES.length) p.setAttribute("stroke-opacity", "0.45");
+        $("burst").appendChild(p);
+        const L = p.getTotalLength();
+        p.style.strokeDasharray = L; p.style.strokeDashoffset = L;
+        tl.to(p, { strokeDashoffset: 0, duration: 0.9 + (i % 4) * 0.12, ease: "power2.out" }, 6.55 + (i % 6) * 0.07);
+        tl.to(p, { strokeOpacity: i >= NODES.length ? 0.18 : 0.35, duration: 1 }, 8.6);
+      });
+      NODES.forEach((n, i) => {
+        const d = document.createElement("div");
+        d.className = "node"; d.id = "nd" + i; d.style.left = n.x + "px"; d.style.top = n.y + "px";
+        d.innerHTML = `<div class="av"><img src="assets/${n.av}.png" alt=""></div><div><div class="nm">${n.n}</div><div class="ps">${n.p}</div></div>`;
+        $("nodes").appendChild(d);
+        tl.fromTo(d, { opacity: 0, scale: 0.5, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "back.out(2)", transformOrigin: "54px 54px" }, 7.25 + i * 0.2);
+      });
+      tl.to("#dot", { scale: 1.6, duration: 0.25, yoyo: true, repeat: 1 }, 6.5);
+      glow(6.5, 0.8, 1.15, 0.6);
+      glow(7.4, 0.5, 1.0, 1.6);
+      tl.fromTo("#cam3", { scale: 1, x: 0, y: 0 }, { scale: 1.18, x: -120, y: -40, duration: 5.2, ease: "sine.inOut", transformOrigin: "50% 50%" }, 6.4);
+      cap("#c3a", 7.0, 9.1);
+      tl.fromTo("#strike", { opacity: 0, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 0.35, ease: "power2.out" }, 8.1);
+      tl.to("#strike", { opacity: 0, duration: 0.25 }, 8.8);
+      cap("#c3b", 9.1, 11.5);
+      tl.to("#cam3", { opacity: 0, filter: "blur(14px)", duration: 0.4 }, 11.2);
+
+      /* ---------- S4 feed 11.6–17.4 ---------- */
+      scene("#s4", 11.6, 17.4);
+      const LEADS = [
+        ["av1", "Laura", "Founder SaaS · 6/8 preguntas", "92%", ["Founder SaaS", "Más demos", "Leads fríos"]],
+        ["av2", "Marcos", "Agencia B2B · 5/8 preguntas", "78%", ["Agencia", "Más clientes", "Ventas lentas"]],
+        ["av3", "Sofía", "Freelance · 7/8 preguntas", "64%", ["Freelance", "Subir precios", "Pocas visitas"]],
+        ["av4", "David", "Equipo de ventas · 8/8 preguntas", "85%", ["Ventas", "Menos churn", "Leads fríos"]],
+      ];
+      const KEYS = ["Quién", "Quiere", "Problema"];
+      LEADS.forEach((L, i) => {
+        const r = document.createElement("div");
+        r.className = "lrow"; r.id = "lr" + i; r.style.top = 128 + i * 290 + "px";
+        r.innerHTML = `<div class="top"><div class="av"><img src="assets/${L[0]}.png" alt=""></div><div><div class="nm">${L[1]}</div><div class="ps">${L[2]}</div></div><div class="fit"><div class="v" id="fit${i}">${L[3]}</div><div class="k">Encaje</div></div></div>
+          <div class="tags">${L[4].map((t, j) => `<div class="tag"><i>${KEYS[j]}</i>${t}</div>`).join("")}</div>
+          <div class="bot"><span>◎ Quiz Funnel</span><div class="btn" id="vb${i}">Ver respuestas</div><div class="btn pri">Resultado</div></div>`;
+        $("rows").appendChild(r);
+        tl.fromTo(r, { opacity: 0, y: 40, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }, 12.0 + i * 0.18);
+      });
+      cap("#c4", 11.8, 17.2);
+      tl.fromTo("#cam4", { scale: 0.9, y: 60, opacity: 0 }, { scale: 0.96, y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }, 11.65);
+      // zoom into Laura's row, ring cursor clicks "Ver respuestas"
+      tl.to("#cam4", { scale: 1.42, x: -110, y: 40, duration: 1.3, ease: "power3.inOut" }, 14.6);
+      tl.to(["#lr1", "#lr2", "#lr3"], { opacity: 0.25, filter: "blur(4px)", duration: 0.6 }, 14.8);
+      tl.fromTo("#ring", { opacity: 0, x: 600, y: 700 }, { opacity: 1, x: 640, y: 380, duration: 0.9, ease: "power3.inOut" }, 15.3);
+      tl.to("#ring", { scale: 0.7, duration: 0.1, yoyo: true, repeat: 1 }, 16.3);
+      tl.to("#vb0", { backgroundColor: "#f4f3f0", color: "#111", duration: 0.12 }, 16.33);
+      tl.to("#cam4", { opacity: 0, filter: "blur(16px)", scale: 1.6, duration: 0.45, ease: "power2.in" }, 16.9);
+
+      /* ---------- S5 interleave 17.4–22.6 ---------- */
+      scene("#s5", 17.4, 22.6);
+      cap("#c5a", 17.5, 19.4);
+      cap("#c5b", 19.4, 22.4);
+      tl.fromTo("#stackmask", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 17.6);
+      tl.fromTo("#stack", { y: 300 }, { y: -880, duration: 4.6, ease: "power1.inOut" }, 17.6);
+      tl.fromTo("#quote", { opacity: 0, scale: 0.7, y: 30 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(2)" }, 21.2);
+      glow(17.5, 0.45, 0.95);
+      tl.to("#s5", { opacity: 0, filter: "blur(12px)", duration: 0.3 }, 22.3);
+
+      /* ---------- S6 gates 22.6–30.4 ---------- */
+      scene("#s6", 22.6, 30.4);
+      tl.set("#s6", { filter: "blur(0px)" }, 22.6);
+      cap("#c6a", 22.7, 25.0);
+      cap("#c6b", 25.0, 26.7);
+      cap("#c6c", 26.7, 30.2);
+      blurIn("#gpA", 22.7, 0.5, 40);
+      blurIn("#gpB", 22.85, 0.5, 40);
+      const SLOT_B = (k) => 1050 + 140 + k * 106, SLOT_A = (k) => 560 + 140 + k * 100;
+      const GATES = [
+        // [label, value html, side, start fill%, ok]
+        ["Perfil", "Founder SaaS", "B", 0],
+        ["Objetivo", "Más demos", "B", 0],
+        ["Problema", "Leads fríos", "B", 0],
+        ["Por qué encaja con él", '0 / 3 <i>razones</i>', "A", 30],
+        ["Oferta específica", '−30% <i>/ plan Growth</i>', "A", 55],
+        ["Tiempo limitado", '<span id="cd">15:00</span> <i>/ contador</i>', "A", 10],
+      ];
+      GATES.forEach((g, i) => {
+        const d = document.createElement("div");
+        const a = g[2] === "A", k = a ? i - 3 : i;
+        d.className = "gate"; d.id = "g" + i; d.style.top = (a ? SLOT_A(k) : SLOT_B(k)) + "px";
+        d.innerHTML = `<div class="l"><span>${g[0]}</span><span class="val" id="gv${i}" style="color:${a ? "var(--bad)" : "var(--ok)"}">${g[1]}</span></div>
+          <div class="track"><div class="fill ${a ? "bad" : "ok"}" id="gf${i}"></div>${a ? `<div class="fill ok" id="go${i}"></div>` : ""}</div>`;
+        $("gates").appendChild(d);
+        tl.fromTo(d, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 23.0 + i * 0.1);
+        if (!a) tl.fromTo("#gf" + i, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power2.out" }, 23.2 + i * 0.25);
+        else {
+          gsap.set("#go" + i, { opacity: 0 });
+          tl.fromTo("#gf" + i, { clipPath: "inset(0 100% 0 0)" }, { clipPath: `inset(0 ${100 - g[3]}% 0 0)`, duration: 0.8, ease: "power2.out" }, 23.4 + k * 0.2);
+          // the last cards clear each gate: fill → turn green → move into "Cumplido"
+          const t = 27.0 + k * 1.0;
+          tl.to("#gf" + i, { clipPath: "inset(0 0% 0 0)", duration: 0.35, ease: "power2.out" }, t);
+          tl.to("#go" + i, { opacity: 1, duration: 0.15 }, t + 0.3);
+          tl.to("#gv" + i, { color: "#2fd47a", duration: 0.15 }, t + 0.3);
+          tl.to(d, { y: SLOT_B(3 + k) - SLOT_A(k), duration: 0.5, ease: "power3.inOut" }, t + 0.45);
+        }
+      });
+      // "0 / 3 razones" counts up, countdown ticks once the offer is live
+      const R = { v: 0 };
+      tl.to(R, { v: 3, duration: 0.35, ease: "none", onUpdate: () => { $("gv3").innerHTML = Math.round(R.v) + " / 3 <i>razones</i>"; } }, 27.0);
+      const C = { s: 900 };
+      tl.to(C, { s: 900 - 3, duration: 3, ease: "none", onUpdate: () => { const s = Math.ceil(C.s); $("cd").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); } }, 27.2);
+      tl.fromTo("#gdone", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 29.6);
+      glow(27.0, 0.75, 1.15, 2.5);
+      tl.to(["#gpA", "#gpB", "#gates"], { opacity: 0, filter: "blur(12px)", duration: 0.3 }, 30.05);
+
+      /* ---------- S7 payoff 30.4–34 ---------- */
+      scene("#s7", 30.4, 34.0);
+      glow(30.4, 0.45, 0.9, 0.8);
+      const n1 = words("p1", ["Así", "no", "solo", "captas", '<span class="red">el lead.</span>'], 30.55, 0.16);
+      for (let i = 0; i < n1; i++) tl.to("#p1w" + i, { opacity: 0, filter: "blur(12px)", duration: 0.3 }, 31.75);
+      const n2 = words("p2", ["Lo", "segmentas,", "lo", "educas", "y", "lo", "llevas", "directo", '<span class="red">a la compra.</span>'], 32.05, 0.12);
+      for (let i = 0; i < n2; i++) tl.to("#p2w" + i, { opacity: 0, filter: "blur(12px)", duration: 0.3 }, 33.65);
+
+      /* ---------- S8 end card 34–38 ---------- */
+      scene("#s8", 34.0, 38.1);
+      glow(33.9, 1, 1.35, 1.4);
+      tl.fromTo("#lock", { opacity: 0, filter: "blur(20px)", scale: 0.92 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.8, ease: "power3.out" }, 34.1);
+      blurIn("#sub", 34.8, 0.6, 16);
+
+      tl.set({}, {}, END);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
